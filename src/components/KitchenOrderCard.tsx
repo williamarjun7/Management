@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Printer, MoreVertical, Table2 } from 'lucide-react';
+import { Printer, Table2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/core/utils';
 import type { Order } from '../types';
@@ -26,7 +26,7 @@ const ORDER_TYPE = {
 } as const;
 
 function getOrderType(order: Order): { label: string; badgeClass: string } {
-  if (!order.restaurant_tables || order.status === 'ready' && !order.restaurant_tables) {
+  if (!order.restaurant_tables) {
     return ORDER_TYPE.takeout;
   }
   return ORDER_TYPE.dinein;
@@ -148,30 +148,19 @@ export function KitchenOrderCard({
       </div>
 
       <div className="p-4 bg-surface-container-high rounded-b-xl flex gap-3">
-        {order.status === 'confirmed' && (
-          <Button
-            onClick={() => onStatusChange(order.id, 'preparing')}
-            disabled={isUpdating}
-            className="flex-1 py-3 h-auto text-sm font-bold bg-surface-container-lowest text-on-surface border border-outline-variant hover:bg-surface-variant active:scale-95 transition-all rounded-lg"
-          >
-            START PREP
-          </Button>
-        )}
-        {(order.status === 'preparing' || order.status === 'ready') && (
-          <Button
-            onClick={() => onStatusChange(order.id, 'ready')}
-            disabled={isUpdating}
-            className="flex-1 py-3 h-auto text-sm font-bold bg-primary text-on-primary hover:opacity-90 active:scale-95 transition-all rounded-lg"
-          >
-            READY
-          </Button>
-        )}
+        <Button
+          onClick={() => onStatusChange(order.id, 'completed')}
+          disabled={isUpdating}
+          className="flex-1 py-3 h-auto text-sm font-bold bg-primary text-on-primary hover:opacity-90 active:scale-95 transition-all rounded-lg"
+        >
+          COMPLETE
+        </Button>
         <button
           onClick={() => window.print()}
           className="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors shrink-0"
           title={isUrgent ? 'Print order' : 'More actions'}
         >
-          {isUrgent ? <Printer className="h-5 w-5" /> : <MoreVertical className="h-5 w-5" />}
+          <Printer className="h-5 w-5" />
         </button>
       </div>
     </article>

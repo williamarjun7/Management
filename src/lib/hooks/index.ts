@@ -1,5 +1,5 @@
 export { queryKeys } from '../core/query-keys';
-export { useKitchenOrders, useOrders, useCreateOrder, useConfirmOrder, useReserveInventory, useReleaseInventory, useTransitionOrderStatus } from './orders.hooks';
+export { useKitchenOrders, useOrders, useCreateOrder, useReserveInventory, useReleaseInventory, useTransitionOrderStatus } from './orders.hooks';
 export { useMenuCategories, useCreateMenuCategory, useUpdateMenuCategory, useDeleteMenuCategory, useMenuItems, useCreateMenuItem, useUpdateMenuItem, useToggleMenuItemAvailability, useUpdateMenuItemImage, useDeleteMenuItem } from './menu.hooks';
 export { useTables, useActiveTableSession, useCreateTableSession, useCloseTableSession, useWorkflowForEntity, useUpdateWorkflowStep } from './tables.hooks';
 export { useInvoices, useInvoice, useProcessPayment, useCreatePaymentIntent, useConfirmPayment, useReversePayment, useProcessCashPayment, useDeleteInvoice, useSplitBill, usePartialPayment, useProcessRefund, useApplyDiscount, useGenerateReceipt, useReconciliationReport, useSplits, useCreateSplitBill, useAddSplitPayment, useFinalizeSplit, useRefundSplit } from './billing.hooks';

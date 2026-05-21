@@ -14,7 +14,7 @@ export default function ReportsPage() {
   const { data: products } = useProducts();
 
   const completedOrders = (orders ?? []).filter(
-    (o: Order) => o.status === 'completed' || o.status === 'served'
+    (o: Order) => o.status === 'completed'
   );
   const totalRevenue = completedOrders.reduce((s, o) => s + Number(o.total), 0);
   const totalOrders = completedOrders.length;

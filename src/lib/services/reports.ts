@@ -167,7 +167,7 @@ async function generateAnalyticsReport(): Promise<Report> {
       .limit(500);
     const orders = (orderData ?? []) as { status: string; total: number }[];
     const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0);
-    const completedCount = orders.filter(o => o.status === 'completed' || o.status === 'served').length;
+    const completedCount = orders.filter(o => o.status === 'completed').length;
 
     const { data: bookingData } = await insforge.database
       .from('bookings')

@@ -3,7 +3,7 @@ import { insforge } from '../lib/core/insforge';
 /**
  * RuFlo Workflow Definitions
  *
- * Order Workflow:     Table Selected → Order Created → Kitchen Pending → Preparing → Ready → Served → Billing → Closed
+ * Order Workflow:     Order Created (Active) → Completed | Cancelled
  * Table Workflow:     Available → Occupied → Ordering → Billing → Cleaning → Available
  * Billing Workflow:   Generate Bill → Process Payment → Close Session → Reset Table
  */
@@ -22,25 +22,14 @@ interface WorkflowDefinition {
 // ────────────────────────────────────────────
 
 const orderWorkflowSteps = [
-  'table_selected',
   'order_created',
-  'kitchen_pending',
-  'preparing',
-  'ready',
-  'served',
-  'billing',
-  'closed',
+  'completed',
+  'cancelled',
 ];
 
 const orderTransitions: Record<string, string[]> = {
-  table_selected: ['order_created'],
-  order_created: ['kitchen_pending', 'cancelled'],
-  kitchen_pending: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
-  ready: ['served'],
-  served: ['billing'],
-  billing: ['closed'],
-  closed: [],
+  order_created: ['completed', 'cancelled'],
+  completed: [],
   cancelled: [],
 };
 
@@ -58,47 +47,33 @@ async function notifyRealtime(entityType: string, entityId: string, event: strin
 }
 
 const orderHandlers: Record<string, WorkflowHandler> = {
-  table_selected: async (payload) => {
-    await insforge.database
-      .from('restaurant_tables')
-      .update({ status: 'ordering' })
-      .eq('id', payload.table_id as string);
-    await notifyRealtime('table', payload.table_id as string, 'TABLE_STATUS_CHANGED', { status: 'ordering' });
-  },
   order_created: async (payload) => {
     await insforge.database
       .from('workflow_state')
       .insert([{
         entity_type: 'order',
         entity_id: payload.order_id,
-        current_step: 'kitchen_pending',
+        current_step: 'order_created',
         status: 'active',
         context: payload,
       }]);
     await notifyRealtime('order', payload.order_id as string, 'ORDER_CREATED', payload);
   },
-  kitchen_pending: async (payload) => {
-    await notifyRealtime('order', payload.order_id as string, 'ORDER_STATUS_CHANGED', { status: 'pending' });
-  },
-  preparing: async (payload) => {
-    await notifyRealtime('order', payload.order_id as string, 'ORDER_STATUS_CHANGED', { status: 'preparing' });
-  },
-  ready: async (payload) => {
-    await notifyRealtime('order', payload.order_id as string, 'ORDER_STATUS_CHANGED', { status: 'ready' });
-  },
-  served: async (payload) => {
-    await notifyRealtime('order', payload.order_id as string, 'ORDER_STATUS_CHANGED', { status: 'served' });
-  },
-  billing: async (payload) => {
-    await notifyRealtime('order', payload.order_id as string, 'BILL_GENERATED', payload);
-  },
-  closed: async (payload) => {
+  completed: async (payload) => {
     await insforge.database
       .from('workflow_state')
       .update({ status: 'completed', completed_at: new Date().toISOString() })
       .eq('entity_type', 'order')
       .eq('entity_id', payload.order_id);
     await notifyRealtime('order', payload.order_id as string, 'ORDER_COMPLETED', payload);
+  },
+  cancelled: async (payload) => {
+    await insforge.database
+      .from('workflow_state')
+      .update({ status: 'cancelled', completed_at: new Date().toISOString() })
+      .eq('entity_type', 'order')
+      .eq('entity_id', payload.order_id);
+    await notifyRealtime('order', payload.order_id as string, 'ORDER_CANCELLED', payload);
   },
 };
 

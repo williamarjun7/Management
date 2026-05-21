@@ -5,7 +5,7 @@ import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditE
 import type { Order } from '../../types';
 import { queryKeys } from '../core/query-keys';
 
-const KITCHEN_STATUSES = ['confirmed', 'preparing'];
+const KITCHEN_STATUSES = ['active'];
 
 const T = {
   orders: 'orders' as const,
@@ -68,7 +68,7 @@ export function useCreateOrder() {
           table_id: rest.table_id, customer_name: rest.customer_name || null,
           notes: rest.notes || null,
           subtotal, discount, total,
-          status: 'pending',
+          status: 'active',
         }])
         .select()
         .single();
@@ -95,33 +95,6 @@ export function useCreateOrder() {
 }
 
 // ─────────────── ORDER STATUS (RPC ONLY) ───────────────
-
-export function useConfirmOrder() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      p_order_id: string;
-      p_user_id: string;
-      p_idempotency_key: string;
-      p_expected_version?: number;
-    }) => {
-      const { data, error } = await insforge.database.rpc('confirm_order', params);
-      if (error) {
-        logger.error('confirm_order_failed', 'hooks', {
-          metadata: { params, error: (error as Error)?.message },
-          operation: 'confirm_order',
-        });
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: (_data, vars) => {
-      writeAuditLog(createAuditEntry(AuditActions.ORDER_CONFIRMED, AuditEntityTypes.ORDER, vars.p_order_id, { reason: 'Order confirmed', event_type: AuditEventTypes.ORDER_CONFIRMED }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.kitchenOrders });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders });
-    },
-  });
-}
 
 export function useReserveInventory() {
   const queryClient = useQueryClient();

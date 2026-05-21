@@ -1,5 +1,5 @@
 export type Role = 'admin' | 'manager' | 'owner' | 'staff' | 'kitchen' | 'reception';
-export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled' | 'refunded';
+export type OrderStatus = 'active' | 'completed' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'credit_account' | 'fonepay';
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
@@ -12,8 +12,7 @@ export type PaymentIntentStatus = 'pending' | 'processing' | 'succeeded' | 'fail
 export type InventoryHoldStatus = 'active' | 'consumed' | 'released' | 'expired';
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: "Pending", confirmed: "Confirmed", preparing: "Preparing",
-  ready: "Ready", served: "Served", completed: "Completed",
+  active: "Active", completed: "Completed",
   cancelled: "Cancelled", refunded: "Refunded",
 };
 

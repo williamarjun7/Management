@@ -172,7 +172,7 @@ export function useStaffOrderCounts() {
         if (!o.created_by) return;
         if (!staffCounts[o.created_by]) staffCounts[o.created_by] = { total: 0, completed: 0 };
         staffCounts[o.created_by].total++;
-        if (o.status === 'completed' || o.status === 'served') staffCounts[o.created_by].completed++;
+        if (o.status === 'completed') staffCounts[o.created_by].completed++;
       });
       return staffCounts;
     },

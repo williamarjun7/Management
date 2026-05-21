@@ -37,7 +37,7 @@ export default function OperationalAnalytics() {
   const { data: occupancyForecast } = useOccupancyForecast(7);
 
   const paidOrders = (orders ?? []).filter(
-    (o: Order) => ['completed', 'served'].includes(o.status)
+    (o: Order) => o.status === 'completed'
   );
   const grossRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
   const avgOrderValue = paidOrders.length > 0 ? grossRevenue / paidOrders.length : 0;
@@ -47,7 +47,7 @@ export default function OperationalAnalytics() {
   const occupancyRate = totalRooms > 0 ? ((occupiedRooms / totalRooms) * 100).toFixed(1) : '0.0';
 
   const kitchenOrders = (orders ?? []).filter(
-    (o: Order) => ['confirmed', 'preparing'].includes(o.status)
+    (o: Order) => o.status === 'active'
   );
   const avgPrepMs = 0;
 
