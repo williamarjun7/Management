@@ -13,7 +13,6 @@ export { default as InventoryPage } from './inventory/InventoryPage';
 export { default as BillingPage } from './billing/BillingPage';
 export { default as InvoiceDetailPage } from './billing/InvoiceDetailPage';
 export { default as MotelPage } from './motel/MotelPage';
-export { default as RoomDetailPage } from './motel/RoomDetailPage';
 export { default as ReportsPage } from './reports/ReportsPage';
 export { default as SettingsPage } from './settings/SettingsPage';
 export { default as StaffPage } from './staff/StaffPage';

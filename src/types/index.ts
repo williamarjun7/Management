@@ -3,8 +3,7 @@ export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'ser
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'credit_account' | 'fonepay';
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
-export type RoomStatus = 'available' | 'reserved' | 'occupied' | 'cleaning' | 'maintenance';
-export type RoomTypeCode = 'single' | 'double' | 'suite' | 'deluxe' | 'dormitory';
+export type RoomStatus = 'available' | 'reserved' | 'booked' | 'occupied' | 'partial_paid' | 'fully_paid' | 'cleaning' | 'maintenance';
 export type StockMovementType = 'purchase' | 'sale' | 'wastage' | 'adjustment' | 'room_usage';
 export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
 export type TableStatus = 'available' | 'reserved' | 'occupied' | 'ordering' | 'preparing' | 'ready' | 'dining' | 'billing' | 'cleaning';
@@ -43,19 +42,24 @@ export const TABLE_STATUS_BG: Record<string, string> = {
 };
 
 export const ROOM_STATUS_LABELS: Record<string, string> = {
-  available: "Available", reserved: "Reserved", occupied: "Occupied",
+  available: "Available", reserved: "Booked", booked: "Booked", occupied: "Occupied",
+  partial_paid: "Partial Paid", fully_paid: "Fully Paid",
   cleaning: "Cleaning", maintenance: "Maintenance",
 };
 
 export const ROOM_STATUS_COLORS: Record<string, string> = {
-  available: "bg-emerald-500", reserved: "bg-yellow-500", occupied: "bg-red-500",
+  available: "bg-emerald-500", reserved: "bg-yellow-500", booked: "bg-yellow-500",
+  occupied: "bg-red-500", partial_paid: "bg-blue-500", fully_paid: "bg-green-500",
   cleaning: "bg-orange-500", maintenance: "bg-gray-500",
 };
 
 export const ROOM_STATUS_BG: Record<string, string> = {
   available: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800",
   reserved: "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800",
+  booked: "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800",
   occupied: "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800",
+  partial_paid: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
+  fully_paid: "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800",
   cleaning: "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800",
   maintenance: "bg-gray-50 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800",
 };
@@ -185,14 +189,13 @@ export interface Invoice {
 }
 
 export interface RoomType {
-  id: string; name: string; code: RoomTypeCode; description: string | null;
-  base_price: number; max_guests: number; amenities: string[];
-  image_url: string | null; is_active: boolean; created_at: string; updated_at: string;
+  id: string; name: string; base_price: number; max_guests: number;
+  is_active: boolean; created_at: string; updated_at: string;
 }
 
 export interface Room {
-  id: string; room_number: string; room_type_id: string; floor: string | null;
-  status: RoomStatus; notes: string | null; image_url: string | null; is_active: boolean;
+  id: string; room_number: string; room_type_id: string;
+  status: RoomStatus; is_active: boolean;
   created_at: string; updated_at: string; room_types?: RoomType;
 }
 
@@ -204,8 +207,7 @@ export interface RoomStateTransition {
 
 export interface Booking {
   id: string; booking_number: string; room_id: string; guest_name: string;
-  guest_phone: string | null; guest_email: string | null;
-  guest_id_proof: string | null; check_in: string; check_out: string;
+  guest_phone: string | null; check_in: string; check_out: string;
   adults: number; children: number; status: BookingStatus;
   nightly_rate: number; total_amount: number; paid_amount: number;
   notes: string | null; created_by: string | null;
@@ -301,7 +303,6 @@ export interface StockMovementFormData {
 
 export interface BookingFormData {
   room_id: string; guest_name: string; guest_phone?: string;
-  guest_email?: string; guest_id_proof?: string;
   check_in: string; check_out: string; adults: number; children: number;
   nightly_rate: number; notes?: string;
 }

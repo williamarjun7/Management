@@ -12,7 +12,6 @@ import { showSuccess, showError } from '../../components/ui/toast';
 import { RoomGrid } from '../../components/rooms/RoomGrid';
 import { RoomList } from '../../components/rooms/RoomList';
 import { RoomFilters, applyFilters } from '../../components/rooms/RoomFilters';
-import { RoomDetailModal } from '../../components/rooms/RoomDetailModal';
 import { BookingForm } from '../motel/BookingForm';
 import type { Order, RestaurantTable, Room, Booking } from '../../types';
 import type { FiltersState } from '../../components/rooms/RoomFilters';
@@ -58,8 +57,6 @@ export default function DashboardPage() {
   }, []);
 
   const [roomFilters, setRoomFilters] = useState<FiltersState>({ search: '', status: 'all', roomType: 'all' });
-  const [capacityFilter, setCapacityFilter] = useState('all');
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [bookingRoom, setBookingRoom] = useState<Room | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -93,7 +90,7 @@ export default function DashboardPage() {
   const availableRooms = (rooms ?? []).filter((r: Room) => r.status === 'available').length;
   const totalRooms = (rooms ?? []).length;
 
-  const filteredRooms = applyFilters(rooms ?? [], roomFilters, capacityFilter);
+  const filteredRooms = applyFilters(rooms ?? [], roomFilters);
 
   const handleTableClick = (table: RestaurantTable) => {
     navigate(`/pos?table=${table.id}`);
@@ -356,8 +353,6 @@ export default function DashboardPage() {
                 filters={roomFilters}
                 onChange={setRoomFilters}
                 roomTypes={roomTypes}
-                capacity={capacityFilter}
-                onCapacityChange={setCapacityFilter}
               />
 
               {roomsLoading ? (
@@ -368,7 +363,6 @@ export default function DashboardPage() {
                 <RoomGrid
                   rooms={filteredRooms}
                   bookings={bookings}
-                  onView={(room) => setSelectedRoom(room)}
                   onCheckIn={(booking) => setConfirmAction({ type: 'checkin', booking })}
                   onCheckOut={(booking) => setConfirmAction({ type: 'checkout', booking })}
                   onCreateBooking={(room) => { setBookingRoom(room); setShowBookingForm(true); }}
@@ -379,7 +373,6 @@ export default function DashboardPage() {
                 <RoomList
                   rooms={filteredRooms}
                   bookings={bookings}
-                  onView={(room) => setSelectedRoom(room)}
                   onCheckIn={(booking) => setConfirmAction({ type: 'checkin', booking })}
                   onCheckOut={(booking) => setConfirmAction({ type: 'checkout', booking })}
                   onCreateBooking={(room) => { setBookingRoom(room); setShowBookingForm(true); }}
@@ -505,19 +498,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      <RoomDetailModal
-        room={selectedRoom!}
-        bookings={bookings}
-        open={selectedRoom !== null}
-        onClose={() => setSelectedRoom(null)}
-        onCheckIn={(booking) => { setSelectedRoom(null); setConfirmAction({ type: 'checkin', booking }); }}
-        onCheckOut={(booking) => { setSelectedRoom(null); setConfirmAction({ type: 'checkout', booking }); }}
-        onCreateBooking={(room) => { setSelectedRoom(null); setBookingRoom(room); setShowBookingForm(true); }}
-        onMarkCleaning={(room) => { setSelectedRoom(null); setConfirmAction({ type: 'status', room, status: 'cleaning' }); }}
-        onMarkMaintenance={(room) => { setSelectedRoom(null); setConfirmAction({ type: 'status', room, status: 'maintenance' }); }}
-        onNavigateDetail={(room) => navigate(`/motel/rooms/${room.id}`)}
-      />
 
       {showBookingForm && (
         <BookingForm

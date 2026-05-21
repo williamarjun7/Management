@@ -76,7 +76,7 @@ export function useCreateOrder() {
 
       const { error: ie } = await insforge.database
         .from(T.orderItems)
-        .insert(items.map((i, idx) => ({
+        .insert(items.map((i) => ({
           order_id: (order as Order).id,
           menu_item_id: i.menu_item_id,
           item_name: i.item_name,

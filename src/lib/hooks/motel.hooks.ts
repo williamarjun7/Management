@@ -174,8 +174,7 @@ export function useCreateBooking() {
   return useMutation({
     mutationFn: async (booking: {
       room_id: string; guest_name: string; guest_phone?: string;
-      guest_email?: string; guest_id_proof?: string; check_in: string;
-      check_out: string; adults: number; children: number;
+      check_in: string; check_out: string; adults: number; children: number;
       nightly_rate: number; total_amount: number; notes?: string;
       created_by?: string;
     }) => {
@@ -184,8 +183,6 @@ export function useCreateBooking() {
         p_room_id: booking.room_id,
         p_guest_name: booking.guest_name,
         p_guest_phone: booking.guest_phone || null,
-        p_guest_email: booking.guest_email || null,
-        p_guest_id_proof: booking.guest_id_proof || null,
         p_check_in: booking.check_in,
         p_check_out: booking.check_out,
         p_adults: booking.adults,
@@ -273,17 +270,13 @@ export function useCreateRoom() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (values: {
-      room_number: string; room_type_id: string; floor?: string;
-      notes?: string; image_url?: string | null;
+      room_number: string; room_type_id: string;
     }) => {
       const { data, error } = await insforge.database
         .from('rooms')
         .insert([{
           room_number: values.room_number,
           room_type_id: values.room_type_id,
-          floor: values.floor || null,
-          notes: values.notes || null,
-          image_url: values.image_url ?? null,
           status: 'available',
           is_active: true,
         }])
@@ -304,15 +297,11 @@ export function useUpdateRoom() {
   return useMutation({
     mutationFn: async (values: {
       id: string; room_number?: string; room_type_id?: string;
-      floor?: string; notes?: string; image_url?: string | null;
     }) => {
       const { id, ...rest } = values;
       const updateData: Record<string, unknown> = {};
       if (rest.room_number !== undefined) updateData.room_number = rest.room_number;
       if (rest.room_type_id !== undefined) updateData.room_type_id = rest.room_type_id;
-      if (rest.floor !== undefined) updateData.floor = rest.floor || null;
-      if (rest.notes !== undefined) updateData.notes = rest.notes || null;
-      if (rest.image_url !== undefined) updateData.image_url = rest.image_url;
 
       const { data, error } = await insforge.database
         .from('rooms')
@@ -369,46 +358,6 @@ export function useDeleteRoom() {
     onSuccess: (_data, id) => {
       writeAuditLog(createAuditEntry(AuditActions.DELETE, AuditEntityTypes.ROOM, id));
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms });
-    },
-  });
-}
-
-export function useUpdateRoomTypeImage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, image_url }: { id: string; image_url: string | null }) => {
-      const { data, error } = await insforge.database
-        .from('room_types')
-        .update({ image_url })
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data, vars) => {
-      writeAuditLog(createAuditEntry(AuditActions.IMAGE_UPDATE, AuditEntityTypes.ROOM_TYPE, data.id, { reason: vars.image_url ? 'Room type image updated' : 'Room type image removed' }));
-      qc.invalidateQueries({ queryKey: queryKeys.roomTypes });
-    },
-  });
-}
-
-export function useUpdateRoomImage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, image_url }: { id: string; image_url: string | null }) => {
-      const { data, error } = await insforge.database
-        .from('rooms')
-        .update({ image_url })
-        .eq('id', id)
-        .select('*, room_types(*)')
-        .single();
-      if (error) throw error;
-      return data as Room;
-    },
-    onSuccess: (data, vars) => {
-      writeAuditLog(createAuditEntry(AuditActions.IMAGE_UPDATE, AuditEntityTypes.ROOM, (data as Room).id, { reason: vars.image_url ? 'Room image updated' : 'Room image removed' }));
-      qc.invalidateQueries({ queryKey: queryKeys.rooms });
     },
   });
 }

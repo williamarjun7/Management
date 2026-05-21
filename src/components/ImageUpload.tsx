@@ -87,7 +87,7 @@ export default function ImageUpload({ currentUrl, onUpload, onRemove, uploading 
             disabled={uploading}
           >
             <Upload className="mr-1.5 h-3.5 w-3.5" />
-            {uploading ? "Uploading…" : displayUrl ? "Change" : "Upload"}
+            {uploading ? "Uploading\u2026" : displayUrl ? "Change" : "Upload"}
           </Button>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
