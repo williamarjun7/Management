@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+.insforge/
+
+# Build output
+dist/
+dist-ssr/
+
+# Knowledge graph cache
+graphify-out/
+
+# Generated analysis / artifact files
+SYSTEM_FULL_ANALYSIS.md
+ls/
+sql_chunks/
+nul
+
+# Ad-hoc migration scripts (not part of the build)
+scripts/exec-*
+scripts/run-*
