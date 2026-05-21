@@ -1,5 +1,3 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/7ce857e9-4773-45d0-8cff-f9f12532f75e/deploy-status)](https://app.netlify.com/projects/highlandcafe/deploys)
-
 # Highlands Cafe & Motel Inn Management System
 
 Full-stack hospitality POS with QR ordering, table management, Kitchen Display System (KDS), room booking, and realtime synchronization.
