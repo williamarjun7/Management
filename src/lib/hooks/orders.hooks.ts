@@ -60,9 +60,11 @@ export function useCreateOrder() {
       const subtotal = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
       const discount = Math.max(0, Math.min(rest.discount ?? 0, subtotal));
       const total = subtotal - discount;
+      const orderNumber = `ORD-${Date.now().toString(36).toUpperCase().slice(-4)}${Math.random().toString(36).toUpperCase().slice(2, 6)}`;
       const { data: order, error: oe } = await insforge.database
         .from(T.orders)
         .insert([{
+          order_number: orderNumber,
           table_id: rest.table_id, customer_name: rest.customer_name || null,
           notes: rest.notes || null,
           subtotal, discount, total,
