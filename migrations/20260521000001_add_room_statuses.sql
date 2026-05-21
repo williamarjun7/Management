@@ -1,5 +1,15 @@
 -- Add new room statuses for POS-focused room management
--- room_status is a PostgreSQL enum, so we need ALTER TYPE
-ALTER TYPE room_status ADD VALUE IF NOT EXISTS 'booked';
-ALTER TYPE room_status ADD VALUE IF NOT EXISTS 'partial_paid';
-ALTER TYPE room_status ADD VALUE IF NOT EXISTS 'fully_paid';
+-- Use DO block because ALTER TYPE ... ADD VALUE cannot run in a transaction
+-- (migrations run inside a backend-managed transaction)
+DO $$ BEGIN
+  ALTER TYPE room_status ADD VALUE 'booked';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TYPE room_status ADD VALUE 'partial_paid';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  ALTER TYPE room_status ADD VALUE 'fully_paid';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
