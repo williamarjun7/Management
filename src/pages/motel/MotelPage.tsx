@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Hotel, CalendarCheck, LogIn, LogOut, Plus, Trash2, Search, ImageIcon, DoorOpen } from "lucide-react";
+import { Hotel, CalendarCheck, LogIn, LogOut, Plus, Trash2, Search, DoorOpen } from "lucide-react";
 import { useRooms, useRoomTypes, useTodayBookings, useCheckIn, useCheckOut, useDeleteBooking, useUpdateRoomStatus } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
 import { Button } from "../../components/ui/button";
@@ -13,24 +12,13 @@ import { BookingForm } from "./BookingForm";
 import RoomDialog from "./RoomDialog";
 import type { Room, RoomType, Booking } from "../../types";
 
-const roomStatusStyles: Record<string, string> = {
-  available: "bg-green-100 border-green-400 text-green-800 hover:bg-green-200",
-  occupied: "bg-red-100 border-red-400 text-red-800 hover:bg-red-200",
-  reserved: "bg-yellow-100 border-yellow-400 text-yellow-800 hover:bg-yellow-200",
-  cleaning: "bg-orange-100 border-orange-400 text-orange-800 hover:bg-orange-200",
-  maintenance: "bg-gray-100 border-gray-400 text-gray-800 hover:bg-gray-200",
-};
-
 const statusLabel: Record<string, string> = {
-  available: "Available",
-  occupied: "Occupied",
-  reserved: "Reserved",
-  cleaning: "Cleaning",
-  maintenance: "Maintenance",
+  available: "Available", reserved: "Booked", booked: "Booked",
+  occupied: "Occupied", partial_paid: "Partial Paid", fully_paid: "Fully Paid",
+  cleaning: "Cleaning", maintenance: "Maintenance",
 };
 
 export default function MotelPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: rooms, isLoading: roomsLoading } = useRooms();
   const { data: roomTypes } = useRoomTypes();
@@ -64,7 +52,7 @@ export default function MotelPage() {
 
   const occupiedCount = rooms?.filter((r: Room) => r.status === "occupied").length ?? 0;
   const availableCount = rooms?.filter((r: Room) => r.status === "available").length ?? 0;
-  const reservedCount = rooms?.filter((r: Room) => r.status === "reserved").length ?? 0;
+  const bookedCount = rooms?.filter((r: Room) => r.status === "reserved" || r.status === "booked").length ?? 0;
   const cleaningCount = rooms?.filter((r: Room) => r.status === "cleaning").length ?? 0;
 
   const checkedInToday = todayBookings?.filter(
@@ -109,12 +97,16 @@ export default function MotelPage() {
     }
   }, [confirmAction, user, checkOut]);
 
+  const handleBookingClick = () => {
+    setShowBookingForm(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Motel</h1>
-          <p className="text-muted-foreground">Manage rooms, bookings, and housekeeping.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Room Management</h1>
+          <p className="text-muted-foreground">Manage rooms, bookings, and operations.</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setShowRoomDialog(true)} variant="outline" className="min-h-[44px]">
@@ -147,11 +139,11 @@ export default function MotelPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reserved</CardTitle>
+            <CardTitle className="text-sm font-medium">Booked</CardTitle>
             <Hotel className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{reservedCount}</div>
+            <div className="text-2xl font-bold text-yellow-600">{bookedCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -214,32 +206,17 @@ export default function MotelPage() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           {booking.status === "confirmed" && (
-                            <Button
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); handleCheckIn(booking); }}
-                              disabled={checkIn.isPending}
-                              className="min-h-[44px]"
-                            >
+                            <Button size="sm" onClick={(e) => { e.stopPropagation(); handleCheckIn(booking); }} disabled={checkIn.isPending} className="min-h-[44px]">
                               <LogIn className="mr-1 h-3 w-3" /> Check In
                             </Button>
                           )}
                           {booking.status === "checked_in" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => { e.stopPropagation(); handleCheckOut(booking); }}
-                              disabled={checkOut.isPending}
-                              className="min-h-[44px]"
-                            >
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleCheckOut(booking); }} disabled={checkOut.isPending} className="min-h-[44px]">
                               <LogOut className="mr-1 h-3 w-3" /> Check Out
                             </Button>
                           )}
                           {booking.status !== "checked_in" && booking.status !== "checked_out" && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteBooking(booking); }}
-                              className="rounded p-1.5 text-muted-foreground hover:text-destructive hover:bg-accent transition-colors"
-                              title="Cancel booking"
-                            >
+                            <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteBooking(booking); }} className="rounded p-1.5 text-muted-foreground hover:text-destructive hover:bg-accent transition-colors" title="Cancel booking">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           )}
@@ -257,13 +234,7 @@ export default function MotelPage() {
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search rooms..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border bg-background pl-9 pr-4 py-2 text-sm outline-none focus:border-primary"
-          />
+          <input type="text" placeholder="Search rooms..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border bg-background pl-9 pr-4 py-2 text-sm outline-none focus:border-primary" />
         </div>
         <Tabs value={filterType} onValueChange={setFilterType} className="flex-1">
           <TabsList className="flex-wrap">
@@ -290,100 +261,60 @@ export default function MotelPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {filteredRooms?.map((room: Room) => {
-              const roomImage = room.image_url || room.room_types?.image_url;
-              return (
-                <div
-                  key={room.id}
-                  className={`flex flex-col overflow-hidden rounded-lg border-2 transition-all hover:shadow-md ${roomStatusStyles[room.status] || ""}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/motel/rooms/${room.id}`)}
-                    className="flex flex-col flex-1 text-left"
-                  >
-                    {roomImage ? (
-                      <div className="aspect-video w-full overflow-hidden">
-                        <img
-                          src={roomImage}
-                          alt={room.room_types?.name ?? `Room ${room.room_number}`}
-                          className="h-full w-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-video w-full flex items-center justify-center bg-muted/40">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
-                      </div>
-                    )}
-                    <div className="flex flex-col items-center p-3">
-                      <span className="text-lg font-bold">{room.room_number}</span>
-                      <span className="mt-1 text-xs text-muted-foreground">{room.room_types?.name}</span>
-                      <Badge variant={
-                        room.status === "available" ? "success" :
-                        room.status === "occupied" ? "destructive" :
-                        room.status === "reserved" ? "warning" : "outline"
-                      } className="mt-2 text-[10px] uppercase tracking-wider">
-                        {statusLabel[room.status] || room.status}
-                      </Badge>
-                    </div>
-                  </button>
-                  <div className="flex border-t border-inherit divide-x divide-inherit">
-                    {room.status === "available" && (
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/motel/rooms/${room.id}`)}
-                        className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors"
-                      >
-                        Book Now
-                      </button>
-                    )}
-                    {room.status === "occupied" && (
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/motel/rooms/${room.id}`)}
-                        className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors"
-                      >
-                        View Guest
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setEditingRoom(room); }}
-                      className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const nextStatus = room.status === "available" ? "maintenance"
-                          : room.status === "occupied" ? "cleaning"
-                          : room.status === "cleaning" ? "available"
-                          : "available";
-                        setConfirmStatusTarget({ room, status: nextStatus });
-                      }}
-                      className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors"
-                    >
-                      {room.status === "available" ? "Maint." :
-                       room.status === "occupied" ? "Cleaning" :
-                       room.status === "cleaning" ? "Ready" : "Status"}
-                    </button>
-                  </div>
+            {filteredRooms?.map((room: Room) => (
+              <div key={room.id} className={`flex flex-col rounded-lg border-2 transition-colors ${
+                room.status === 'available' ? 'border-emerald-200 bg-emerald-50/30' :
+                room.status === 'occupied' ? 'border-red-200 bg-red-50/30' :
+                room.status === 'reserved' || room.status === 'booked' ? 'border-yellow-200 bg-yellow-50/30' :
+                room.status === 'cleaning' ? 'border-orange-200 bg-orange-50/30' :
+                room.status === 'maintenance' ? 'border-gray-200 bg-gray-50/30' :
+                'border-border bg-card'
+              }`}>
+                <div className="flex flex-col items-center p-4">
+                  <span className="text-lg font-bold">{room.room_number}</span>
+                  <span className="mt-0.5 text-xs text-muted-foreground">{room.room_types?.name}</span>
+                  <Badge variant={
+                    room.status === "available" ? "success" :
+                    room.status === "occupied" ? "destructive" :
+                    room.status === "reserved" || room.status === "booked" ? "warning" : "outline"
+                  } className="mt-2 text-[10px] uppercase tracking-wider">
+                    {statusLabel[room.status] || room.status}
+                  </Badge>
                 </div>
-              );
-            })}
+                <div className="flex border-t border-inherit divide-x divide-inherit">
+                  {room.status === "available" && (
+                    <button type="button" onClick={handleBookingClick} className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors">
+                      Book Now
+                    </button>
+                  )}
+                  {room.status === "occupied" && (
+                    <button type="button" className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors text-muted-foreground">
+                      Occupied
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setEditingRoom(room)} className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors">
+                    Edit
+                  </button>
+                  <button type="button" onClick={() => {
+                    const nextStatus = room.status === "available" ? "maintenance"
+                      : room.status === "occupied" ? "cleaning"
+                      : room.status === "cleaning" ? "available"
+                      : "available";
+                    setConfirmStatusTarget({ room, status: nextStatus });
+                  }} className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors">
+                    {room.status === "available" ? "Maint." :
+                     room.status === "occupied" ? "Cleaning" :
+                     room.status === "cleaning" ? "Ready" : "Status"}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
       {(showRoomDialog || editingRoom) && (
-        <RoomDialog
-          open={true}
-          room={editingRoom}
-          onClose={() => { setShowRoomDialog(false); setEditingRoom(null); }}
-        />
+        <RoomDialog open={true} room={editingRoom} onClose={() => { setShowRoomDialog(false); setEditingRoom(null); }} />
       )}
 
       {showBookingForm && (
@@ -405,9 +336,7 @@ export default function MotelPage() {
             : "An invoice will be generated for all outstanding charges. Room will be marked for cleaning."
         }
         entity={`${confirmAction?.booking.booking_number ?? ""} — ${confirmAction?.booking.guest_name ?? ""}`}
-        confirmLabel={
-          confirmAction?.type === "checkin" ? "Yes, Check In" : "Yes, Check Out"
-        }
+        confirmLabel={confirmAction?.type === "checkin" ? "Yes, Check In" : "Yes, Check Out"}
         confirmVariant={confirmAction?.type === "checkout" ? "destructive" : "default"}
         onConfirm={confirmAction?.type === "checkin" ? executeCheckIn : executeCheckOut}
         isPending={checkIn.isPending || checkOut.isPending}
@@ -418,7 +347,7 @@ export default function MotelPage() {
         onOpenChange={(open) => { if (!open) setConfirmDeleteBooking(null); }}
         title="Cancel Booking"
         description={`Cancel booking for ${confirmDeleteBooking?.guest_name} (Room ${confirmDeleteBooking?.rooms?.room_number})?`}
-        consequence="The booking will be cancelled and the room will be released for other guests."
+        consequence="The booking will be cancelled and the room will be released."
         entity={`Booking: ${confirmDeleteBooking?.booking_number ?? ""} — ${confirmDeleteBooking?.guest_name ?? ""}`}
         confirmLabel="Cancel Booking"
         onConfirm={() => {

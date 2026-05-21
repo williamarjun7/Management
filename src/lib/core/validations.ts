@@ -71,8 +71,6 @@ export const bookingSchema = z.object({
   room_id: z.string().min(1, "Room is required"),
   guest_name: z.string().min(1, "Guest name is required").max(200),
   guest_phone: z.string().max(20).optional().or(z.literal("")),
-  guest_email: z.string().email("Invalid email").optional().or(z.literal("")),
-  guest_id_proof: z.string().max(100).optional().or(z.literal("")),
   check_in: z.string().min(1, "Check-in date is required"),
   check_out: z.string().min(1, "Check-out date is required"),
   adults: z.coerce.number().int().min(1, "At least 1 adult"),
@@ -100,9 +98,6 @@ export type RoomServiceFormData = z.infer<typeof roomServiceSchema>;
 export const roomSchema = z.object({
   room_number: z.string().min(1, "Room number is required").max(10),
   room_type_id: z.string().min(1, "Room type is required"),
-  floor: z.string().max(50).optional().or(z.literal("")),
-  notes: z.string().max(500).optional().or(z.literal("")),
-  image_url: z.string().url("Invalid image URL").nullable().optional(),
 });
 
 export type RoomFormData = z.infer<typeof roomSchema>;

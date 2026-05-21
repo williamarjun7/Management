@@ -45,7 +45,7 @@ export default function ReportsPage() {
         detail: r.room_types?.name ?? '',
         amount: '',
         status: r.status,
-        extra: r.floor ?? '',
+        extra: r.room_types?.name ?? '',
       })),
       ...(products ?? []).map((p: Product) => ({
         section: 'Product',
@@ -187,7 +187,7 @@ export default function ReportsPage() {
                       <TableCell className="font-medium">{r.room_number}</TableCell>
                       <TableCell>{r.room_types?.name ?? '—'}</TableCell>
                       <TableCell className="capitalize">{r.status}</TableCell>
-                      <TableCell>{r.floor ?? '—'}</TableCell>
+                      <TableCell>{r.room_types?.name ?? '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

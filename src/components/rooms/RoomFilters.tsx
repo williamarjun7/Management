@@ -11,28 +11,20 @@ interface RoomFiltersProps {
   filters: FiltersState;
   onChange: (filters: FiltersState) => void;
   roomTypes?: { id: string; name: string }[];
-  capacity: string;
-  onCapacityChange: (value: string) => void;
 }
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
   { value: 'available', label: 'Available' },
+  { value: 'booked', label: 'Booked' },
   { value: 'occupied', label: 'Occupied' },
-  { value: 'reserved', label: 'Reserved' },
+  { value: 'partial_paid', label: 'Partial Paid' },
+  { value: 'fully_paid', label: 'Fully Paid' },
   { value: 'cleaning', label: 'Cleaning' },
   { value: 'maintenance', label: 'Maintenance' },
 ];
 
-const CAPACITY_OPTIONS = [
-  { value: 'all', label: 'Any Capacity' },
-  { value: '1', label: '1 Guest' },
-  { value: '2', label: '2 Guests' },
-  { value: '3', label: '3 Guests' },
-  { value: '4', label: '4+ Guests' },
-];
-
-export function RoomFilters({ filters, onChange, roomTypes, capacity, onCapacityChange }: RoomFiltersProps) {
+export function RoomFilters({ filters, onChange, roomTypes }: RoomFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative flex-1 min-w-[200px] max-w-xs">
@@ -68,39 +60,24 @@ export function RoomFilters({ filters, onChange, roomTypes, capacity, onCapacity
           ))}
         </select>
       )}
-
-      <select
-        value={capacity}
-        onChange={(e) => onCapacityChange(e.target.value)}
-        className="rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-      >
-        {CAPACITY_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
     </div>
   );
 }
 
-export function applyFilters(rooms: Room[], filters: FiltersState, capacityFilter: string): Room[] {
+export function applyFilters(rooms: Room[], filters: FiltersState): Room[] {
   return rooms.filter((room) => {
     if (filters.search && !room.room_number.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
     if (filters.status !== 'all' && room.status !== filters.status) {
-      return false;
+      if (filters.status === 'booked') {
+        if (room.status !== 'reserved' && room.status !== 'booked') return false;
+      } else {
+        return false;
+      }
     }
     if (filters.roomType !== 'all' && room.room_type_id !== filters.roomType) {
       return false;
-    }
-    if (capacityFilter !== 'all') {
-      const max = room.room_types?.max_guests ?? 0;
-      const capNum = parseInt(capacityFilter, 10);
-      if (capacityFilter === '4') {
-        if (max < 4) return false;
-      } else if (max !== capNum) {
-        return false;
-      }
     }
     return true;
   });
