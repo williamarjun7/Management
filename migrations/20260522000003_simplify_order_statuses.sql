@@ -11,6 +11,15 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Drop triggers that reference orders.status before altering the column type
+DO $$ DECLARE
+  rec RECORD;
+BEGIN
+  FOR rec IN SELECT tgname FROM pg_trigger WHERE tgrelid = 'orders'::regclass AND tgname NOT LIKE 'RI_%' LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON orders', rec.tgname);
+  END LOOP;
+END $$;
+
 -- 2. Migrate orders.status
 ALTER TABLE orders ALTER COLUMN status DROP DEFAULT;
 ALTER TABLE orders
@@ -197,3 +206,14 @@ BEGIN
   RETURN jsonb_build_object('status', 'ok', 'holds_created', v_holds_created);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Recreate triggers on orders table
+DROP TRIGGER IF EXISTS trigger_audit_order_status ON orders;
+CREATE TRIGGER trigger_audit_order_status
+  AFTER UPDATE OF status ON orders
+  FOR EACH ROW EXECUTE FUNCTION trigger_audit_order_status();
+
+DROP TRIGGER IF EXISTS trigger_system_event_order ON orders;
+CREATE TRIGGER trigger_system_event_order
+  AFTER UPDATE OF status ON orders
+  FOR EACH ROW EXECUTE FUNCTION trigger_system_event_order();
