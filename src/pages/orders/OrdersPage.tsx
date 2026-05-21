@@ -5,22 +5,21 @@ import { Input } from "../../components/ui/input";
 import OrderCard from "../../components/OrderCard";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { showSuccess, showError } from "../../components/ui/toast";
-import { useOrders, useConfirmOrder, useTransitionOrderStatus } from "../../lib/hooks";
+import { useOrders, useTransitionOrderStatus } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
 import { ORDER_STATUS_LABELS } from "../../types";
 import type { Order } from "../../types";
 
-const TABS = ["pending", "confirmed", "preparing", "ready", "served", "completed", "cancelled"];
+const TABS = ["active", "completed", "cancelled"];
 
 export default function OrdersPage() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("active");
   const [search, setSearch] = useState("");
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const { data: orders, isLoading } = useOrders(activeTab);
-  const confirmOrder = useConfirmOrder();
   const transitionStatus = useTransitionOrderStatus();
   const idempotencyKeys = useRef<Map<string, string>>(new Map());
 
@@ -49,27 +48,16 @@ export default function OrdersPage() {
       return;
     }
 
-    if (status === "confirmed") {
-      confirmOrder.mutate({
-        p_order_id: orderId,
-        p_user_id: user.id,
-        p_idempotency_key: getIdempotencyKey('order', orderId, 'confirmed'),
-      }, {
-        onSuccess: () => showSuccess(`Order #${orderId.slice(0, 8)} confirmed`),
-        onError: (err) => showError(err?.message || "Failed to confirm order"),
-      });
-    } else {
-      transitionStatus.mutate({
-        p_order_id: orderId,
-        p_new_status: status,
-        p_user_id: user.id,
-        p_idempotency_key: getIdempotencyKey('order', orderId, status),
-      }, {
-        onSuccess: () => showSuccess(`Order marked as ${status}`),
-        onError: (err) => showError(err?.message || "Failed to update order status"),
-      });
-    }
-  }, [user, confirmOrder, transitionStatus, orders]);
+    transitionStatus.mutate({
+      p_order_id: orderId,
+      p_new_status: status,
+      p_user_id: user.id,
+      p_idempotency_key: getIdempotencyKey('order', orderId, status),
+    }, {
+      onSuccess: () => showSuccess(`Order marked as ${status}`),
+      onError: (err) => showError(err?.message || "Failed to update order status"),
+    });
+  }, [user, transitionStatus, orders]);
 
   const handleCancelConfirm = useCallback(() => {
     if (!cancelTarget || !user) return;

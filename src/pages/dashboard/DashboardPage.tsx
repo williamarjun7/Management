@@ -15,7 +15,7 @@ import { RoomFilters, applyFilters } from '../../components/rooms/RoomFilters';
 import { BookingForm } from '../motel/BookingForm';
 import type { Order, RestaurantTable, Room, Booking } from '../../types';
 import type { FiltersState } from '../../components/rooms/RoomFilters';
-import { TABLE_STATUS_LABELS, TABLE_STATUS_COLORS } from '../../types';
+import { TABLE_STATUS_LABELS, TABLE_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../types';
 import { TrendingUp, Clock, User, ChevronRight, Users, CookingPot, Hotel, Building2 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -67,16 +67,16 @@ export default function DashboardPage() {
   } | null>(null);
 
   const activeOrders = (orders ?? []).filter(
-    (o: Order) => !['completed', 'cancelled', 'refunded'].includes(o.status)
+    (o: Order) => o.status === 'active'
   );
   const pendingPayments = (orders ?? []).filter(
-    (o: Order) => o.status === 'ready' || o.status === 'served'
+    (o: Order) => o.status === 'active'
   );
   const recentOrders = (orders ?? []).slice(0, 8);
   const kitchenCount = (kitchenOrders ?? []).length;
 
   const netSales = (orders ?? []).reduce(
-    (sum: number, o: Order) => sum + (['completed', 'served'].includes(o.status) ? o.total : 0), 0
+    (sum: number, o: Order) => sum + (o.status === 'completed' ? o.total : 0), 0
   );
   const avgCheck = activeOrders.length > 0
     ? activeOrders.reduce((sum: number, o: Order) => sum + o.total, 0) / activeOrders.length
@@ -410,7 +410,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="ml-auto shrink-0">
-                  <Badge variant={order.status === 'preparing' ? 'default' : 'secondary'} className="text-[10px]">
+                  <Badge variant="default" className="text-[10px]">
                     {order.status}
                   </Badge>
                 </div>
@@ -478,14 +478,13 @@ export default function DashboardPage() {
                 <div key={order.id} className="relative pl-8">
                   <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-background border-2 border-border flex items-center justify-center">
                     <span className="text-[10px] font-bold text-foreground">
-                      {order.status === 'completed' ? 'Rs.' : order.status === 'confirmed' ? '+' : '#'}
+                      {order.status === 'completed' ? 'Rs.' : '#'}
                     </span>
                   </div>
                   <div>
                     <p className="text-sm font-medium">
                       {order.status === 'completed' ? 'Payment Completed' :
-                       order.status === 'confirmed' ? 'Order Confirmed' :
-                       `Order ${order.status}`} - {order.restaurant_tables ? `T${order.restaurant_tables.table_number}` : 'Takeaway'}
+                       `Order ${ORDER_STATUS_LABELS[order.status] || order.status}`} - {order.restaurant_tables ? `T${order.restaurant_tables.table_number}` : 'Takeaway'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}m ago

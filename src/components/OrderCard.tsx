@@ -5,11 +5,7 @@ import { ORDER_STATUS_LABELS } from "../types";
 import type { Order, OrderStatus } from "../types";
 
 const statusBadgeVariant: Record<string, "default" | "secondary" | "warning" | "success" | "destructive"> = {
-  pending: "warning",
-  confirmed: "secondary",
-  preparing: "default",
-  ready: "success",
-  served: "success",
+  active: "default",
   completed: "success",
   cancelled: "destructive",
   refunded: "destructive",
@@ -26,11 +22,7 @@ function timeElapsed(createdAt: string): string {
 }
 
 const nextStatus: Record<string, OrderStatus | undefined> = {
-  pending: "confirmed",
-  confirmed: "preparing",
-  preparing: "ready",
-  ready: "served",
-  served: "completed",
+  active: "completed",
 };
 
 interface Props {
@@ -102,7 +94,7 @@ export default function OrderCard({ order, onStatusChange, onView, userRole }: P
               Mark {ORDER_STATUS_LABELS[nextStatus[order.status]!]}
             </Button>
           )}
-          {(order.status === "pending" || order.status === "confirmed") && onStatusChange && userRole !== 'staff' && (
+          {order.status === "active" && onStatusChange && userRole !== 'staff' && (
             <Button
               variant="destructive"
               size="sm"

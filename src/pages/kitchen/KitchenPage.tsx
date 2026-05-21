@@ -5,9 +5,9 @@ import { KitchenOrderCard } from '../../components/KitchenOrderCard';
 import { playKitchenAlert } from '../../lib/services/kitchen-sound';
 import { subscribeKitchenOrders } from '../../lib/services/realtime';
 import type { Order } from '../../types';
-import { CookingPot, Clock, CheckCircle, List, ArrowUpDown } from 'lucide-react';
+import { Clock, List, ArrowUpDown } from 'lucide-react';
 
-type KdsFilter = 'all' | 'confirmed' | 'preparing' | 'ready';
+type KdsFilter = 'all' | 'active';
 
 export default function KitchenPage() {
   const { data: orders, isLoading, error } = useKitchenOrders();
@@ -39,11 +39,9 @@ export default function KitchenPage() {
     });
   }, [user, transitionStatus]);
 
-  const confirmedOrders = (orders ?? []).filter((o: Order) => o.status === 'confirmed');
-  const preparingOrders = (orders ?? []).filter((o: Order) => o.status === 'preparing');
+  const activeOrders = (orders ?? []).filter((o: Order) => o.status === 'active');
 
   let displayedOrders = filter === 'all' ? (orders ?? [])
-    : filter === 'ready' ? (orders ?? []).filter((o: Order) => o.status === 'ready')
     : (orders ?? []).filter((o: Order) => o.status === filter);
 
   if (sortByTable) {
@@ -59,7 +57,7 @@ export default function KitchenPage() {
 
   const urgentOrders = (orders ?? []).filter((o: Order) => {
     const elapsed = Date.now() - new Date(o.created_at).getTime();
-    return o.status !== 'ready' && elapsed > 15 * 60000;
+    return elapsed > 15 * 60000;
   }).length;
 
   return (
@@ -80,9 +78,7 @@ export default function KitchenPage() {
       <div className="flex items-center justify-between px-6 py-3 border-b bg-card shrink-0">
         <div className="flex gap-2">
           {([{ key: 'all', label: 'All Orders', icon: List },
-            { key: 'confirmed', label: `New (${confirmedOrders.length})`, icon: Clock },
-            { key: 'preparing', label: `Preparing (${preparingOrders.length})`, icon: CookingPot },
-            { key: 'ready', label: 'Ready', icon: CheckCircle },
+            { key: 'active', label: `Active (${activeOrders.length})`, icon: Clock },
           ] as const).map((t) => {
             const Icon = t.icon;
             const active = filter === t.key;
