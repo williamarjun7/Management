@@ -83,7 +83,6 @@ export function useCreateOrder() {
           quantity: i.quantity,
           unit_price: i.unit_price,
           notes: i.notes || null,
-          sort_order: idx,
         })));
       if (ie) throw ie;
       return order;
