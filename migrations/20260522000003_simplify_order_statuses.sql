@@ -12,6 +12,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 -- 2. Migrate orders.status
+ALTER TABLE orders ALTER COLUMN status DROP DEFAULT;
 ALTER TABLE orders
   ALTER COLUMN status TYPE order_status_new
   USING CASE status::text
@@ -26,6 +27,7 @@ ALTER TABLE orders
   END;
 
 -- 3. Migrate order_items.status
+ALTER TABLE order_items ALTER COLUMN status DROP DEFAULT;
 ALTER TABLE order_items
   ALTER COLUMN status TYPE order_status_new
   USING CASE status::text
@@ -72,6 +74,10 @@ ALTER TABLE order_status_history
 -- 6. Drop old enum and rename new one
 DROP TYPE order_status;
 ALTER TYPE order_status_new RENAME TO order_status;
+
+-- Restore defaults
+ALTER TABLE orders ALTER COLUMN status SET DEFAULT 'active'::order_status;
+ALTER TABLE order_items ALTER COLUMN status SET DEFAULT 'active'::order_status;
 
 -- 7. Update trigger: fire ORDER_CONFIRMED on transition to active, ORDER_COMPLETED on completed, ORDER_CANCELLED on cancelled
 CREATE OR REPLACE FUNCTION trigger_system_event_order()
