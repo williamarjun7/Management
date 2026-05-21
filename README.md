@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/47050715-076d-4820-b585-128767ba1655/deploy-status)](https://app.netlify.com/projects/highlandcafe/deploys)
+
 # Highlands Cafe & Motel Inn — Hospitality OS
 
 One system to run the table, the kitchen, the rooms, and the books.
