@@ -1,3 +1,11 @@
+-- ============================================================
+-- MIGRATION: Add p_idempotency_key to transition_order_status
+-- ============================================================
+-- The original 20260521000002 migration defined the function
+-- without the p_idempotency_key parameter that the frontend
+-- sends. This caused PostgREST schema cache errors.
+-- ============================================================
+
 CREATE OR REPLACE FUNCTION transition_order_status(
   p_order_id uuid,
   p_new_status text,
@@ -39,4 +47,4 @@ BEGIN
 
   RETURN jsonb_build_object('success', true, 'order_id', p_order_id, 'from', v_order.status, 'to', p_new_status);
 END;
-$$
+$$;
