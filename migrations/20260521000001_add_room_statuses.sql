@@ -1,6 +1,5 @@
 -- Add new room statuses for POS-focused room management
-ALTER TABLE rooms DROP CONSTRAINT IF EXISTS rooms_status_check;
-ALTER TABLE rooms ADD CONSTRAINT rooms_status_check
-  CHECK (status IN ('available', 'reserved', 'booked', 'occupied', 'partial_paid', 'fully_paid', 'cleaning', 'maintenance'));
-
--- Update RLS policies to allow new statuses (existing policies already cover all statuses)
+-- room_status is a PostgreSQL enum, so we need ALTER TYPE
+ALTER TYPE room_status ADD VALUE IF NOT EXISTS 'booked';
+ALTER TYPE room_status ADD VALUE IF NOT EXISTS 'partial_paid';
+ALTER TYPE room_status ADD VALUE IF NOT EXISTS 'fully_paid';
