@@ -1,9 +1,10 @@
 CREATE OR REPLACE FUNCTION transition_order_status(
   p_order_id uuid,
   p_new_status text,
-  p_user_id uuid,
-  p_idempotency_key text
-) RETURNS jsonb AS $$
+  p_user_id uuid
+) RETURNS jsonb
+LANGUAGE plpgsql SECURITY INVOKER
+AS $$
 DECLARE
   v_order orders;
 BEGIN
@@ -17,6 +18,9 @@ BEGIN
   INSERT INTO order_status_history (order_id, from_status, to_status, changed_by, reason)
   VALUES (p_order_id, v_order.status, p_new_status::order_status, p_user_id, 'Status changed to ' || p_new_status);
 
+  PERFORM pg_notify('notifications', jsonb_build_object('event', 'order_status_changed',
+    'order_id', p_order_id, 'from', v_order.status, 'to', p_new_status)::text);
+
   RETURN jsonb_build_object('success', true, 'order_id', p_order_id, 'from', v_order.status, 'to', p_new_status);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$
