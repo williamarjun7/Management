@@ -93,7 +93,7 @@ export default async function (req) {
       const webhookSecret = Deno.env.get('BOOKING_WEBHOOK_SECRET');
       const signature = webhookSecret ? await hmacSha256Hex(webhookSecret, eventPayload) : '';
 
-      const webhookUrl = `${websiteUrl}/functions/pos-sync-api`;
+      const webhookUrl = `${websiteUrl}/functions/booking-webhook`;
 
       const resp = await fetch(webhookUrl, {
         method: 'POST',
@@ -144,7 +144,7 @@ export default async function (req) {
       const webhookSecret = Deno.env.get('BOOKING_WEBHOOK_SECRET');
       const signature = webhookSecret ? await hmacSha256Hex(webhookSecret, eventPayload) : '';
 
-      const webhookUrl = `${websiteUrl}/functions/pos-sync-api`;
+      const webhookUrl = `${websiteUrl}/functions/booking-webhook`;
 
       const resp = await fetch(webhookUrl, {
         method: 'POST',
@@ -233,7 +233,7 @@ export default async function (req) {
           await posRpc(fnUrl, anonKey, 'mark_queue_processing', { p_queue_id: item.id });
 
           const eventPayload = typeof item.payload === 'string' ? item.payload : JSON.stringify(item.payload);
-      const webhookUrl = `${websiteUrl}/functions/pos-sync-api`;
+      const webhookUrl = `${websiteUrl}/functions/booking-webhook`;
           const resp = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
