@@ -25,4 +25,10 @@ export const queryKeys = {
   fonepayQR: ['fonepay-qr'] as const,
   fonepayVerify: ['fonepay-verify'] as const,
   creditCustomers: ['credit-customers'] as const,
+  roomMappings: ['room-mappings'] as const,
+  syncLogs: ['sync-logs'] as const,
+  syncLog: (id: string) => ['sync-log', id] as const,
+  syncQueue: ['sync-queue'] as const,
+  externalBookings: ['external-bookings'] as const,
+  externalBooking: (id: string) => ['external-booking', id] as const,
 };
