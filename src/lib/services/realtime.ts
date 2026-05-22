@@ -95,6 +95,7 @@ const EVENT_QUERY_MAP: Record<string, string[]> = {
   WORKFLOW_STEP_CHANGED: ['workflows'],
   BILL_GENERATED: ['invoices', 'orders'],
   PAYMENT_PROCESSED: ['invoices', 'orders', 'tables'],
+  FONEPAY_PAYMENT_INITIATED: ['invoices', 'orders'],
 };
 
 function invalidateForEvent(eventType: string): void {

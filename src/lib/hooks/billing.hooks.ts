@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
-import type { Invoice, BillSplit } from '../../types';
+import { generateFonepayQR, verifyFonepayPayment, generateTransactionId, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
+import type { Invoice, BillSplit, CreditCustomer } from '../../types';
 import { queryKeys } from '../core/query-keys';
-import { showSuccess } from '../../components/ui/toast';
+import { showSuccess, showPending } from '../../components/ui/toast';
 
 // ─────────────── INVOICES ───────────────
 
@@ -492,6 +493,78 @@ export function useRefundSplit() {
       }));
       queryClient.invalidateQueries({ queryKey: ['splits'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+    },
+  });
+}
+
+// ─────────────── FONEPAY ───────────────
+
+export function useFonepayQR() {
+  return useMutation({
+    mutationFn: async (params: { amount: number; transactionId?: string; invoiceId?: string }) => {
+      const txId = params.transactionId || generateTransactionId();
+      const result = await generateFonepayQR(params.amount, txId, params.invoiceId);
+      if (!result.success) throw new Error(result.error || 'Failed to generate QR');
+      return { ...result, transaction_id: txId };
+    },
+  });
+}
+
+export function useVerifyFonepayPayment() {
+  return useMutation({
+    mutationFn: async (params: { transactionId: string; amount: number }) => {
+      const result = await verifyFonepayPayment(params.transactionId, params.amount);
+      return result;
+    },
+  });
+}
+
+// ─────────────── CREDIT CUSTOMERS ───────────────
+
+export function useCreditCustomers() {
+  return useQuery({
+    queryKey: queryKeys.creditCustomers,
+    queryFn: async () => {
+      const { data, error } = await insforge.database
+        .from('payment_logs')
+        .select('invoices!inner(customer_name, customer_phone)')
+        .eq('method', 'credit_account')
+        .eq('status', 'paid')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as CreditCustomer[];
+    },
+  });
+}
+
+export function useCreditOutstandingBalance(customerName: string | undefined) {
+  return useQuery({
+    queryKey: ['credit-outstanding', customerName],
+    enabled: !!customerName,
+    queryFn: async () => {
+      const { data, error } = await insforge.database.rpc('get_customer_credit_balance', {
+        p_customer_name: customerName,
+      });
+      if (error) throw error;
+      return data as { outstanding: number; total_credit: number };
+    },
+  });
+}
+
+// ─────────────── FONEPAY TRANSACTIONS ───────────────
+
+export function useLogFonepayTransaction() {
+  return useMutation({
+    mutationFn: async (params: { invoiceId: string; transactionId: string; amount: number }) => {
+      return await logFonepayTransaction(params.invoiceId, params.transactionId, params.amount);
+    },
+  });
+}
+
+export function useUpdateFonepayTransaction() {
+  return useMutation({
+    mutationFn: async (params: { transactionId: string; status: string; paymentLogId?: string }) => {
+      return await updateFonepayTransaction(params.transactionId, params.status, params.paymentLogId);
     },
   });
 }

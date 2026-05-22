@@ -2,6 +2,38 @@ export type Role = 'admin' | 'manager' | 'owner' | 'staff' | 'kitchen' | 'recept
 export type OrderStatus = 'active' | 'completed' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'credit_account' | 'fonepay';
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  card: 'Card',
+  upi: 'UPI',
+  credit_account: 'Credit Account',
+  fonepay: 'FonePay',
+};
+
+export const PAYMENT_METHOD_ICONS: Record<PaymentMethod, string> = {
+  cash: '💰',
+  card: '💳',
+  upi: '📱',
+  credit_account: '📋',
+  fonepay: '📷',
+};
+
+export const CASH_QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
+
+export interface FonepayConfig {
+  merchantCode: string;
+  secretKey: string;
+}
+
+export interface CreditCustomer {
+  id: string;
+  name: string;
+  phone: string | null;
+  total_balance: number;
+  outstanding: number;
+  last_payment: string | null;
+}
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
 export type RoomStatus = 'available' | 'reserved' | 'booked' | 'occupied' | 'partial_paid' | 'fully_paid' | 'cleaning' | 'maintenance';
 export type StockMovementType = 'purchase' | 'sale' | 'wastage' | 'adjustment' | 'room_usage';

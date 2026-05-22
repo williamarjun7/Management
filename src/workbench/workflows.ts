@@ -132,13 +132,15 @@ const tableHandlers: Record<string, WorkflowHandler> = {
 const billingWorkflowSteps = [
   'generate_bill',
   'process_payment',
+  'fonepay_payment',
   'close_session',
   'reset_table',
 ];
 
 const billingTransitions: Record<string, string[]> = {
-  generate_bill: ['process_payment'],
+  generate_bill: ['process_payment', 'fonepay_payment'],
   process_payment: ['close_session'],
+  fonepay_payment: ['close_session'],
   close_session: ['reset_table'],
   reset_table: [],
 };
@@ -149,6 +151,9 @@ const billingHandlers: Record<string, WorkflowHandler> = {
   },
   process_payment: async (payload) => {
     await notifyRealtime('billing', payload.invoice_id as string, 'PAYMENT_PROCESSED', payload);
+  },
+  fonepay_payment: async (payload) => {
+    await notifyRealtime('billing', payload.invoice_id as string, 'FONEPAY_PAYMENT_INITIATED', payload);
   },
   close_session: async (payload) => {
     if (payload.table_session_id) {

@@ -1,19 +1,21 @@
 import { useState, useRef } from "react";
-import { X } from "lucide-react";
-import { useProcessPayment } from "../../lib/hooks";
+import { X, QrCode, Banknote, CreditCard } from "lucide-react";
+import { useProcessPayment, useProcessCashPayment, useFonepayQR, useVerifyFonepayPayment } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
-import { showSuccess, showError } from "../../components/ui/toast";
-import type { Invoice } from "../../types";
+import { showSuccess, showError, showInfo } from "../../components/ui/toast";
+import { FonepayQRDialog } from "../../components/FonepayQRDialog";
+import { CASH_QUICK_AMOUNTS, PAYMENT_METHOD_LABELS, type Invoice } from "../../types";
 
 const paymentMethods = [
   { value: "cash", label: "Cash" },
   { value: "card", label: "Card" },
   { value: "upi", label: "UPI" },
   { value: "credit_account", label: "Credit Account" },
+  { value: "fonepay", label: "FonePay" },
 ];
 
 interface PaymentModalProps {
@@ -28,27 +30,53 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
   const [method, setMethod] = useState("cash");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [cashReceived, setCashReceived] = useState(String(remaining));
   const [submitted, setSubmitted] = useState(false);
   const [idempotencyKey] = useState(() => `payment:${invoice.id}:${Date.now()}`);
   const processPayment = useProcessPayment();
+  const processCashPayment = useProcessCashPayment();
+  const fonepayQR = useFonepayQR();
+  const verifyPayment = useVerifyFonepayPayment();
   const submitLockRef = useRef(false);
+  const [showFonepayQR, setShowFonepayQR] = useState(false);
+  const [quickCash, setQuickCash] = useState(false);
+
+  const change = Math.max(0, Number(cashReceived) - remaining);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || submitted || submitLockRef.current) return;
+
+    if (method === "fonepay") {
+      setShowFonepayQR(true);
+      return;
+    }
+
     submitLockRef.current = true;
     setSubmitted(true);
     try {
-      await processPayment.mutateAsync({
-        p_invoice_id: invoice.id,
-        p_amount: Number(amount),
-        p_method: method,
-        p_processed_by: user.id,
-        p_idempotency_key: idempotencyKey,
-        p_reference: reference || undefined,
-        p_notes: notes || undefined,
-      });
-      showSuccess(`Payment of Rs. ${Number(amount).toFixed(2)} recorded for ${invoice.invoice_number}`);
+      const key = `payment:${invoice.id}:${Date.now()}`;
+      if (method === "cash") {
+        await processCashPayment.mutateAsync({
+          p_invoice_id: invoice.id,
+          p_amount: Number(amount),
+          p_processed_by: user.id,
+          p_idempotency_key: key,
+          p_notes: notes || undefined,
+        });
+      } else {
+        await processPayment.mutateAsync({
+          p_invoice_id: invoice.id,
+          p_amount: Number(amount),
+          p_method: method,
+          p_processed_by: user.id,
+          p_idempotency_key: key,
+          p_reference: method === "credit_account" ? (customerName || reference) : (reference || undefined),
+          p_notes: notes || undefined,
+        });
+      }
+      showSuccess(`${PAYMENT_METHOD_LABELS[method as keyof typeof PAYMENT_METHOD_LABELS] || method} payment of Rs. ${Number(amount).toFixed(2)} recorded`);
       onClose();
     } catch (err) {
       const msg = (err as Error)?.message || "Payment failed";
@@ -62,6 +90,48 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
       }
     }
   };
+
+  const handleQuickCash = async (received: number) => {
+    if (!user || submitted) return;
+    setSubmitted(true);
+    try {
+      const key = `cash:${invoice.id}:${Date.now()}`;
+      await processCashPayment.mutateAsync({
+        p_invoice_id: invoice.id,
+        p_amount: remaining,
+        p_processed_by: user.id,
+        p_idempotency_key: key,
+      });
+      const chg = Math.max(0, received - remaining);
+      const msg = chg > 0
+        ? `Payment received. Change due: Rs. ${chg.toFixed(2)}`
+        : `Cash payment of Rs. ${remaining.toFixed(2)} completed`;
+      showSuccess(msg);
+      onClose();
+    } catch (err) {
+      const msg = (err as Error)?.message || "";
+      if (msg.includes("already processed") || msg.includes("idempotency")) {
+        showSuccess("Payment was already processed");
+        onClose();
+      } else {
+        showError(msg);
+        setSubmitted(false);
+      }
+    }
+  };
+
+  if (showFonepayQR) {
+    return (
+      <FonepayQRDialog
+        invoice={invoice}
+        amount={Number(amount)}
+        onSuccess={onClose}
+        onCancel={() => setShowFonepayQR(false)}
+      />
+    );
+  }
+
+  const isCash = method === "cash";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -84,64 +154,131 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Remaining</span>
-            <span className="font-medium">Rs. {remaining.toFixed(2)}</span>
+            <span className="font-bold text-primary">Rs. {remaining.toFixed(2)}</span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              max={remaining}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
+        {isCash && !quickCash ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {CASH_QUICK_AMOUNTS.map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => {
+                    setCashReceived(String(amt));
+                    if (amt >= remaining) handleQuickCash(amt);
+                  }}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all min-h-[44px] ${
+                    Number(cashReceived) === amt
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  Rs. {amt.toLocaleString()}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setQuickCash(true)} className="flex-1 min-h-[44px]">
+                Custom Amount
+              </Button>
+              <Button onClick={() => handleQuickCash(remaining)} disabled={submitted} className="flex-1 min-h-[44px]">
+                Exact Rs. {remaining.toFixed(2)}
+              </Button>
+            </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={remaining}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="method">Payment Method</Label>
-            <Select
-              id="method"
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-              options={paymentMethods}
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="method">Payment Method</Label>
+              <Select
+                id="method"
+                value={method}
+                onChange={(e) => {
+                  setMethod(e.target.value);
+                  if (e.target.value !== "cash") setQuickCash(false);
+                }}
+                options={paymentMethods}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="reference">Reference (Transaction ID)</Label>
-            <Input
-              id="reference"
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              placeholder="Optional transaction ID"
-            />
-          </div>
+            {isCash && (
+              <div className="space-y-2">
+                <Label htmlFor="cashReceived">Amount Received</Label>
+                <Input
+                  id="cashReceived"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                />
+                {Number(cashReceived) > remaining && (
+                  <p className="text-xs text-emerald-600 font-medium">
+                    Change due: Rs. {change.toFixed(2)}
+                  </p>
+                )}
+              </div>
+            )}
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes"
-            />
-          </div>
+            {!isCash && method === "credit_account" && (
+              <div className="space-y-2">
+                <Label htmlFor="customerName">Customer Name</Label>
+                <Input
+                  id="customerName"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Required for credit"
+                />
+              </div>
+            )}
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="min-h-[44px]">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={submitted || processPayment.isPending} className="min-h-[44px]">
-              {processPayment.isPending ? "Processing..." : "Process Payment"}
-            </Button>
-          </div>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="reference">
+                {method === "credit_account" ? "Reference" : "Reference (Transaction ID)"}
+              </Label>
+              <Input
+                id="reference"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder={method === "credit_account" ? "Optional reference" : "Optional transaction ID"}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional notes"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={onClose} className="min-h-[44px]">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitted || processPayment.isPending || processCashPayment.isPending} className="min-h-[44px]">
+                {processPayment.isPending || processCashPayment.isPending ? "Processing..." : "Process Payment"}
+              </Button>
+            </div>
+          </form>
+        )}
 
         {processPayment.isError && !submitted && (
           <p className="mt-2 text-sm text-destructive">
