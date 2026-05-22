@@ -22,4 +22,7 @@ export const queryKeys = {
   purchaseOrders: ['purchase-orders'] as const,
   splits: ['splits'] as const,
   splitsByInvoice: (id: string) => ['splits', 'invoice', id] as const,
+  fonepayQR: ['fonepay-qr'] as const,
+  fonepayVerify: ['fonepay-verify'] as const,
+  creditCustomers: ['credit-customers'] as const,
 };

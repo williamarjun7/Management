@@ -26,7 +26,7 @@ const statusBadgeVariant = (status: string) => {
 };
 
 const methodLabel: Record<string, string> = {
-  cash: "Cash", card: "Card", upi: "UPI", credit_account: "Credit Account",
+  cash: "Cash", card: "Card", upi: "UPI", credit_account: "Credit Account", fonepay: "FonePay",
 };
 
 export default function InvoiceDetailPage() {

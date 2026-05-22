@@ -17,6 +17,7 @@ const PAYMENT_METHODS = [
   { value: 'card', label: 'Card' },
   { value: 'upi', label: 'UPI' },
   { value: 'credit_account', label: 'Credit Account' },
+  { value: 'fonepay', label: 'FonePay' },
   { value: 'digital_wallet', label: 'Digital Wallet' },
   { value: 'mixed', label: 'Mixed' },
 ];

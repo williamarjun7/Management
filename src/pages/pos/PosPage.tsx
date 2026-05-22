@@ -6,8 +6,9 @@ import { formatCurrency } from '../../lib/core/format-currency';
 import { updateTableStatus } from '../../components/tables/table.service';
 import { insforge } from '../../lib/core/insforge';
 import type { MenuItem, RestaurantTable, Invoice, Order } from '../../types';
-import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, Receipt } from 'lucide-react';
+import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, Receipt, CreditCard } from 'lucide-react';
 import SplitBillModal from './SplitBillModal';
+import { PaymentCheckout } from '../../components/PaymentCheckout';
 
 interface CartItem {
   menu_item_id: string;
@@ -50,6 +51,9 @@ export default function PosPage() {
   const [showSplitModal, setShowSplitModal] = useState(false);
   const [splitInvoice, setSplitInvoice] = useState<Invoice | null>(null);
   const [splitOrderItems, setSplitOrderItems] = useState<Order['order_items']>([]);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
+  const [paymentRemaining, setPaymentRemaining] = useState(0);
 
   // Auto-select table from URL param (set by dashboard click)
   useEffect(() => {
@@ -191,6 +195,83 @@ export default function PosPage() {
       setShowSplitModal(true);
     } catch (err) {
       showError((err as Error)?.message || 'Failed to prepare bill');
+    }
+  }
+
+  async function handlePay() {
+    if (!selectedTableId) {
+      showError('Please select a table first');
+      return;
+    }
+
+    try {
+      const { data: tableOrders, error: orderErr } = await insforge.database
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('table_id', selectedTableId)
+        .not('status', 'in', '("cancelled","refunded")')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (orderErr) throw orderErr;
+      const latestOrder = (tableOrders as Order[])?.[0];
+
+      if (!latestOrder) {
+        showError('No active orders for this table');
+        return;
+      }
+
+      const { data: invoices, error: invErr } = await insforge.database
+        .from('invoices')
+        .select('*, invoice_items(*), payment_logs(*)')
+        .eq('order_id', latestOrder.id)
+        .limit(1);
+
+      if (invErr) throw invErr;
+      let invoice = (invoices as Invoice[])?.[0];
+
+      if (!invoice) {
+        const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+        const { data: newInvoice, error: createErr } = await insforge.database
+          .from('invoices')
+          .insert([{
+            invoice_number: invoiceNumber,
+            order_id: latestOrder.id,
+            customer_name: latestOrder.customer_name,
+            customer_phone: latestOrder.customer_phone,
+            subtotal: latestOrder.subtotal,
+            discount: latestOrder.discount,
+            total: latestOrder.total,
+            status: 'unpaid',
+          }])
+          .select('*, invoice_items(*), payment_logs(*)')
+          .single();
+
+        if (createErr) throw createErr;
+        invoice = newInvoice as Invoice;
+
+        if (latestOrder.order_items && latestOrder.order_items.length > 0) {
+          const invItems = latestOrder.order_items.map(item => ({
+            invoice_id: invoice.id,
+            description: item.item_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total: item.unit_price * item.quantity,
+            reference_type: 'order_item',
+            reference_id: item.id,
+          }));
+          await insforge.database.from('invoice_items').insert(invItems);
+        }
+      }
+
+      const paidAmount = (invoice.payment_logs ?? []).reduce((s, p) => s + Number(p.amount), 0);
+      const remaining = Number(invoice.total) - paidAmount;
+
+      setPaymentInvoice(invoice);
+      setPaymentRemaining(remaining);
+      setShowPayment(true);
+    } catch (err) {
+      showError((err as Error)?.message || 'Failed to prepare payment');
     }
   }
 
@@ -436,7 +517,13 @@ export default function PosPage() {
               <span>{npr(total)}</span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={handlePay}
+              className="h-11 rounded-lg bg-primary text-background text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+            >
+              <CreditCard className="h-4 w-4" /> Pay
+            </button>
             <button
               onClick={handleBill}
               className="h-11 rounded-lg border-2 border-border text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2"
@@ -465,6 +552,20 @@ export default function PosPage() {
           orderItems={splitOrderItems as any}
           onClose={() => { setShowSplitModal(false); setSplitInvoice(null); }}
           onComplete={() => { setShowSplitModal(false); setSplitInvoice(null); }}
+        />
+      )}
+
+      {showPayment && paymentInvoice && (
+        <PaymentCheckout
+          invoice={paymentInvoice}
+          remaining={paymentRemaining}
+          onClose={() => { setShowPayment(false); setPaymentInvoice(null); }}
+          onComplete={() => {
+            setShowPayment(false);
+            setPaymentInvoice(null);
+            showSuccess('Payment completed');
+            setTimeout(() => { window.print(); }, 300);
+          }}
         />
       )}
     </div>
