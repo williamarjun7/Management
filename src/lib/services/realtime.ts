@@ -78,6 +78,14 @@ function setLastEventId(channel: string, id: string): void {
   }
 }
 
+const SYNC_EVENTS: Record<string, string[]> = {
+  SYNC_BOOKING_CREATED: ['bookings', 'rooms', 'today-bookings', 'external-bookings'],
+  SYNC_BOOKING_UPDATED: ['bookings', 'rooms', 'sync-logs'],
+  SYNC_BOOKING_CANCELLED: ['bookings', 'rooms', 'today-bookings', 'sync-logs'],
+  SYNC_BOOKING_CHECKED_IN: ['bookings', 'rooms', 'today-bookings', 'sync-logs'],
+  SYNC_BOOKING_CHECKED_OUT: ['bookings', 'rooms', 'today-bookings', 'invoices', 'sync-logs'],
+};
+
 const EVENT_QUERY_MAP: Record<string, string[]> = {
   ORDER_CONFIRMED: ['kitchen-orders', 'orders'],
   PAYMENT_RECEIVED: ['invoices'],
@@ -96,6 +104,7 @@ const EVENT_QUERY_MAP: Record<string, string[]> = {
   BILL_GENERATED: ['invoices', 'orders'],
   PAYMENT_PROCESSED: ['invoices', 'orders', 'tables'],
   FONEPAY_PAYMENT_INITIATED: ['invoices', 'orders'],
+  ...SYNC_EVENTS,
 };
 
 function invalidateForEvent(eventType: string): void {

@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { X } from "lucide-react";
-import { useRooms, useCreateBooking } from "../../lib/hooks";
+import { useRooms, useCreateBooking, useRoomMappings } from "../../lib/hooks";
+import { pushBookingToWebsite } from "../../lib/services/booking-sync";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
+import { showError } from "../../components/ui/toast";
 import { bookingSchema } from "../../lib/core/validations";
 import type { Room } from "../../types";
 import type { z } from "zod";
@@ -16,6 +18,7 @@ interface BookingFormProps {
 
 export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
   const { data: rooms } = useRooms();
+  const { data: mappings } = useRoomMappings();
   const createBooking = useCreateBooking();
 
   const [roomId, setRoomId] = useState(preselectedRoomId ?? "");
@@ -55,6 +58,32 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
     return errors.find((e) => e.path[0] === field)?.message;
   }
 
+  const syncBookingToWebsite = useCallback(async (bookingResult: Record<string, unknown>, roomId: string, guestName: string, guestPhone: string, checkInRaw: string, checkOutRaw: string, adults: string, children: string, nightlyRate: string, notes: string) => {
+    try {
+      const mapping = mappings?.find(m => m.pos_room_id === roomId);
+      if (!mapping?.website_room_id) return;
+      const bookingId = bookingResult?.booking_id as string;
+      if (!bookingId) return;
+      const idempotencyKey = crypto.randomUUID();
+      await pushBookingToWebsite({
+        external_booking_id: `pos:${bookingId}`,
+        website_room_id: mapping.website_room_id,
+        guest_name: guestName,
+        guest_phone: guestPhone || undefined,
+        check_in: new Date(checkInRaw).toISOString(),
+        check_out: new Date(checkOutRaw).toISOString(),
+        adults: parseInt(adults) || 1,
+        children: parseInt(children) || 0,
+        nightly_rate: parseFloat(nightlyRate) || 0,
+        total_amount: 0,
+        notes: notes || undefined,
+        idempotency_key: idempotencyKey,
+      });
+    } catch (err) {
+      console.error('Failed to sync booking to website:', err);
+    }
+  }, [mappings]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = bookingSchema.safeParse({
@@ -74,12 +103,13 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
     }
     setErrors([]);
     try {
-      await createBooking.mutateAsync({
+      const result = await createBooking.mutateAsync({
         ...parsed.data,
         check_in: new Date(parsed.data.check_in).toISOString(),
         check_out: new Date(parsed.data.check_out).toISOString(),
         total_amount: totalAmount,
       });
+      syncBookingToWebsite(result as Record<string, unknown>, roomId, guestName, guestPhone, checkIn, checkOut, adults, children, nightlyRate, notes);
       onClose();
     } catch {}
   };

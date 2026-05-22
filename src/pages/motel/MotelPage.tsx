@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
-import { Hotel, CalendarCheck, LogIn, LogOut, Plus, Trash2, Search, DoorOpen } from "lucide-react";
-import { useRooms, useRoomTypes, useTodayBookings, useCheckIn, useCheckOut, useDeleteBooking, useUpdateRoomStatus } from "../../lib/hooks";
+import { useState, useCallback, useEffect } from "react";
+import { Hotel, CalendarCheck, LogIn, LogOut, Plus, Trash2, Search, DoorOpen, RefreshCw, Activity } from "lucide-react";
+import { useRooms, useRoomTypes, useTodayBookings, useCheckIn, useCheckOut, useDeleteBooking, useUpdateRoomStatus, useExternalBookingByPosId, useExternalBookings } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
+import { pushStatusUpdateToWebsite, getExternalBookingByPosId } from "../../lib/services/booking-sync";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
@@ -10,6 +11,8 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { showSuccess, showError } from "../../components/ui/toast";
 import { BookingForm } from "./BookingForm";
 import RoomDialog from "./RoomDialog";
+import { SyncAdminPanel } from "../../components/SyncAdminPanel";
+import { subscribeRooms } from "../../lib/services/realtime";
 import type { Room, RoomType, Booking } from "../../types";
 
 const statusLabel: Record<string, string> = {
@@ -20,19 +23,29 @@ const statusLabel: Record<string, string> = {
 
 export default function MotelPage() {
   const { user } = useAuth();
-  const { data: rooms, isLoading: roomsLoading } = useRooms();
+  const { data: rooms, isLoading: roomsLoading, refetch: refetchRooms } = useRooms();
   const { data: roomTypes } = useRoomTypes();
-  const { data: todayBookings } = useTodayBookings();
+  const { data: todayBookings, refetch: refetchTodayBookings } = useTodayBookings();
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const deleteBooking = useDeleteBooking();
   const updateStatus = useUpdateRoomStatus();
 
+  const [showSyncPanel, setShowSyncPanel] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = subscribeRooms(() => {
+      refetchRooms();
+      refetchTodayBookings();
+    });
+    return unsubscribe;
+  }, []);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showRoomDialog, setShowRoomDialog] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const { data: extBookings } = useExternalBookings();
   const [confirmAction, setConfirmAction] = useState<{
     type: "checkin" | "checkout";
     booking: Booking;
@@ -59,6 +72,21 @@ export default function MotelPage() {
     (b) => b.status === "checked_in"
   ).length ?? 0;
 
+  const syncStatusToWebsite = useCallback(async (bookingId: string, eventType: string) => {
+    try {
+      const ext = await getExternalBookingByPosId(bookingId);
+      if (!ext?.external_booking_id) return;
+      const idempotencyKey = crypto.randomUUID();
+      await pushStatusUpdateToWebsite({
+        external_booking_id: ext.external_booking_id,
+        event_type: eventType,
+        idempotency_key: idempotencyKey,
+      });
+    } catch (err) {
+      console.error('Failed to sync status to website:', err);
+    }
+  }, []);
+
   const handleCheckIn = useCallback((booking: Booking) => {
     setConfirmAction({ type: "checkin", booking });
   }, []);
@@ -76,11 +104,12 @@ export default function MotelPage() {
         p_idempotency_key: `checkin:${confirmAction.booking.id}:${Date.now()}`,
       });
       showSuccess(`${confirmAction.booking.guest_name} checked in successfully`);
+      syncStatusToWebsite(confirmAction.booking.id, 'booking.checked_in');
       setConfirmAction(null);
     } catch (err) {
       showError((err as Error)?.message || "Check-in failed");
     }
-  }, [confirmAction, user, checkIn]);
+  }, [confirmAction, user, checkIn, syncStatusToWebsite]);
 
   const executeCheckOut = useCallback(async () => {
     if (!confirmAction || !user) return;
@@ -91,11 +120,12 @@ export default function MotelPage() {
         p_idempotency_key: `checkout:${confirmAction.booking.id}:${Date.now()}`,
       });
       showSuccess(`${confirmAction.booking.guest_name} checked out successfully`);
+      syncStatusToWebsite(confirmAction.booking.id, 'booking.checked_out');
       setConfirmAction(null);
     } catch (err) {
       showError((err as Error)?.message || "Check-out failed");
     }
-  }, [confirmAction, user, checkOut]);
+  }, [confirmAction, user, checkOut, syncStatusToWebsite]);
 
   const handleBookingClick = () => {
     setShowBookingForm(true);
@@ -115,8 +145,15 @@ export default function MotelPage() {
           <Button onClick={() => setShowBookingForm(true)} className="min-h-[44px]">
             <Plus className="mr-2 h-4 w-4" /> New Booking
           </Button>
+          <Button onClick={() => setShowSyncPanel(!showSyncPanel)} variant="ghost" className="min-h-[44px]">
+            <Activity className="mr-2 h-4 w-4" /> Sync
+          </Button>
         </div>
       </div>
+
+      {showSyncPanel && (
+        <SyncAdminPanel />
+      )}
 
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
@@ -355,6 +392,7 @@ export default function MotelPage() {
           deleteBooking.mutate(confirmDeleteBooking.id, {
             onSuccess: () => {
               showSuccess(`Booking ${confirmDeleteBooking.booking_number} cancelled`);
+              syncStatusToWebsite(confirmDeleteBooking.id, 'booking.cancelled');
               setConfirmDeleteBooking(null);
             },
             onError: (err) => showError((err as Error)?.message || "Failed to cancel booking"),
