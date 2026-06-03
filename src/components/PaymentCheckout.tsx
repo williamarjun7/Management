@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { useProcessPayment, useProcessCashPayment } from "../lib/hooks";
 import { useAuth } from "../lib/core/auth-context";
 import { showSuccess, showError } from "./ui/toast";
 import { formatCurrency } from "../lib/core/format-currency";
 import { FonepayQRDialog } from "./FonepayQRDialog";
+import { markInvoicePaidAndSync } from "../lib/services/payment-workflow";
 import { CASH_QUICK_AMOUNTS, type Invoice } from "../types";
 
 interface PaymentCheckoutProps {
@@ -27,11 +28,23 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
   const [creditPhone, setCreditPhone] = useState(invoice.customer_phone || "");
   const [submitting, setSubmitting] = useState(false);
   const [showFonepay, setShowFonepay] = useState(false);
+  const submitLockRef = useRef(false);
 
   const change = Math.max(0, Number(cashReceived) - remaining);
 
+  const handlePaymentError = (err: unknown, fallbackMsg: string) => {
+    const msg = (err as Error)?.message || "";
+    if (msg.includes("already processed") || msg.includes("idempotency")) {
+      showSuccess("Payment was already processed");
+      onComplete();
+    } else {
+      showError(msg || fallbackMsg);
+    }
+  };
+
   const handleCashExact = async () => {
-    if (!user || submitting) return;
+    if (!user || submitting || submitLockRef.current) return;
+    submitLockRef.current = true;
     setSubmitting(true);
     try {
       const key = `cash:${invoice.id}:${Date.now()}`;
@@ -41,23 +54,20 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
         p_processed_by: user.id,
         p_idempotency_key: key,
       });
+      await markInvoicePaidAndSync(invoice.id).catch(() => {});
       showSuccess(`Payment of ${formatCurrency(remaining)} received`);
       onComplete();
     } catch (err) {
-      const msg = (err as Error)?.message || "";
-      if (msg.includes("already processed") || msg.includes("idempotency")) {
-        showSuccess("Payment was already processed");
-        onComplete();
-      } else {
-        showError(msg);
-      }
+      handlePaymentError(err, "Cash payment failed");
     } finally {
       setSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
   const handleCashWithChange = async () => {
-    if (!user || submitting || Number(cashReceived) < remaining) return;
+    if (!user || submitting || Number(cashReceived) < remaining || submitLockRef.current) return;
+    submitLockRef.current = true;
     setSubmitting(true);
     try {
       const key = `cash:${invoice.id}:${Date.now()}`;
@@ -67,23 +77,20 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
         p_processed_by: user.id,
         p_idempotency_key: key,
       });
+      await markInvoicePaidAndSync(invoice.id).catch(() => {});
       showSuccess(`Payment received. Change due: ${formatCurrency(change)}`);
       onComplete();
     } catch (err) {
-      const msg = (err as Error)?.message || "";
-      if (msg.includes("already processed") || msg.includes("idempotency")) {
-        showSuccess("Payment was already processed");
-        onComplete();
-      } else {
-        showError(msg);
-      }
+      handlePaymentError(err, "Cash payment failed");
     } finally {
       setSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
   const handleCreditPayment = async () => {
-    if (!user || submitting || !creditName.trim()) return;
+    if (!user || submitting || !creditName.trim() || submitLockRef.current) return;
+    submitLockRef.current = true;
     setSubmitting(true);
     try {
       const key = `credit:${invoice.id}:${Date.now()}`;
@@ -96,18 +103,14 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
         p_reference: creditName.trim(),
         p_notes: creditPhone ? `Phone: ${creditPhone}` : undefined,
       });
+      await markInvoicePaidAndSync(invoice.id).catch(() => {});
       showSuccess(`Credit payment recorded for ${creditName.trim()}`);
       onComplete();
     } catch (err) {
-      const msg = (err as Error)?.message || "";
-      if (msg.includes("already processed") || msg.includes("idempotency")) {
-        showSuccess("Payment was already processed");
-        onComplete();
-      } else {
-        showError(msg);
-      }
+      handlePaymentError(err, "Credit payment failed");
     } finally {
       setSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -186,8 +189,8 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
                 <QrCode className="h-6 w-6 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold">FonePay</p>
-                <p className="text-xs text-muted-foreground">Scan QR & pay via FonePay app</p>
+                <p className="font-semibold">FonePay QR</p>
+                <p className="text-xs text-muted-foreground">Scan QR & pay via mobile banking app</p>
               </div>
               <span className="text-2xl text-muted-foreground/30">→</span>
             </button>
@@ -261,8 +264,9 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
                   </div>
                 )}
                 {Number(cashReceived) > 0 && Number(cashReceived) < remaining && (
-                  <div className="text-xs text-amber-600 mt-1 text-center">
-                    Still due: {formatCurrency(remaining - Number(cashReceived))}
+                  <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>Still due: {formatCurrency(remaining - Number(cashReceived))}</span>
                   </div>
                 )}
               </div>
@@ -275,14 +279,23 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
                 disabled={submitting}
                 className="min-h-[48px] text-sm"
               >
-                <Check className="h-4 w-4 mr-1" /> Exact {formatCurrency(remaining)}
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4 mr-1" />
+                )}
+                Exact {formatCurrency(remaining)}
               </Button>
               <Button
                 onClick={handleCashWithChange}
                 disabled={submitting || Number(cashReceived) < remaining}
                 className="min-h-[48px] text-sm"
               >
-                {submitting ? "Processing..." : `Receive ${formatCurrency(Number(cashReceived))}`}
+                {submitting ? (
+                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Processing...</>
+                ) : (
+                  <>Receive {formatCurrency(Number(cashReceived))}</>
+                )}
               </Button>
             </div>
 
@@ -333,7 +346,11 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
               disabled={submitting || !creditName.trim()}
               className="w-full min-h-[48px]"
             >
-              {submitting ? "Processing..." : `Bill ${formatCurrency(remaining)} to ${creditName.trim() || "customer"}`}
+              {submitting ? (
+                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Processing...</>
+              ) : (
+                <>Bill {formatCurrency(remaining)} to {creditName.trim() || "customer"}</>
+              )}
             </Button>
           </div>
         )}

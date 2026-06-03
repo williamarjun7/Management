@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
-import { X, QrCode, Banknote, CreditCard } from "lucide-react";
-import { useProcessPayment, useProcessCashPayment, useFonepayQR, useVerifyFonepayPayment } from "../../lib/hooks";
+import { X } from "lucide-react";
+import { useProcessPayment, useProcessCashPayment } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
-import { showSuccess, showError, showInfo } from "../../components/ui/toast";
+import { showSuccess, showError } from "../../components/ui/toast";
 import { FonepayQRDialog } from "../../components/FonepayQRDialog";
 import { CASH_QUICK_AMOUNTS, PAYMENT_METHOD_LABELS, type Invoice } from "../../types";
 
@@ -33,11 +33,8 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
   const [customerName, setCustomerName] = useState("");
   const [cashReceived, setCashReceived] = useState(String(remaining));
   const [submitted, setSubmitted] = useState(false);
-  const [idempotencyKey] = useState(() => `payment:${invoice.id}:${Date.now()}`);
   const processPayment = useProcessPayment();
   const processCashPayment = useProcessCashPayment();
-  const fonepayQR = useFonepayQR();
-  const verifyPayment = useVerifyFonepayPayment();
   const submitLockRef = useRef(false);
   const [showFonepayQR, setShowFonepayQR] = useState(false);
   const [quickCash, setQuickCash] = useState(false);

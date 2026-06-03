@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, QrCode, RefreshCw, CheckCircle, AlertCircle, Timer, Search } from "lucide-react";
+import { X, QrCode, RefreshCw, CheckCircle, AlertCircle, Timer, Search, Zap } from "lucide-react";
 import { Button } from "./ui/button";
-import { useFonepayQR, useVerifyFonepayPayment, useProcessPayment, useLogFonepayTransaction, useUpdateFonepayTransaction } from "../lib/hooks";
+import { useFonepayQR, useCheckFonepayStatus, useProcessPayment, useLogFonepayTransaction, useUpdateFonepayTransaction } from "../lib/hooks";
 import { useAuth } from "../lib/core/auth-context";
 import { showSuccess, showError, showInfo } from "./ui/toast";
 import { formatCurrency } from "../lib/core/format-currency";
-import type { Invoice } from "../types";
+import { generateTransactionId } from "../lib/services/fonepay";
+import { markInvoicePaidAndSync } from "../lib/services/payment-workflow";
+import type { Invoice, QRPaymentStatus } from "../types";
 import QRCode from "qrcode";
 
 interface FonepayQRDialogProps {
@@ -16,28 +18,30 @@ interface FonepayQRDialogProps {
 }
 
 const POLL_INTERVAL = 5000;
-const MAX_POLL_ATTEMPTS = 36;
-const QR_TIMEOUT_MINUTES = 3;
+const MAX_POLL_ATTEMPTS = 72;
+const QR_TIMEOUT_MINUTES = 10;
 
 export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: FonepayQRDialogProps) {
   const { user } = useAuth();
   const generateQR = useFonepayQR();
-  const verifyPayment = useVerifyFonepayPayment();
+  const checkStatus = useCheckFonepayStatus();
   const processPayment = useProcessPayment();
   const logTx = useLogFonepayTransaction();
   const updateTx = useUpdateFonepayTransaction();
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
-  const [transactionId, setTransactionId] = useState<string>("");
-  const [status, setStatus] = useState<"generating" | "displaying" | "polling" | "verifying" | "success" | "failed" | "timeout">("generating");
+  const [transactionId, setTransactionId] = useState("");
+  const [status, setStatus] = useState<QRPaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [pollAttempt, setPollAttempt] = useState(0);
   const [timeLeft, setTimeLeft] = useState(QR_TIMEOUT_MINUTES * 60);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const [idempotencyKey] = useState(() => `fonepay:${invoice.id}:${Date.now()}`);
   const cancelledRef = useRef(false);
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
 
-  const completePayment = useCallback(async (txId: string, amt: number) => {
+  const completePayment = useCallback(async (txId: string, amt: number, gwRef?: string) => {
     setStatus("verifying");
     try {
       const result = await processPayment.mutateAsync({
@@ -46,19 +50,27 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
         p_method: "fonepay",
         p_processed_by: user!.id,
         p_idempotency_key: idempotencyKey,
-        p_reference: txId,
-        p_notes: `FonePay TX: ${txId}`,
+        p_reference: gwRef || txId,
+        p_notes: gwRef ? `FonePay TX: ${txId}, Gateway Ref: ${gwRef}` : `FonePay TX: ${txId}`,
       });
 
       const plId = result?.id || result?.payment_log_id || undefined;
-      await updateTx.mutateAsync({ transactionId: txId, status: "paid", paymentLogId: plId });
+      await updateTx.mutateAsync({
+        transactionId: txId,
+        status: "paid",
+        paymentLogId: plId,
+        gatewayReference: gwRef,
+        paidAmount: amt,
+      });
 
       setStatus("success");
       showSuccess(`FonePay payment of ${formatCurrency(amt)} confirmed`);
 
+      await markInvoicePaidAndSync(invoice.id).catch(() => {});
+
       setTimeout(() => {
         if (typeof window !== "undefined") {
-          window.print();
+          void window.print();
         }
         onSuccess();
       }, 500);
@@ -68,8 +80,50 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     }
   }, [invoice.id, processPayment, updateTx, user, idempotencyKey, onSuccess]);
 
-  const startPolling = useCallback((txId: string, amt: number) => {
-    setStatus("polling");
+  const connectWebSocket = useCallback((url: string, txId: string, amt: number) => {
+    try {
+      setWsStatus('connecting');
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setWsStatus('connected');
+        console.debug('fonepay_ws_connected', txId);
+      };
+
+      ws.onmessage = (event) => {
+        if (cancelledRef.current) return;
+        try {
+          const data = JSON.parse(event.data);
+          console.debug('fonepay_ws_message', txId, data);
+
+          if (data.paymentStatus === 'success' || data.paymentStatus === 'paid' || data.paymentStatus === 'completed') {
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+            if (countdownRef.current) clearInterval(countdownRef.current);
+            const gwRef = data.fonepayTraceId ? String(data.fonepayTraceId) : undefined;
+            completePayment(txId, amt, gwRef);
+          }
+        } catch {
+          console.debug('fonepay_ws_parse_error', event.data);
+        }
+      };
+
+      ws.onerror = (err) => {
+        setWsStatus('disconnected');
+        console.debug('fonepay_ws_error', txId, err);
+      };
+
+      ws.onclose = () => {
+        setWsStatus('disconnected');
+        console.debug('fonepay_ws_closed', txId);
+      };
+    } catch (err) {
+      setWsStatus('disconnected');
+      console.debug('fonepay_ws_connect_failed', txId, err);
+    }
+  }, [completePayment]);
+
+  const startPolling = useCallback((txId: string) => {
     let attempts = 0;
 
     pollTimerRef.current = setInterval(async () => {
@@ -78,40 +132,120 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
       setPollAttempt(attempts);
 
       try {
-        const result = await verifyPayment.mutateAsync({ transactionId: txId, amount: amt });
+        const result = await checkStatus.mutateAsync({ prn: txId });
         if (cancelledRef.current) return;
 
         if (result.verified) {
           if (pollTimerRef.current) clearInterval(pollTimerRef.current);
           if (countdownRef.current) clearInterval(countdownRef.current);
-          await completePayment(txId, amt);
+          await completePayment(txId, amount, result.gateway_reference || undefined);
           return;
         }
       } catch {
-        // retry on next interval
+        console.debug('fonepay_poll_retry', txId);
       }
 
       if (attempts >= MAX_POLL_ATTEMPTS) {
         if (pollTimerRef.current) clearInterval(pollTimerRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
-        setStatus("timeout");
-        showInfo("QR code expired. Please try again.");
+        setStatus("expired");
+        showInfo("QR code expired. Please generate a new one.");
       }
     }, POLL_INTERVAL);
-  }, [verifyPayment, completePayment]);
+  }, [checkStatus, completePayment, amount]);
+
+  const handleGenerateQR = async () => {
+    if (generateQR.isPending) return;
+    cancelledRef.current = false;
+    setStatus("generating");
+    setError(null);
+    setPollAttempt(0);
+    setQrImageUrl(null);
+
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    const amt = Math.round(amount * 100) / 100;
+    const txId = generateTransactionId();
+    setTransactionId(txId);
+    setTimeLeft(QR_TIMEOUT_MINUTES * 60);
+
+    try {
+      const result = await generateQR.mutateAsync({ amount: amt, transactionId: txId, invoiceId: invoice.id });
+      if (cancelledRef.current) return;
+
+      const qrContent = result.qr_message;
+      if (!qrContent) {
+        setError("Failed to generate QR: no QR message returned");
+        setStatus("failed");
+        return;
+      }
+
+      const qrDataUrl = await QRCode.toDataURL(qrContent, {
+        width: 400,
+        margin: 2,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+      if (cancelledRef.current) return;
+      setQrImageUrl(qrDataUrl);
+
+      await logTx.mutateAsync({
+        invoiceId: invoice.id,
+        transactionId: txId,
+        amount: amt,
+      });
+
+      setStatus("displaying");
+
+      if (result.websocket_url) {
+        connectWebSocket(result.websocket_url, txId, amt);
+      }
+
+      startPolling(txId);
+
+      countdownRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      if (cancelledRef.current) return;
+      setError((err as Error)?.message || "Failed to generate QR code");
+      setStatus("failed");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      setWsStatus('disconnected');
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, []);
 
   const handleManualVerify = async () => {
     if (!transactionId) return;
     setStatus("verifying");
     try {
-      const result = await verifyPayment.mutateAsync({ transactionId, amount });
+      const result = await checkStatus.mutateAsync({ prn: transactionId });
       if (result.verified) {
         if (pollTimerRef.current) clearInterval(pollTimerRef.current);
         if (countdownRef.current) clearInterval(countdownRef.current);
-        await completePayment(transactionId, amount);
+        await completePayment(transactionId, amount, result.gateway_reference || undefined);
       } else {
-        setStatus("polling");
-        showInfo("Payment not yet confirmed. Polling continues.");
+        setStatus("displaying");
+        showInfo("Payment not yet confirmed. Still checking...");
       }
     } catch (err) {
       setStatus("polling");
@@ -119,101 +253,18 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     }
   };
 
-  useEffect(() => {
-    cancelledRef.current = false;
-    const amt = Math.round(amount * 100) / 100;
-    const ts = Date.now().toString(36).toUpperCase();
-    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const txId = `FP${ts}${rand}`;
-    setTransactionId(txId);
-
-    generateQR.mutateAsync({ amount: amt, transactionId: txId, invoiceId: invoice.id }).then(async (result) => {
-      if (cancelledRef.current) return;
-      if (result.payment_url) {
-        try {
-          const qrDataUrl = await QRCode.toDataURL(result.payment_url, {
-            width: 300,
-            margin: 2,
-            color: { dark: "#000000", light: "#ffffff" },
-          });
-          if (cancelledRef.current) return;
-          setQrImageUrl(qrDataUrl);
-        } catch {
-          // fallback: use payment_url as img src (external QR API fallback)
-          setQrImageUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(result.payment_url)}`);
-        }
-
-        await logTx.mutateAsync({ invoiceId: invoice.id, transactionId: txId, amount: amt });
-
-        setStatus("displaying");
-        startPolling(txId, amt);
-
-        countdownRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 1) {
-              if (countdownRef.current) clearInterval(countdownRef.current);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-    }).catch((err) => {
-      if (cancelledRef.current) return;
-      setError((err as Error)?.message || "Failed to generate QR code");
-      setStatus("failed");
-    });
-
-    return () => {
-      cancelledRef.current = true;
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
-  }, []);
-
   const handleCancel = () => {
     cancelledRef.current = true;
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
-    if (status !== "success") {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    if (status !== "success" && transactionId) {
       updateTx.mutate({ transactionId, status: "expired" });
     }
     onCancel();
-  };
-
-  const handleRetry = () => {
-    setStatus("generating");
-    setError(null);
-    setPollAttempt(0);
-    setTimeLeft(QR_TIMEOUT_MINUTES * 60);
-    setQrImageUrl(null);
-    cancelledRef.current = false;
-    const amt = Math.round(amount * 100) / 100;
-    const ts = Date.now().toString(36).toUpperCase();
-    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const txId = `FP${ts}${rand}`;
-    setTransactionId(txId);
-    generateQR.mutateAsync({ amount: amt, transactionId: txId, invoiceId: invoice.id }).then(async (result) => {
-      if (cancelledRef.current) return;
-      if (result.payment_url) {
-        const qrDataUrl = await QRCode.toDataURL(result.payment_url, { width: 300, margin: 2 });
-        if (cancelledRef.current) return;
-        setQrImageUrl(qrDataUrl);
-        await logTx.mutateAsync({ invoiceId: invoice.id, transactionId: txId, amount: amt });
-        setStatus("displaying");
-        startPolling(txId, amt);
-        countdownRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 1) { if (countdownRef.current) clearInterval(countdownRef.current); return 0; }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-    }).catch((err) => {
-      if (cancelledRef.current) return;
-      setError((err as Error)?.message || "Failed to generate QR code");
-      setStatus("failed");
-    });
   };
 
   const formatTime = (seconds: number) => {
@@ -221,6 +272,8 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
+
+  const timerPercent = (timeLeft / (QR_TIMEOUT_MINUTES * 60)) * 100;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -245,7 +298,31 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
             <span className="text-muted-foreground">Amount</span>
             <span className="font-bold text-lg">{formatCurrency(amount)}</span>
           </div>
+          {transactionId && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">TX ID</span>
+              <span className="font-mono">{transactionId}</span>
+            </div>
+          )}
         </div>
+
+        {status === "idle" && (
+          <div className="flex flex-col items-center py-6 gap-4">
+            <div className="w-20 h-20 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <QrCode className="h-10 w-10 text-blue-600" />
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Generate a QR code your customer can scan from their mobile banking app to pay instantly
+            </p>
+            <Button onClick={handleGenerateQR} disabled={generateQR.isPending} className="min-h-[48px] w-full text-base gap-2">
+              {generateQR.isPending ? (
+                <><RefreshCw className="h-5 w-5 animate-spin" /> Generating...</>
+              ) : (
+                <><Zap className="h-5 w-5" /> Generate QR Code</>
+              )}
+            </Button>
+          </div>
+        )}
 
         {status === "generating" && (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
@@ -256,33 +333,63 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
 
         {status === "displaying" && qrImageUrl && (
           <div className="flex flex-col items-center gap-3">
-            <div className="rounded-xl border-2 border-border bg-white p-4">
+            <div className="rounded-xl border-2 border-border bg-white p-2 sm:p-3">
               <img
                 src={qrImageUrl}
                 alt="FonePay QR"
-                className="w-56 h-56 object-contain"
+                className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
               />
             </div>
-            <p className="text-xs text-muted-foreground text-center max-w-xs">
-              Scan this QR with your banking app to pay
-            </p>
-            <div className="flex items-center gap-1 text-xs text-amber-600">
-              <Timer className="h-3 w-3" />
-              <span>Expires in {formatTime(timeLeft)}</span>
+            <div className="w-full max-w-xs flex items-center justify-between px-1">
+              <p className="text-xs text-muted-foreground text-center">
+                Open your <strong>mobile banking app</strong> → <strong>Scan QR</strong> → <strong>Confirm</strong>
+              </p>
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <span className={`inline-block w-2 h-2 rounded-full ${
+                  wsStatus === 'connected' ? 'bg-green-500' :
+                  wsStatus === 'connecting' ? 'bg-amber-400 animate-pulse' :
+                  'bg-gray-400'
+                }`} />
+                <span className="text-[10px] text-muted-foreground">
+                  {wsStatus === 'connected' ? 'Live' :
+                   wsStatus === 'connecting' ? 'Connecting...' :
+                   'Polling'}
+                </span>
+              </div>
             </div>
-            <div className="w-full bg-muted rounded-full h-1.5">
+            <div className="flex items-center gap-1 text-sm font-medium">
+              <Timer className={`h-4 w-4 ${timeLeft < 60 ? "text-destructive" : "text-amber-600"}`} />
+              <span className={timeLeft < 60 ? "text-destructive" : "text-amber-600"}>
+                Expires in {formatTime(timeLeft)}
+              </span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
               <div
-                className="bg-primary h-1.5 rounded-full transition-all duration-1000"
-                style={{ width: `${(timeLeft / (QR_TIMEOUT_MINUTES * 60)) * 100}%` }}
+                className={`h-2 rounded-full transition-all duration-1000 ${
+                  timeLeft < 60 ? "bg-destructive" : timeLeft < 120 ? "bg-amber-500" : "bg-primary"
+                }`}
+                style={{ width: `${timerPercent}%` }}
               />
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/20 text-xs text-blue-700 dark:text-blue-300 animate-pulse">
+              <Search className="h-3.5 w-3.5" />
+              <span>Waiting for payment confirmation...</span>
             </div>
           </div>
         )}
 
         {status === "polling" && (
-          <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span>Waiting for payment... ({pollAttempt}/{MAX_POLL_ATTEMPTS})</span>
+          <div className="flex flex-col items-center gap-2 py-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span>Checking payment status... ({pollAttempt}/{MAX_POLL_ATTEMPTS})</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+              <div
+                className="bg-primary h-1.5 rounded-full transition-all"
+                style={{ width: `${(pollAttempt / MAX_POLL_ATTEMPTS) * 100}%` }}
+              />
+            </div>
           </div>
         )}
 
@@ -295,45 +402,52 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
 
         {status === "success" && (
           <div className="flex flex-col items-center py-6 gap-2">
-            <CheckCircle className="h-12 w-12 text-green-500" />
-            <p className="text-sm font-medium text-green-600">Payment successful!</p>
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <CheckCircle className="h-10 w-10 text-green-500" />
+            </div>
+            <p className="text-base font-semibold text-green-600">Payment Successful!</p>
             <p className="text-xs text-muted-foreground">Receipt is printing...</p>
           </div>
         )}
 
         {status === "failed" && (
           <div className="flex flex-col items-center py-6 gap-2">
-            <AlertCircle className="h-12 w-12 text-destructive" />
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <AlertCircle className="h-10 w-10 text-destructive" />
+            </div>
             <p className="text-sm font-medium text-destructive">{error || "Payment failed"}</p>
+            <p className="text-xs text-muted-foreground text-center">You can try again or choose a different payment method.</p>
           </div>
         )}
 
-        {status === "timeout" && (
+        {status === "expired" && (
           <div className="flex flex-col items-center py-6 gap-2">
-            <Timer className="h-12 w-12 text-amber-500" />
+            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-950/20 flex items-center justify-center">
+              <Timer className="h-10 w-10 text-amber-500" />
+            </div>
             <p className="text-sm font-medium text-amber-600">QR code expired</p>
-            <p className="text-xs text-muted-foreground">Generate a new QR to try again.</p>
+            <p className="text-xs text-muted-foreground text-center">Generate a new QR code to try again.</p>
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2 pt-4">
+        <div className="flex items-center justify-between gap-2 pt-4 border-t border-border">
           <div className="flex gap-2">
-            {(status === "failed" || status === "timeout") && (
-              <Button onClick={handleRetry} disabled={generateQR.isPending} className="min-h-[44px]">
+            {(status === "failed" || status === "expired") && (
+              <Button onClick={handleGenerateQR} disabled={generateQR.isPending} className="min-h-[44px]">
                 <RefreshCw className={`h-4 w-4 mr-1 ${generateQR.isPending ? "animate-spin" : ""}`} />
-                Retry
+                Regenerate QR
               </Button>
             )}
-            {status === "displaying" && (
+            {(status === "displaying" || status === "polling" || status === "idle") && (
               <Button variant="outline" onClick={handleCancel} className="min-h-[44px]">
                 Cancel
               </Button>
             )}
           </div>
           {(status === "displaying" || status === "polling") && (
-            <Button variant="secondary" onClick={handleManualVerify} disabled={verifyPayment.isPending} className="min-h-[44px]">
+            <Button variant="secondary" onClick={handleManualVerify} disabled={checkStatus.isPending} className="min-h-[44px]">
               <Search className="h-4 w-4 mr-1" />
-              {verifyPayment.isPending ? "Checking..." : "Verify"}
+              {checkStatus.isPending ? "Checking..." : "Refresh Status"}
             </Button>
           )}
         </div>

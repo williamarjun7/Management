@@ -104,6 +104,8 @@ const EVENT_QUERY_MAP: Record<string, string[]> = {
   BILL_GENERATED: ['invoices', 'orders'],
   PAYMENT_PROCESSED: ['invoices', 'orders', 'tables'],
   FONEPAY_PAYMENT_INITIATED: ['invoices', 'orders'],
+  FONEPAY_PAYMENT_CONFIRMED: ['invoices', 'orders', 'tables'],
+  PAYMENT_COMPLETED: ['invoices', 'orders', 'tables'],
   ...SYNC_EVENTS,
 };
 
@@ -158,7 +160,6 @@ async function replayMissedEvents(channel: string): Promise<void> {
   if (!lastId) return;
 
   let cursor = lastId;
-  let totalProcessed = 0;
   const MAX_REPLAY_ITERATIONS = 20;
 
   for (let iter = 0; iter < MAX_REPLAY_ITERATIONS; iter++) {
@@ -213,7 +214,6 @@ async function replayMissedEvents(channel: string): Promise<void> {
     }
 
     setLastEventId(channel, newCursor);
-    totalProcessed += events.length;
 
     recordTelemetry('replay_batch', channel, {
       count: events.length,
@@ -579,6 +579,83 @@ export function subscribeTableUpdates(tableId: string): () => void {
     recordChannelActivity(channelKey);
     queryClient.invalidateQueries({ queryKey: ['tables'] });
     queryClient.invalidateQueries({ queryKey: ['orders'] });
+  };
+
+  insforge.realtime.on(channelKey, handler);
+
+  const cleanup = () => {
+    insforge.realtime.off(channelKey, handler);
+    insforge.realtime.unsubscribe(channelKey);
+  };
+
+  trackChannel(channelKey, cleanup);
+
+  return () => {
+    removeChannel(channelKey);
+    cleanup();
+  };
+}
+
+export function subscribeFonepayPayment(
+  transactionId: string,
+  onPaid: (payload: Record<string, unknown>) => void,
+): () => void {
+  const channelKey = `fonepay:${transactionId}`;
+
+  insforge.realtime.subscribe(channelKey);
+
+  const handler = (payload: Record<string, unknown>) => {
+    recordChannelActivity(channelKey);
+    const event = payload?.event as string | undefined;
+    if (event === 'payment_confirmed') {
+      onPaid(payload?.data as Record<string, unknown> || payload);
+    }
+  };
+
+  insforge.realtime.on(channelKey, handler);
+
+  const cleanup = () => {
+    insforge.realtime.off(channelKey, handler);
+    insforge.realtime.unsubscribe(channelKey);
+  };
+
+  trackChannel(channelKey, cleanup);
+
+  return () => {
+    removeChannel(channelKey);
+    cleanup();
+  };
+}
+
+export interface PaymentStatusEvent {
+  invoice_id: string;
+  status: string;
+  payment_method?: string;
+  transaction_id?: string;
+  gateway_reference?: string;
+  paid_amount?: number;
+}
+
+export function subscribePaymentStatus(
+  invoiceId: string,
+  onPaid: (event: PaymentStatusEvent) => void,
+): () => void {
+  const channelKey = `payment:${invoiceId}`;
+
+  insforge.realtime.subscribe(channelKey);
+
+  const handler = (payload: Record<string, unknown>) => {
+    recordChannelActivity(channelKey);
+    const data = payload?.data as Record<string, unknown> | undefined;
+    const event = payload?.event as string | undefined;
+
+    if (event === 'payment_received' || event === 'PAYMENT_RECEIVED') {
+      onPaid({
+        invoice_id: invoiceId,
+        status: 'paid',
+        ...(data as Record<string, unknown>),
+      } as PaymentStatusEvent);
+    }
   };
 
   insforge.realtime.on(channelKey, handler);

@@ -5,7 +5,8 @@ import { insforge } from '../lib/core/insforge';
  *
  * Order Workflow:     Order Created (Active) → Completed | Cancelled
  * Table Workflow:     Available → Occupied → Ordering → Billing → Cleaning → Available
- * Billing Workflow:   Generate Bill → Process Payment → Close Session → Reset Table
+ * Billing Workflow:   Generate Bill → Process Payment → Payment Completed → Close Session → Reset Table
+ * Payment Workflow:   Initiated → QR Generated → Awaiting Payment → Paid | Failed | Expired
  */
 
 type WorkflowHandler = (payload: Record<string, unknown>) => Promise<void>;
@@ -132,15 +133,15 @@ const tableHandlers: Record<string, WorkflowHandler> = {
 const billingWorkflowSteps = [
   'generate_bill',
   'process_payment',
-  'fonepay_payment',
+  'payment_completed',
   'close_session',
   'reset_table',
 ];
 
 const billingTransitions: Record<string, string[]> = {
-  generate_bill: ['process_payment', 'fonepay_payment'],
-  process_payment: ['close_session'],
-  fonepay_payment: ['close_session'],
+  generate_bill: ['process_payment'],
+  process_payment: ['payment_completed'],
+  payment_completed: ['close_session'],
   close_session: ['reset_table'],
   reset_table: [],
 };
@@ -152,8 +153,15 @@ const billingHandlers: Record<string, WorkflowHandler> = {
   process_payment: async (payload) => {
     await notifyRealtime('billing', payload.invoice_id as string, 'PAYMENT_PROCESSED', payload);
   },
-  fonepay_payment: async (payload) => {
-    await notifyRealtime('billing', payload.invoice_id as string, 'FONEPAY_PAYMENT_INITIATED', payload);
+  payment_completed: async (payload) => {
+    // Update invoice and table status
+    if (payload.table_id) {
+      await insforge.database
+        .from('restaurant_tables')
+        .update({ status: 'cleaning' })
+        .eq('id', payload.table_id as string);
+    }
+    await notifyRealtime('billing', payload.invoice_id as string, 'PAYMENT_COMPLETED', payload);
   },
   close_session: async (payload) => {
     if (payload.table_session_id) {
@@ -172,6 +180,49 @@ const billingHandlers: Record<string, WorkflowHandler> = {
         .eq('id', payload.table_id);
       await notifyRealtime('table', payload.table_id as string, 'TABLE_STATUS_CHANGED', { status: 'available' });
     }
+  },
+};
+
+// ────────────────────────────────────────────
+// PAYMENT WORKFLOW (FonePay specific)
+// ────────────────────────────────────────────
+
+const paymentWorkflowSteps = [
+  'initiated',
+  'qr_generated',
+  'awaiting_payment',
+  'paid',
+  'failed',
+  'expired',
+];
+
+const paymentTransitions: Record<string, string[]> = {
+  initiated: ['qr_generated', 'failed'],
+  qr_generated: ['awaiting_payment', 'failed'],
+  awaiting_payment: ['paid', 'failed', 'expired'],
+  paid: [],
+  failed: ['initiated'],  // Allow retry
+  expired: ['initiated'], // Allow regeneration
+};
+
+const paymentHandlers: Record<string, WorkflowHandler> = {
+  initiated: async (payload) => {
+    await notifyRealtime('payment', payload.transaction_id as string, 'PAYMENT_INITIATED', payload);
+  },
+  qr_generated: async (payload) => {
+    await notifyRealtime('payment', payload.transaction_id as string, 'FONEPAY_PAYMENT_INITIATED', payload);
+  },
+  awaiting_payment: async (payload) => {
+    await notifyRealtime('payment', payload.transaction_id as string, 'PAYMENT_AWAITING', payload);
+  },
+  paid: async (payload) => {
+    await notifyRealtime('payment', payload.transaction_id as string, 'PAYMENT_CONFIRMED', payload);
+  },
+  failed: async (payload) => {
+    await notifyRealtime('payment', payload.transaction_id as string, 'PAYMENT_FAILED', payload);
+  },
+  expired: async (payload) => {
+    await notifyRealtime('payment', payload.transaction_id as string, 'PAYMENT_EXPIRED', payload);
   },
 };
 
@@ -197,6 +248,12 @@ export const workflows: Record<string, WorkflowDefinition> = {
     steps: billingWorkflowSteps,
     transitions: billingTransitions,
     handlers: billingHandlers,
+  },
+  payment: {
+    name: 'Payment Workflow',
+    steps: paymentWorkflowSteps,
+    transitions: paymentTransitions,
+    handlers: paymentHandlers,
   },
 };
 

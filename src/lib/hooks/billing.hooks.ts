@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
-import { generateFonepayQR, verifyFonepayPayment, generateTransactionId, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
+import { generateFonepayQR, checkFonepayStatus, generateTransactionId, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
 import type { Invoice, BillSplit, CreditCustomer } from '../../types';
 import { queryKeys } from '../core/query-keys';
-import { showSuccess, showPending } from '../../components/ui/toast';
+import { showSuccess } from '../../components/ui/toast';
 
 // ─────────────── INVOICES ───────────────
 
@@ -510,10 +510,10 @@ export function useFonepayQR() {
   });
 }
 
-export function useVerifyFonepayPayment() {
+export function useCheckFonepayStatus() {
   return useMutation({
-    mutationFn: async (params: { transactionId: string; amount: number }) => {
-      const result = await verifyFonepayPayment(params.transactionId, params.amount);
+    mutationFn: async (params: { prn: string }) => {
+      const result = await checkFonepayStatus(params.prn);
       return result;
     },
   });
@@ -555,16 +555,16 @@ export function useCreditOutstandingBalance(customerName: string | undefined) {
 
 export function useLogFonepayTransaction() {
   return useMutation({
-    mutationFn: async (params: { invoiceId: string; transactionId: string; amount: number }) => {
-      return await logFonepayTransaction(params.invoiceId, params.transactionId, params.amount);
+    mutationFn: async (params: { invoiceId: string; transactionId: string; amount: number; qrExpiry?: string }) => {
+      return await logFonepayTransaction(params.invoiceId, params.transactionId, params.amount, params.qrExpiry);
     },
   });
 }
 
 export function useUpdateFonepayTransaction() {
   return useMutation({
-    mutationFn: async (params: { transactionId: string; status: string; paymentLogId?: string }) => {
-      return await updateFonepayTransaction(params.transactionId, params.status, params.paymentLogId);
+    mutationFn: async (params: { transactionId: string; status: string; paymentLogId?: string; gatewayReference?: string; paidAmount?: number }) => {
+      return await updateFonepayTransaction(params.transactionId, params.status, params.paymentLogId, params.gatewayReference, params.paidAmount);
     },
   });
 }

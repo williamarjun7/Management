@@ -5,6 +5,7 @@ import { showSuccess, showError } from '../../components/ui/toast';
 import { formatCurrency } from '../../lib/core/format-currency';
 import { updateTableStatus } from '../../components/tables/table.service';
 import { insforge } from '../../lib/core/insforge';
+import { markInvoicePaidAndSync } from '../../lib/services/payment-workflow';
 import type { MenuItem, RestaurantTable, Invoice, Order } from '../../types';
 import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, Receipt, CreditCard } from 'lucide-react';
 import SplitBillModal from './SplitBillModal';
@@ -560,7 +561,11 @@ export default function PosPage() {
           invoice={paymentInvoice}
           remaining={paymentRemaining}
           onClose={() => { setShowPayment(false); setPaymentInvoice(null); }}
-          onComplete={() => {
+          onComplete={async () => {
+            await markInvoicePaidAndSync(
+              paymentInvoice.id,
+              selectedTableId || undefined,
+            ).catch(() => {});
             setShowPayment(false);
             setPaymentInvoice(null);
             showSuccess('Payment completed');

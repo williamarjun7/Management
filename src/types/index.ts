@@ -21,6 +21,24 @@ export const PAYMENT_METHOD_ICONS: Record<PaymentMethod, string> = {
 
 export const CASH_QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
+export type QRPaymentStatus = 'idle' | 'generating' | 'displaying' | 'polling' | 'verifying' | 'success' | 'failed' | 'expired';
+
+export interface FonepayTransactionRecord {
+  id: string;
+  invoice_id: string;
+  transaction_id: string;
+  amount: number;
+  qr_generated_at: string;
+  qr_expiry: string | null;
+  status: string;
+  verified_at: string | null;
+  payment_log_id: string | null;
+  gateway_reference: string | null;
+  paid_amount: number | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
 export interface FonepayConfig {
   merchantCode: string;
   secretKey: string;
