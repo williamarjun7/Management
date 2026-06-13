@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, Link, ExternalLink, Trash2, Activity } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, Link, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -247,6 +247,8 @@ export function SyncAdminPanel() {
         onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}
         title="Delete Room Mapping"
         description={`Remove mapping for website room ${deleteTarget?.website_room_id}?`}
+        consequence="The room mapping will be permanently deleted. External bookings for this room will no longer auto-link."
+        entity={`Room Mapping: ${deleteTarget?.website_room_id ?? ""}`}
         confirmLabel="Delete"
         onConfirm={() => {
           if (!deleteTarget) return;

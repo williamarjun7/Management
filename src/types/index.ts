@@ -41,7 +41,6 @@ export interface FonepayTransactionRecord {
 
 export interface FonepayConfig {
   merchantCode: string;
-  secretKey: string;
 }
 
 export interface CreditCustomer {
@@ -234,6 +233,7 @@ export interface Invoice {
   customer_phone: string | null; subtotal: number; discount: number; total: number;
   status: InvoiceStatus; notes: string | null; created_by: string | null;
   idempotency_key: string | null; created_at: string; updated_at: string;
+  locked_for_payment: boolean | null; locked_until: string | null;
   invoice_items?: InvoiceItem[]; payment_logs?: PaymentLog[];
 }
 

@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
-import { showError } from "../../components/ui/toast";
+
 import { bookingSchema } from "../../lib/core/validations";
 import type { Room } from "../../types";
 import type { z } from "zod";
@@ -111,7 +111,9 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
       });
       syncBookingToWebsite(result as Record<string, unknown>, roomId, guestName, guestPhone, checkIn, checkOut, adults, children, nightlyRate, notes);
       onClose();
-    } catch {}
+    } catch {
+      // ignore
+    }
   };
 
   return (

@@ -6,10 +6,10 @@ import {
   getExternalBookings, getExternalBookingByPosId,
   pushBookingToWebsite, pushStatusUpdateToWebsite, triggerRetryQueue,
 } from '../services/booking-sync';
-import { queryKeys } from '../core/query-keys';
+import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking } from '../services/booking-sync.types';
 
 export function useRoomMappings() {
-  return useQuery({
+  return useQuery<RoomMapping[]>({
     queryKey: ['room-mappings'],
     queryFn: getRoomMappings,
   });
@@ -32,14 +32,14 @@ export function useDeleteRoomMapping() {
 }
 
 export function useSyncLogs(status?: string) {
-  return useQuery({
+  return useQuery<SyncLog[]>({
     queryKey: ['sync-logs', status],
     queryFn: () => getSyncLogs(100, status),
   });
 }
 
 export function useSyncLog(id: string | undefined) {
-  return useQuery({
+  return useQuery<SyncLog | null>({
     queryKey: ['sync-log', id],
     enabled: !!id,
     queryFn: () => getSyncLog(id!),
@@ -47,22 +47,22 @@ export function useSyncLog(id: string | undefined) {
 }
 
 export function useSyncQueue() {
-  return useQuery({
+  return useQuery<SyncQueueItem[]>({
     queryKey: ['sync-queue'],
-    queryFn: getSyncQueue,
+    queryFn: () => getSyncQueue(),
     refetchInterval: 10000,
   });
 }
 
 export function useExternalBookings() {
-  return useQuery({
+  return useQuery<ExternalBooking[]>({
     queryKey: ['external-bookings'],
-    queryFn: getExternalBookings,
+    queryFn: () => getExternalBookings(),
   });
 }
 
 export function useExternalBookingByPosId(posBookingId: string | undefined) {
-  return useQuery({
+  return useQuery<ExternalBooking | null>({
     queryKey: ['external-booking', posBookingId],
     enabled: !!posBookingId,
     queryFn: () => getExternalBookingByPosId(posBookingId!),

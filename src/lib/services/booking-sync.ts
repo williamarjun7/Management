@@ -1,5 +1,5 @@
 import { insforge } from '../core/insforge';
-import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, SyncPushResult, AvailabilityCheck, WebsiteBookingEvent } from './booking-sync.types';
+import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, SyncPushResult, AvailabilityCheck } from './booking-sync.types';
 
 const SYNC_FUNCTION = 'website-sync';
 

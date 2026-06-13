@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { Hotel, CalendarCheck, LogIn, LogOut, Plus, Trash2, Search, DoorOpen, RefreshCw, Activity } from "lucide-react";
-import { useRooms, useRoomTypes, useTodayBookings, useCheckIn, useCheckOut, useDeleteBooking, useUpdateRoomStatus, useExternalBookingByPosId, useExternalBookings } from "../../lib/hooks";
+import { Hotel, CalendarCheck, LogIn, LogOut, Plus, Trash2, Search, DoorOpen, Activity } from "lucide-react";
+import { useRooms, useRoomTypes, useTodayBookings, useCheckIn, useCheckOut, useDeleteBooking, useUpdateRoomStatus } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
 import { pushStatusUpdateToWebsite, getExternalBookingByPosId } from "../../lib/services/booking-sync";
 import { Button } from "../../components/ui/button";
@@ -45,7 +45,6 @@ export default function MotelPage() {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showRoomDialog, setShowRoomDialog] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
-  const { data: extBookings } = useExternalBookings();
   const [confirmAction, setConfirmAction] = useState<{
     type: "checkin" | "checkout";
     booking: Booking;

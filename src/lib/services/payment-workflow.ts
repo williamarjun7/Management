@@ -55,6 +55,7 @@ export async function processFonepayPayment(
     p_notes: gatewayReference
       ? `FonePay payment. Gateway Ref: ${gatewayReference}`
       : `FonePay payment. TX: ${transactionId}`,
+    p_transaction_id: transactionId,
   });
 
   if (error) throw error;
@@ -126,10 +127,14 @@ export async function markInvoicePaidAndSync(
   }
 
   // Notify system via event
-  await insforge.database.rpc('create_system_event', {
-    p_event_type: 'PAYMENT_PROCESSED',
-    p_entity_type: 'invoice',
-    p_entity_id: invoiceId,
-    p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
-  }).catch(() => {});
+  try {
+    await insforge.database.rpc('create_system_event', {
+      p_event_type: 'PAYMENT_PROCESSED',
+      p_entity_type: 'invoice',
+      p_entity_id: invoiceId,
+      p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
+    });
+  } catch {
+    // non-blocking notification
+  }
 }

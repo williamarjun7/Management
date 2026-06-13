@@ -48,7 +48,7 @@ function detectChannel(): ReleaseChannel {
   try {
     const raw = localStorage.getItem(CHANNEL_STORAGE_KEY);
     if (raw && isValidChannel(raw)) return raw;
-  } catch {}
+  } catch { /* ignore */ }
 
   return 'stable';
 }

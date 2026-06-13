@@ -72,7 +72,7 @@ export default async function(req) {
 
     // 2. Sync user_profiles table (keeps InsForge dashboard + user_profiles in sync)
     if (email !== undefined) {
-      const profileRes = await fetch(`${baseUrl}/api/rest/v1/user_profiles?id=eq.${userId}`, {
+      const profileRes = await fetch(`${baseUrl}/api/database/records/user_profiles?id=eq.${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

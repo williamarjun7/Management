@@ -36,7 +36,7 @@ function getPosApi() {
 
 async function posRpc(rpcName, params) {
   const { fnUrl, anonKey } = getPosApi();
-  const resp = await fetch(`${fnUrl}/rest/v1/rpc/${rpcName}`, {
+  const resp = await fetch(`${fnUrl}/api/database/rpc/${rpcName}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` },
     body: JSON.stringify(params),
@@ -51,7 +51,7 @@ async function posRpc(rpcName, params) {
 async function posQuery(url, params) {
   const { fnUrl, anonKey } = getPosApi();
   const queryStr = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
-  const resp = await fetch(`${fnUrl}/rest/v1/${url}?${queryStr}`, {
+  const resp = await fetch(`${fnUrl}/api/database/records/${url}?${queryStr}`, {
     headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` },
   });
   if (!resp.ok) {

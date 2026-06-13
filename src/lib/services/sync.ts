@@ -7,7 +7,7 @@ export interface Mutex {
 
 export function createMutex(): Mutex {
   let locked = false;
-  let waiters: Array<() => void> = [];
+  const waiters: Array<() => void> = [];
 
   return {
     acquire: async (): Promise<() => void> => {

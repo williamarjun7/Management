@@ -52,15 +52,57 @@ function getConfig() {
     baseUrl: isProduction
       ? 'https://merchantapi.fonepay.com/api'
       : 'https://dev-merchantapi.fonepay.com/convergent-merchant-web/api',
+    anonKey: Deno.env.get('ANON_KEY') || '',
+    functionsUrl: Deno.env.get('INSFORGE_FUNCTIONS_URL') || '',
   };
 }
 
+function generateServerPRN() {
+  const uuid = crypto.randomUUID().replace(/-/g, '');
+  return `FP${uuid.toUpperCase()}`;
+}
+
+async function dbRpc(config, rpcName, body) {
+  if (!config.functionsUrl || !config.anonKey) {
+    console.error('db_rpc_not_configured', rpcName);
+    return null;
+  }
+  const url = `${config.functionsUrl}/api/database/rpc/${rpcName}`;
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': config.anonKey,
+        'Authorization': `Bearer ${config.anonKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error('db_rpc_failed', JSON.stringify({ rpc: rpcName, status: resp.status, error: errText }));
+      return null;
+    }
+    return await resp.json();
+  } catch (err) {
+    console.error('db_rpc_error', JSON.stringify({ rpc: rpcName, error: err.message }));
+    return null;
+  }
+}
+
+function fetchWithTimeout(url, options, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 async function handleGenerateQR(params) {
-  const { amount, transaction_id, invoice_id } = params;
+  const { amount, invoice_id } = params;
   const config = getConfig();
 
-  if (!amount || !transaction_id) {
-    return jsonResponse({ success: false, error: 'amount and transaction_id are required' }, 400);
+  if (!amount || !invoice_id) {
+    return jsonResponse({ success: false, error: 'amount and invoice_id are required' }, 400);
   }
 
   const amt = parseFloat(amount).toFixed(2);
@@ -68,9 +110,9 @@ async function handleGenerateQR(params) {
     return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
   }
 
+  const prn = generateServerPRN();
   const remarks1 = 'Highlands Cafe';
   const remarks2 = invoice_id ? `INV:${invoice_id}` : 'POS';
-  const prn = transaction_id;
 
   const dvInput = amt + remarks1 + remarks2 + prn + config.merchantCode;
   const dv = await hmacSha512Hex(config.secretKey, dvInput);
@@ -88,35 +130,59 @@ async function handleGenerateQR(params) {
 
   const url = `${config.baseUrl}/merchant/merchantDetailsForThirdParty/thirdPartyDynamicQrDownload`;
 
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  let resp;
+  try {
+    resp = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }, 15000);
+  } catch (err) {
+    console.error('fonepay_qr_api_timeout', JSON.stringify({ prn, error: err.message }));
+    return jsonResponse({
+      success: false,
+      error: 'Fonepay QR API timed out. Please try again.',
+    }, 504);
+  }
 
   const result = await resp.json();
 
   if (!resp.ok) {
-    console.error('fonepay_qr_api_error', JSON.stringify({ transaction_id, status: resp.status, result }));
+    console.error('fonepay_qr_api_error', JSON.stringify({ prn, invoice_id, status: resp.status, result }));
     return jsonResponse({
       success: false,
       error: result?.message || `QR API returned ${resp.status}`,
     }, resp.status);
   }
 
+  const qrMessage = result.qrMessage || null;
+  const wsUrl = result.thirdpartyQrWebSocketUrl || null;
+  const qrTimeoutMinutes = config.qrTimeoutMinutes;
+  const qrExpiry = new Date(Date.now() + qrTimeoutMinutes * 60 * 1000).toISOString();
+
+  // Store transaction in database (cancels old active QR for same invoice)
+  await dbRpc(config, 'log_fonepay_transaction', {
+    p_invoice_id: invoice_id,
+    p_transaction_id: prn,
+    p_amount: parseFloat(amt),
+    p_qr_expiry: qrExpiry,
+  });
+
   console.log('fonepay_qr_generated', JSON.stringify({
-    transaction_id, amount: amt, invoice_id, merchant_code: config.merchantCode, status: result.status,
+    prn, invoice_id, amount: amt, merchant_code: config.merchantCode,
+    status: result.status, qr_expiry: qrExpiry,
   }));
 
   return jsonResponse({
     success: true,
-    qr_message: result.qrMessage || null,
-    websocket_url: result.thirdpartyQrWebSocketUrl || null,
+    qr_message: qrMessage,
+    websocket_url: wsUrl,
     merchant_code: config.merchantCode,
-    transaction_id,
+    transaction_id: prn,
     amount: amt,
     status: result.status || 'CREATED',
-    qr_timeout_minutes: config.qrTimeoutMinutes,
+    qr_timeout_minutes: qrTimeoutMinutes,
+    qr_expiry: qrExpiry,
     raw_status_code: result.statusCode,
   });
 }
@@ -142,11 +208,20 @@ async function handleCheckStatus(params) {
 
   const url = `${config.baseUrl}/merchant/merchantDetailsForThirdParty/thirdPartyDynamicQrGetStatus`;
 
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  let resp;
+  try {
+    resp = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }, 10000);
+  } catch (err) {
+    console.error('fonepay_status_api_timeout', JSON.stringify({ prn, error: err.message }));
+    return jsonResponse({
+      success: false,
+      error: 'Fonepay Status API timed out',
+    }, 504);
+  }
 
   const result = await resp.json();
 
@@ -159,9 +234,11 @@ async function handleCheckStatus(params) {
   }
 
   const paymentStatus = (result.paymentStatus || '').toLowerCase();
-  const isPaid = paymentStatus === 'success' || paymentStatus === 'paid' || paymentStatus === 'completed';
+  const isPaid = paymentStatus === 'success';
 
-  console.log('fonepay_status_result', JSON.stringify({ prn, paymentStatus, fonepayTraceId: result.fonepayTraceId }));
+  console.log('fonepay_status_result', JSON.stringify({
+    prn, paymentStatus, fonepayTraceId: result.fonepayTraceId, isPaid,
+  }));
 
   return jsonResponse({
     success: true,
@@ -171,7 +248,6 @@ async function handleCheckStatus(params) {
     merchant_code: result.merchantCode || config.merchantCode,
     gateway_reference: result.fonepayTraceId ? String(result.fonepayTraceId) : null,
     prn: result.prn || prn,
-    raw: result,
   });
 }
 
@@ -203,16 +279,23 @@ async function handlePostTaxRefund(params) {
 
   const url = `${config.baseUrl}/merchant/merchantDetailsForThirdParty/thirdPartyPostTaxRefund`;
 
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  let resp;
+  try {
+    resp = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }, 10000);
+  } catch (err) {
+    return jsonResponse({
+      success: false,
+      error: 'Tax refund API timed out',
+    }, 504);
+  }
 
   const result = await resp.json();
 
   if (!resp.ok) {
-    console.error('fonepay_tax_refund_error', JSON.stringify({ merchantPRN, status: resp.status, result }));
     return jsonResponse({
       success: false,
       error: result?.message || `Tax refund API returned ${resp.status}`,

@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, QrCode, RefreshCw, CheckCircle, AlertCircle, Timer, Search, Zap } from "lucide-react";
+import { X, QrCode, RefreshCw, CheckCircle, AlertCircle, Timer, Search, Zap, Wifi, WifiOff } from "lucide-react";
 import { Button } from "./ui/button";
-import { useFonepayQR, useCheckFonepayStatus, useProcessPayment, useLogFonepayTransaction, useUpdateFonepayTransaction } from "../lib/hooks";
+import { useFonepayQR, useCheckFonepayStatus, useProcessPayment, useUpdateFonepayTransaction } from "../lib/hooks";
 import { useAuth } from "../lib/core/auth-context";
 import { showSuccess, showError, showInfo } from "./ui/toast";
 import { formatCurrency } from "../lib/core/format-currency";
-import { generateTransactionId } from "../lib/services/fonepay";
 import { markInvoicePaidAndSync } from "../lib/services/payment-workflow";
 import type { Invoice, QRPaymentStatus } from "../types";
 import QRCode from "qrcode";
@@ -20,30 +19,80 @@ interface FonepayQRDialogProps {
 const POLL_INTERVAL = 5000;
 const MAX_POLL_ATTEMPTS = 72;
 const QR_TIMEOUT_MINUTES = 10;
+const WS_CONNECT_TIMEOUT_MS = 8000;
+const WS_RECONNECT_MAX_ATTEMPTS = 3;
+const WS_RECONNECT_BASE_DELAY_MS = 1000;
 
 export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: FonepayQRDialogProps) {
   const { user } = useAuth();
   const generateQR = useFonepayQR();
   const checkStatus = useCheckFonepayStatus();
   const processPayment = useProcessPayment();
-  const logTx = useLogFonepayTransaction();
   const updateTx = useUpdateFonepayTransaction();
+
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState("");
   const [status, setStatus] = useState<QRPaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [pollAttempt, setPollAttempt] = useState(0);
   const [timeLeft, setTimeLeft] = useState(QR_TIMEOUT_MINUTES * 60);
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const wsConnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wsReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [idempotencyKey] = useState(() => `fonepay:${invoice.id}:${Date.now()}`);
   const cancelledRef = useRef(false);
-  const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const paymentCompleteRef = useRef(false);
+
+  const cleanupTimers = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    if (wsConnectTimeoutRef.current) {
+      clearTimeout(wsConnectTimeoutRef.current);
+      wsConnectTimeoutRef.current = null;
+    }
+    if (wsReconnectTimerRef.current) {
+      clearTimeout(wsReconnectTimerRef.current);
+      wsReconnectTimerRef.current = null;
+    }
+  }, []);
+
+  const closeWebSocket = useCallback(() => {
+    if (wsConnectTimeoutRef.current) {
+      clearTimeout(wsConnectTimeoutRef.current);
+      wsConnectTimeoutRef.current = null;
+    }
+    if (wsReconnectTimerRef.current) {
+      clearTimeout(wsReconnectTimerRef.current);
+      wsReconnectTimerRef.current = null;
+    }
+    if (wsRef.current) {
+      wsRef.current.onopen = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+  }, []);
 
   const completePayment = useCallback(async (txId: string, amt: number, gwRef?: string) => {
+    if (paymentCompleteRef.current) return;
+    paymentCompleteRef.current = true;
+
     setStatus("verifying");
     try {
+      // process_payment atomically: inserts payment_log, updates fonepay_transactions,
+      // updates invoice status — all in one DB transaction
       const result = await processPayment.mutateAsync({
         p_invoice_id: invoice.id,
         p_amount: amt,
@@ -52,13 +101,15 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
         p_idempotency_key: idempotencyKey,
         p_reference: gwRef || txId,
         p_notes: gwRef ? `FonePay TX: ${txId}, Gateway Ref: ${gwRef}` : `FonePay TX: ${txId}`,
+        p_transaction_id: txId,
       });
 
-      const plId = result?.id || result?.payment_log_id || undefined;
-      await updateTx.mutateAsync({
+      // Best-effort fallback: update fonepay_transaction status in case process_payment
+      // was called without p_transaction_id (e.g., old client). Non-blocking.
+      updateTx.mutate({
         transactionId: txId,
         status: "paid",
-        paymentLogId: plId,
+        paymentLogId: result?.payment_log_id || result?.id || undefined,
         gatewayReference: gwRef,
         paidAmount: amt,
       });
@@ -66,8 +117,10 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
       setStatus("success");
       showSuccess(`FonePay payment of ${formatCurrency(amt)} confirmed`);
 
+      // Mark paid and sync AFTER DB transaction commits
       await markInvoicePaidAndSync(invoice.id).catch(() => {});
 
+      // Only print receipt AFTER payment is committed in DB
       setTimeout(() => {
         if (typeof window !== "undefined") {
           void window.print();
@@ -75,53 +128,103 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
         onSuccess();
       }, 500);
     } catch {
+      paymentCompleteRef.current = false;
       setStatus("failed");
       setError("Payment was verified but failed to record. Please contact support.");
     }
   }, [invoice.id, processPayment, updateTx, user, idempotencyKey, onSuccess]);
 
-  const connectWebSocket = useCallback((url: string, txId: string, amt: number) => {
+  const handlePaymentStatus = useCallback(async (txId: string, amt: number, gwRef?: string) => {
+    if (paymentCompleteRef.current) return;
+
+    setStatus("verifying");
+
+    // CRITICAL: Always call Status API as source of truth before completing payment
     try {
-      setWsStatus('connecting');
+      const statusResult = await checkStatus.mutateAsync({ prn: txId });
+      if (cancelledRef.current) return;
+
+      if (statusResult.verified) {
+        const traceId = gwRef || statusResult.gateway_reference || undefined;
+        await completePayment(txId, amt, traceId);
+      } else {
+        setStatus("displaying");
+        showInfo("Payment not yet confirmed by Fonepay. Still checking...");
+      }
+    } catch (err) {
+      setStatus("displaying");
+      showError((err as Error)?.message || "Verification failed");
+    }
+  }, [checkStatus, completePayment]);
+
+  const connectWebSocket = useCallback((url: string, txId: string, amt: number, reconnectAttempt = 0) => {
+    if (cancelledRef.current || paymentCompleteRef.current) return;
+
+    try {
+      closeWebSocket();
+      setWsStatus(reconnectAttempt > 0 ? 'reconnecting' : 'connecting');
+
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
+      // Connection timeout
+      wsConnectTimeoutRef.current = setTimeout(() => {
+        if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+          ws.close();
+          setWsStatus('disconnected');
+          console.debug('fonepay_ws_connect_timeout', txId);
+        }
+      }, WS_CONNECT_TIMEOUT_MS);
+
       ws.onopen = () => {
+        if (wsConnectTimeoutRef.current) {
+          clearTimeout(wsConnectTimeoutRef.current);
+          wsConnectTimeoutRef.current = null;
+        }
         setWsStatus('connected');
         console.debug('fonepay_ws_connected', txId);
       };
 
       ws.onmessage = (event) => {
-        if (cancelledRef.current) return;
+        if (cancelledRef.current || paymentCompleteRef.current) return;
         try {
           const data = JSON.parse(event.data);
-          console.debug('fonepay_ws_message', txId, data);
 
           if (data.paymentStatus === 'success' || data.paymentStatus === 'paid' || data.paymentStatus === 'completed') {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current);
             if (countdownRef.current) clearInterval(countdownRef.current);
             const gwRef = data.fonepayTraceId ? String(data.fonepayTraceId) : undefined;
-            completePayment(txId, amt, gwRef);
+            // WebSocket only triggers Status API verification — never completes payment directly
+            handlePaymentStatus(txId, amt, gwRef);
           }
         } catch {
           console.debug('fonepay_ws_parse_error', event.data);
         }
       };
 
-      ws.onerror = (err) => {
+      ws.onerror = () => {
         setWsStatus('disconnected');
-        console.debug('fonepay_ws_error', txId, err);
+        console.debug('fonepay_ws_error', txId);
       };
 
       ws.onclose = () => {
         setWsStatus('disconnected');
         console.debug('fonepay_ws_closed', txId);
+
+        // Reconnect logic with exponential backoff
+        if (!cancelledRef.current && !paymentCompleteRef.current && reconnectAttempt < WS_RECONNECT_MAX_ATTEMPTS) {
+          const delay = WS_RECONNECT_BASE_DELAY_MS * Math.pow(2, reconnectAttempt);
+          wsReconnectTimerRef.current = setTimeout(() => {
+            // eslint-disable-next-line react-hooks/immutability
+            connectWebSocket(url, txId, amt, reconnectAttempt + 1);
+          }, delay);
+        }
       };
     } catch (err) {
       setWsStatus('disconnected');
       console.debug('fonepay_ws_connect_failed', txId, err);
     }
-  }, [completePayment]);
+  }, [closeWebSocket, handlePaymentStatus]);
 
   const startPolling = useCallback((txId: string) => {
     let attempts = 0;
@@ -136,8 +239,8 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
         if (cancelledRef.current) return;
 
         if (result.verified) {
-          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-          if (countdownRef.current) clearInterval(countdownRef.current);
+          cleanupTimers();
+          closeWebSocket();
           await completePayment(txId, amount, result.gateway_reference || undefined);
           return;
         }
@@ -146,35 +249,42 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
       }
 
       if (attempts >= MAX_POLL_ATTEMPTS) {
-        if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-        if (countdownRef.current) clearInterval(countdownRef.current);
+        cleanupTimers();
+        closeWebSocket();
         setStatus("expired");
         showInfo("QR code expired. Please generate a new one.");
       }
     }, POLL_INTERVAL);
-  }, [checkStatus, completePayment, amount]);
+  }, [checkStatus, completePayment, amount, cleanupTimers, closeWebSocket]);
 
   const handleGenerateQR = async () => {
     if (generateQR.isPending) return;
     cancelledRef.current = false;
+    paymentCompleteRef.current = false;
     setStatus("generating");
     setError(null);
     setPollAttempt(0);
     setQrImageUrl(null);
 
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    cleanupTimers();
+    closeWebSocket();
 
     const amt = Math.round(amount * 100) / 100;
-    const txId = generateTransactionId();
-    setTransactionId(txId);
-    setTimeLeft(QR_TIMEOUT_MINUTES * 60);
 
     try {
-      const result = await generateQR.mutateAsync({ amount: amt, transactionId: txId, invoiceId: invoice.id });
+      // Server generates PRN — no client-side transaction ID creation
+      const result = await generateQR.mutateAsync({ amount: amt, invoiceId: invoice.id });
       if (cancelledRef.current) return;
+
+      const txId = result.transaction_id;
+      if (!txId) {
+        setError("Failed to generate QR: no transaction ID returned");
+        setStatus("failed");
+        return;
+      }
+
+      setTransactionId(txId);
+      setTimeLeft(QR_TIMEOUT_MINUTES * 60);
 
       const qrContent = result.qr_message;
       if (!qrContent) {
@@ -190,12 +300,6 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
       });
       if (cancelledRef.current) return;
       setQrImageUrl(qrDataUrl);
-
-      await logTx.mutateAsync({
-        invoiceId: invoice.id,
-        transactionId: txId,
-        amount: amt,
-      });
 
       setStatus("displaying");
 
@@ -224,43 +328,20 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
   useEffect(() => {
     return () => {
       cancelledRef.current = true;
-      setWsStatus('disconnected');
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      cleanupTimers();
+      closeWebSocket();
     };
-  }, []);
+  }, [cleanupTimers, closeWebSocket]);
 
   const handleManualVerify = async () => {
     if (!transactionId) return;
-    setStatus("verifying");
-    try {
-      const result = await checkStatus.mutateAsync({ prn: transactionId });
-      if (result.verified) {
-        if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-        if (countdownRef.current) clearInterval(countdownRef.current);
-        await completePayment(transactionId, amount, result.gateway_reference || undefined);
-      } else {
-        setStatus("displaying");
-        showInfo("Payment not yet confirmed. Still checking...");
-      }
-    } catch (err) {
-      setStatus("polling");
-      showError((err as Error)?.message || "Verification failed");
-    }
+    await handlePaymentStatus(transactionId, amount);
   };
 
   const handleCancel = () => {
     cancelledRef.current = true;
-    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    cleanupTimers();
+    closeWebSocket();
     if (status !== "success" && transactionId) {
       updateTx.mutate({ transactionId, status: "expired" });
     }
@@ -345,13 +426,16 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
                 Open your <strong>mobile banking app</strong> → <strong>Scan QR</strong> → <strong>Confirm</strong>
               </p>
               <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <span className={`inline-block w-2 h-2 rounded-full ${
-                  wsStatus === 'connected' ? 'bg-green-500' :
-                  wsStatus === 'connecting' ? 'bg-amber-400 animate-pulse' :
-                  'bg-gray-400'
-                }`} />
+                {wsStatus === 'connected' ? (
+                  <Wifi className="h-3.5 w-3.5 text-green-500" />
+                ) : wsStatus === 'reconnecting' ? (
+                  <RefreshCw className="h-3.5 w-3.5 text-amber-400 animate-spin" />
+                ) : (
+                  <WifiOff className="h-3.5 w-3.5 text-gray-400" />
+                )}
                 <span className="text-[10px] text-muted-foreground">
                   {wsStatus === 'connected' ? 'Live' :
+                   wsStatus === 'reconnecting' ? 'Reconnecting...' :
                    wsStatus === 'connecting' ? 'Connecting...' :
                    'Polling'}
                 </span>

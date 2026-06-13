@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
-import { generateFonepayQR, checkFonepayStatus, generateTransactionId, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
+import { generateFonepayQR, checkFonepayStatus, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
 import type { Invoice, BillSplit, CreditCustomer } from '../../types';
 import { queryKeys } from '../core/query-keys';
 import { showSuccess } from '../../components/ui/toast';
@@ -55,6 +55,7 @@ export function useProcessPayment() {
       p_idempotency_key: string;
       p_reference?: string;
       p_notes?: string;
+      p_transaction_id?: string;
     }) => {
       const { data, error } = await insforge.database.rpc('process_payment', params);
       if (error) {
@@ -501,11 +502,10 @@ export function useRefundSplit() {
 
 export function useFonepayQR() {
   return useMutation({
-    mutationFn: async (params: { amount: number; transactionId?: string; invoiceId?: string }) => {
-      const txId = params.transactionId || generateTransactionId();
-      const result = await generateFonepayQR(params.amount, txId, params.invoiceId);
+    mutationFn: async (params: { amount: number; invoiceId: string }) => {
+      const result = await generateFonepayQR(params.amount, params.invoiceId);
       if (!result.success) throw new Error(result.error || 'Failed to generate QR');
-      return { ...result, transaction_id: txId };
+      return result;
     },
   });
 }
@@ -532,7 +532,14 @@ export function useCreditCustomers() {
         .eq('status', 'paid')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as CreditCustomer[];
+      return (data ?? []).map((item: Record<string, unknown>) => ({
+        id: '',
+        name: (item as { invoices: { customer_name: string } }).invoices?.customer_name ?? '',
+        phone: (item as { invoices: { customer_phone: string } }).invoices?.customer_phone ?? null,
+        total_balance: 0,
+        outstanding: 0,
+        last_payment: null,
+      })) as CreditCustomer[];
     },
   });
 }

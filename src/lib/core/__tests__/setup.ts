@@ -149,7 +149,7 @@ vi.stubGlobal('navigator', {
 type RpcMockHandler = (params: Record<string, unknown>) => { data?: unknown; error?: unknown } | Promise<{ data?: unknown; error?: unknown }>;
 
 let rpcDelayMs = 0;
-let rpcHandlers = new Map<string, RpcMockHandler>();
+const rpcHandlers = new Map<string, RpcMockHandler>();
 let rpcCallHistory: Array<{ name: string; params: Record<string, unknown> }> = [];
 
 vi.mock('../insforge', () => ({

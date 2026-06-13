@@ -9,6 +9,7 @@ export interface FonepayQRResult {
   amount?: string;
   status?: string;
   qr_timeout_minutes?: number;
+  qr_expiry?: string;
   error?: string;
 }
 
@@ -20,7 +21,6 @@ export interface FonepayStatusResult {
   merchant_code?: string;
   gateway_reference?: string | null;
   prn?: string;
-  raw?: Record<string, unknown>;
   error?: string;
 }
 
@@ -40,14 +40,27 @@ export interface UpdateFonepayTxResult {
   success: boolean;
 }
 
+export interface CancelFonepayQrResult {
+  success: boolean;
+}
+
+export interface ActiveFonepayQrResult {
+  found: boolean;
+  id?: string;
+  transaction_id?: string;
+  amount?: number;
+  status?: string;
+  qr_generated_at?: string;
+  qr_expiry?: string;
+}
+
 const FONEPAY_FUNCTION = 'fonepay-v2';
 
-export async function generateFonepayQR(amount: number, transactionId: string, invoiceId?: string): Promise<FonepayQRResult> {
+export async function generateFonepayQR(amount: number, invoiceId: string): Promise<FonepayQRResult> {
   const { data, error } = await insforge.functions.invoke(FONEPAY_FUNCTION, {
     body: {
       action: 'generate_qr',
       amount: amount.toString(),
-      transaction_id: transactionId,
       invoice_id: invoiceId,
     },
   });
@@ -112,8 +125,18 @@ export async function updateFonepayTransaction(
   return data as UpdateFonepayTxResult;
 }
 
-export function generateTransactionId(): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `FP${ts}${rand}`;
+export async function cancelActiveFonepayQR(invoiceId: string): Promise<CancelFonepayQrResult> {
+  const { data, error } = await insforge.database.rpc('cancel_active_fonepay_qr', {
+    p_invoice_id: invoiceId,
+  });
+  if (error) throw error;
+  return data as CancelFonepayQrResult;
+}
+
+export async function getActiveFonepayQR(invoiceId: string): Promise<ActiveFonepayQrResult> {
+  const { data, error } = await insforge.database.rpc('get_active_fonepay_qr', {
+    p_invoice_id: invoiceId,
+  });
+  if (error) throw error;
+  return data as ActiveFonepayQrResult;
 }

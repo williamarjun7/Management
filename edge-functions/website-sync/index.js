@@ -25,7 +25,7 @@ async function hmacSha256Hex(key, data) {
 }
 
 async function posRpc(fnUrl, anonKey, rpcName, params) {
-  const resp = await fetch(`${fnUrl}/rest/v1/rpc/${rpcName}`, {
+  const resp = await fetch(`${fnUrl}/api/database/rpc/${rpcName}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` },
     body: JSON.stringify(params),
@@ -190,7 +190,7 @@ export default async function (req) {
       })();
 
       const bookings = await (async () => {
-        const resp = await fetch(`${fnUrl}/rest/v1/bookings?select=id,guest_name,check_in,check_out,status&room_id=eq.${pos_room_id}&status=in.(confirmed,checked_in)&order=check_in.asc`, {
+        const resp = await fetch(`${fnUrl}/api/database/records/bookings?select=id,guest_name,check_in,check_out,status&room_id=eq.${pos_room_id}&status=in.(confirmed,checked_in)&order=check_in.asc`, {
           headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` },
         });
         if (!resp.ok) return [];
@@ -220,7 +220,7 @@ export default async function (req) {
       })();
 
       const queuedItems = await (async () => {
-        const resp = await fetch(`${fnUrl}/rest/v1/sync_queue?select=*&status=eq.queued&next_retry_at=lte.now()&order=created_at.asc&limit=10`, {
+        const resp = await fetch(`${fnUrl}/api/database/records/sync_queue?select=*&status=eq.queued&next_retry_at=lte.now()&order=created_at.asc&limit=10`, {
           headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` },
         });
         if (!resp.ok) return [];
