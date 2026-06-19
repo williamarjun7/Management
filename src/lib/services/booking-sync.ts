@@ -1,5 +1,5 @@
 import { insforge } from '../core/insforge';
-import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, SyncPushResult, AvailabilityCheck } from './booking-sync.types';
+import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, SyncPushResult, AvailabilityCheck, PropagationFields } from './booking-sync.types';
 
 const SYNC_FUNCTION = 'website-sync';
 
@@ -17,6 +17,7 @@ export async function pushBookingToWebsite(params: {
   total_amount?: number;
   notes?: string;
   idempotency_key: string;
+  propagation?: PropagationFields;
 }): Promise<SyncPushResult> {
   const { data, error } = await insforge.functions.invoke(SYNC_FUNCTION, {
     body: { action: 'push_booking', ...params },
@@ -29,6 +30,7 @@ export async function pushStatusUpdateToWebsite(params: {
   external_booking_id: string;
   event_type: string;
   idempotency_key: string;
+  propagation?: PropagationFields;
 }): Promise<SyncPushResult> {
   const { data, error } = await insforge.functions.invoke(SYNC_FUNCTION, {
     body: { action: 'push_status_update', ...params },

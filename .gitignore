@@ -42,3 +42,18 @@ nul
 # Ad-hoc migration scripts (not part of the build)
 scripts/exec-*
 scripts/run-*
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

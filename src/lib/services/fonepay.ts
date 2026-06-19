@@ -56,12 +56,14 @@ export interface ActiveFonepayQrResult {
 
 const FONEPAY_FUNCTION = 'fonepay-v2';
 
-export async function generateFonepayQR(amount: number, invoiceId: string): Promise<FonepayQRResult> {
+export async function generateFonepayQR(amount: number, invoiceId: string, remarks1?: string, remarks2?: string): Promise<FonepayQRResult> {
   const { data, error } = await insforge.functions.invoke(FONEPAY_FUNCTION, {
     body: {
       action: 'generate_qr',
       amount: amount.toString(),
       invoice_id: invoiceId,
+      ...(remarks1 && { remarks1 }),
+      ...(remarks2 && { remarks2 }),
     },
   });
   if (error) throw error;

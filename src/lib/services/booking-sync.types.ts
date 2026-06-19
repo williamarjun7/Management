@@ -1,7 +1,14 @@
 export type SyncDirection = 'incoming' | 'outgoing';
 export type SyncEventType = 'booking.created' | 'booking.updated' | 'booking.cancelled' | 'booking.checked_in' | 'booking.checked_out';
 export type SyncStatus = 'pending' | 'success' | 'failed' | 'skipped';
-export type QueueStatus = 'queued' | 'processing' | 'completed' | 'failed';
+export type QueueStatus = 'queued' | 'processing' | 'completed' | 'failed' | 'dead';
+export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+
+export interface PropagationFields {
+  origin_system: string;
+  trace_id: string;
+  parent_event_id?: string | null;
+}
 
 export interface RoomMapping {
   id: string;
@@ -28,6 +35,9 @@ export interface SyncLog {
   last_synced_at: string;
   source: string;
   idempotency_key: string | null;
+  origin_system: string | null;
+  trace_id: string | null;
+  parent_event_id: string | null;
   created_at: string;
 }
 
@@ -42,6 +52,11 @@ export interface SyncQueueItem {
   next_retry_at: string;
   last_error: string | null;
   status: QueueStatus;
+  origin_system: string | null;
+  trace_id: string | null;
+  parent_event_id: string | null;
+  dead_letter_at: string | null;
+  dead_letter_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -71,8 +86,12 @@ export interface WebsiteBookingEvent {
   nightly_rate?: number;
   total_amount?: number;
   notes?: string;
+  source?: string;
   idempotency_key: string;
   timestamp: string;
+  origin_system?: string;
+  trace_id?: string;
+  parent_event_id?: string;
 }
 
 export interface SyncPushResult {
@@ -91,4 +110,10 @@ export interface AvailabilityCheck {
     check_out: string;
   }>;
   reason?: string;
+}
+
+export interface CircuitBreakerState {
+  state: CircuitState;
+  failure_count: number;
+  open_until: string | null;
 }

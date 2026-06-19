@@ -51,7 +51,7 @@ function getConfig() {
     qrTimeoutMinutes: parseInt(Deno.env.get('FONEPAY_QR_TIMEOUT_MINUTES') || '10', 10),
     baseUrl: isProduction
       ? 'https://merchantapi.fonepay.com/api'
-      : 'https://dev-merchantapi.fonepay.com/convergent-merchant-web/api',
+      : 'https://uat-new-merchant-api.fonepay.com/api',
     anonKey: Deno.env.get('ANON_KEY') || '',
     functionsUrl: Deno.env.get('INSFORGE_FUNCTIONS_URL') || '',
   };
@@ -98,7 +98,7 @@ function fetchWithTimeout(url, options, timeoutMs = 10000) {
 }
 
 async function handleGenerateQR(params) {
-  const { amount, invoice_id } = params;
+  const { amount, invoice_id, remarks1: customRemarks1, remarks2: customRemarks2 } = params;
   const config = getConfig();
 
   if (!amount || !invoice_id) {
@@ -111,10 +111,10 @@ async function handleGenerateQR(params) {
   }
 
   const prn = generateServerPRN();
-  const remarks1 = 'Highlands Cafe';
-  const remarks2 = invoice_id ? `INV:${invoice_id}` : 'POS';
+  const remarks1 = customRemarks1 || 'Highlands Cafe';
+  const remarks2 = customRemarks2 || `INV:${invoice_id}`;
 
-  const dvInput = amt + remarks1 + remarks2 + prn + config.merchantCode;
+  const dvInput = [amt, prn, config.merchantCode, remarks1, remarks2].join(',');
   const dv = await hmacSha512Hex(config.secretKey, dvInput);
 
   const payload = {
@@ -195,7 +195,7 @@ async function handleCheckStatus(params) {
     return jsonResponse({ success: false, error: 'prn is required' }, 400);
   }
 
-  const dvInput = prn + config.merchantCode;
+  const dvInput = [prn, config.merchantCode].join(',');
   const dv = await hmacSha512Hex(config.secretKey, dvInput);
 
   const payload = {
@@ -262,7 +262,7 @@ async function handlePostTaxRefund(params) {
     }, 400);
   }
 
-  const dvInput = fonepayTraceId + merchantPRN + invoiceNumber + invoiceDate + transactionAmount + config.merchantCode;
+  const dvInput = [fonepayTraceId, merchantPRN, invoiceNumber, invoiceDate, transactionAmount, config.merchantCode].join(',');
   const dv = await hmacSha512Hex(config.secretKey, dvInput);
 
   const payload = {

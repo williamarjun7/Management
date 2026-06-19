@@ -189,13 +189,26 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
         if (cancelledRef.current || paymentCompleteRef.current) return;
         try {
           const data = JSON.parse(event.data);
+          const txStatus = data.transactionStatus;
 
-          if (data.paymentStatus === 'success' || data.paymentStatus === 'paid' || data.paymentStatus === 'completed') {
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            if (countdownRef.current) clearInterval(countdownRef.current);
-            const gwRef = data.fonepayTraceId ? String(data.fonepayTraceId) : undefined;
-            // WebSocket only triggers Status API verification — never completes payment directly
-            handlePaymentStatus(txId, amt, gwRef);
+          if (txStatus) {
+            if (txStatus.qrVerified === true) {
+              console.debug('fonepay_qr_verified', { prn: txId });
+              return;
+            }
+
+            if (txStatus.paymentSuccess === true) {
+              if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+              if (countdownRef.current) clearInterval(countdownRef.current);
+              const gwRef = txStatus.productNumber || undefined;
+              handlePaymentStatus(txId, amt, gwRef);
+              return;
+            }
+
+            if (txStatus.paymentSuccess === false && txStatus.message === 'Request Failed') {
+              console.debug('fonepay_payment_failed', { prn: txId, message: txStatus.message });
+              return;
+            }
           }
         } catch {
           console.debug('fonepay_ws_parse_error', event.data);
@@ -257,6 +270,21 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     }, POLL_INTERVAL);
   }, [checkStatus, completePayment, amount, cleanupTimers, closeWebSocket]);
 
+  const getRemarks1 = () => {
+    const items = invoice.invoice_items;
+    if (items && items.length > 0) {
+      let label = items.slice(0, 3).map(i => {
+        const qty = i.quantity > 1 ? `${i.quantity}x ` : "";
+        return `${qty}${i.description}`;
+      }).join(", ");
+      if (items.length > 3) label += "...";
+      return label.length > 40 ? label.slice(0, 39) + "…" : label;
+    }
+    if (invoice.booking_id) return "Room Booking";
+    if (invoice.order_id) return "Cafe Order";
+    return "Highlands Cafe";
+  };
+
   const handleGenerateQR = async () => {
     if (generateQR.isPending) return;
     cancelledRef.current = false;
@@ -270,10 +298,11 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     closeWebSocket();
 
     const amt = Math.round(amount * 100) / 100;
+    const remarks1 = getRemarks1();
+    const remarks2 = invoice.invoice_number || `INV:${invoice.id}`;
 
     try {
-      // Server generates PRN — no client-side transaction ID creation
-      const result = await generateQR.mutateAsync({ amount: amt, invoiceId: invoice.id });
+      const result = await generateQR.mutateAsync({ amount: amt, invoiceId: invoice.id, remarks1, remarks2 });
       if (cancelledRef.current) return;
 
       const txId = result.transaction_id;

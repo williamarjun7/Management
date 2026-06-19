@@ -502,8 +502,8 @@ export function useRefundSplit() {
 
 export function useFonepayQR() {
   return useMutation({
-    mutationFn: async (params: { amount: number; invoiceId: string }) => {
-      const result = await generateFonepayQR(params.amount, params.invoiceId);
+    mutationFn: async (params: { amount: number; invoiceId: string; remarks1?: string; remarks2?: string }) => {
+      const result = await generateFonepayQR(params.amount, params.invoiceId, params.remarks1, params.remarks2);
       if (!result.success) throw new Error(result.error || 'Failed to generate QR');
       return result;
     },

@@ -48,7 +48,6 @@ export default async function (req) {
 
     const isSuccess = fpStatus === 'success' || response_code === 'success';
 
-    // HMAC verification
     const amt = parseFloat(AMT).toFixed(2);
     const dvInput = merchantCode + PRN + amt;
     const expectedDv = await hmacSha512Hex(secretKey, dvInput);
@@ -57,7 +56,6 @@ export default async function (req) {
     if (!verified) {
       console.warn('fonepay_webhook_hmac_mismatch', JSON.stringify({ PRN, amt }));
       if (isSuccess) {
-        // Fallback: verify via Status API before processing
         console.log('fonepay_webhook_fallback_attempt', JSON.stringify({ PRN }));
         try {
           const statusResult = await checkFonepayStatus(fnUrl, anonKey, merchantCode, secretKey, PRN);
@@ -78,13 +76,11 @@ export default async function (req) {
           console.error('fonepay_webhook_fallback_verify_failed', err.message);
         }
       }
-      // HMAC failed and fallback did not succeed — do NOT acknowledge
       return new Response(JSON.stringify({ error: 'Verification failed' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // HMAC verified — process payment
     const processed = await processPayment(fnUrl, anonKey, PRN, amt, reference_id || PRN);
     if (!processed) {
       console.error('fonepay_webhook_process_failed', JSON.stringify({ PRN }));
@@ -120,8 +116,8 @@ async function checkFonepayStatus(fnUrl, anonKey, merchantCode, secretKey, prn) 
   const isProduction = Deno.env.get('FONEPAY_IS_PRODUCTION') === 'true';
   const baseUrl = isProduction
     ? 'https://merchantapi.fonepay.com/api'
-    : 'https://dev-merchantapi.fonepay.com/convergent-merchant-web/api';
-  const url = `${baseUrl}/merchant/merchantDetailsForThirdParty/thirdPartyDynamicQrGetStatus`;
+    : 'https://uat-new-merchant-api.fonepay.com/api';
+  const url = baseUrl + '/merchant/merchantDetailsForThirdParty/thirdPartyDynamicQrGetStatus';
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -152,13 +148,12 @@ async function processPayment(fnUrl, anonKey, prn, amt, gatewayRef) {
   const authHeaders = {
     'Content-Type': 'application/json',
     'apikey': anonKey,
-    'Authorization': `Bearer ${anonKey}`,
+    'Authorization': 'Bearer ' + anonKey,
   };
 
   try {
-    // Look up the fonepay_transaction to verify amount and get invoice_id
     const txResp = await fetch(
-      `${fnUrl}/api/database/records/fonepay_transactions?select=invoice_id,amount,status,locked_for_payment&transaction_id=eq.${prn}&limit=1`,
+      fnUrl + '/api/database/records/fonepay_transactions?select=invoice_id,amount,status,locked_for_payment&transaction_id=eq.' + prn + '&limit=1',
       { headers: authHeaders }
     );
 
@@ -178,21 +173,18 @@ async function processPayment(fnUrl, anonKey, prn, amt, gatewayRef) {
     const invoiceId = txRecord.invoice_id;
     const storedAmount = parseFloat(txRecord.amount);
 
-    // Verify amount matches
     if (Math.abs(storedAmount - parseFloat(amt)) > 0.01) {
       console.error('fonepay_webhook_amount_mismatch',
         JSON.stringify({ prn, stored: storedAmount, received: parseFloat(amt) }));
       return false;
     }
 
-    // Check if already processed (idempotency)
     if (txRecord.status === 'COMPLETED' || txRecord.status === 'paid') {
       console.log('fonepay_webhook_already_processed', JSON.stringify({ prn, status: txRecord.status }));
       return true;
     }
 
-    // ATOMIC: process_payment via SDK-compatible RPC path
-    const paymentResp = await fetch(`${fnUrl}/api/database/rpc/process_payment`, {
+    const paymentResp = await fetch(fnUrl + '/api/database/rpc/process_payment', {
       method: 'POST',
       headers: authHeaders,
       body: JSON.stringify({
@@ -200,9 +192,9 @@ async function processPayment(fnUrl, anonKey, prn, amt, gatewayRef) {
         p_amount: parseFloat(amt),
         p_method: 'fonepay',
         p_processed_by: null,
-        p_idempotency_key: `fonepay-webhook:${prn}`,
+        p_idempotency_key: 'fonepay-webhook:' + prn,
         p_reference: gatewayRef || prn,
-        p_notes: `FonePay auto-verified. Gateway Ref: ${gatewayRef || 'N/A'}`,
+        p_notes: 'FonePay auto-verified. Gateway Ref: ' + (gatewayRef || 'N/A'),
         p_transaction_id: prn,
       }),
     });
@@ -210,7 +202,6 @@ async function processPayment(fnUrl, anonKey, prn, amt, gatewayRef) {
     if (!paymentResp.ok) {
       const errText = await paymentResp.text();
       console.error('process_payment_via_webhook_failed', errText);
-      // Return 502 so Fonepay retries (never 200 on failure)
       return false;
     }
 
