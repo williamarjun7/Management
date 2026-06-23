@@ -1,10 +1,15 @@
 import * as Sentry from '@sentry/react';
 import { logger } from './logger';
 
+let sentryWarned = false;
+
 export function initSentry(): void {
   const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
   if (!dsn) {
-    logger.warn('SENTRY_DSN not configured — skipping Sentry init', 'sentry');
+    if (!sentryWarned) {
+      sentryWarned = true;
+      logger.warn('SENTRY_DSN not configured — skipping Sentry init', 'sentry');
+    }
     return;
   }
 

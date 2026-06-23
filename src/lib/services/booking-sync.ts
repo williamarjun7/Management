@@ -1,5 +1,5 @@
 import { insforge } from '../core/insforge';
-import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, SyncPushResult, AvailabilityCheck, PropagationFields } from './booking-sync.types';
+import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, SyncPushResult, AvailabilityCheck, PropagationFields, ReconciliationIssue } from './booking-sync.types';
 
 const SYNC_FUNCTION = 'website-sync';
 
@@ -16,6 +16,10 @@ export async function pushBookingToWebsite(params: {
   nightly_rate?: number;
   total_amount?: number;
   notes?: string;
+  payment_status?: string;
+  paid_amount?: number;
+  advance_amount?: number;
+  balance_amount?: number;
   idempotency_key: string;
   propagation?: PropagationFields;
 }): Promise<SyncPushResult> {
@@ -30,6 +34,10 @@ export async function pushStatusUpdateToWebsite(params: {
   external_booking_id: string;
   event_type: string;
   idempotency_key: string;
+  payment_status?: string;
+  paid_amount?: number;
+  advance_amount?: number;
+  balance_amount?: number;
   propagation?: PropagationFields;
 }): Promise<SyncPushResult> {
   const { data, error } = await insforge.functions.invoke(SYNC_FUNCTION, {
@@ -149,4 +157,44 @@ export async function getExternalBookingByPosId(posBookingId: string): Promise<E
     .maybeSingle();
   if (error) throw error;
   return data as ExternalBooking | null;
+}
+
+// ── Reconciliation Engine ──
+
+export async function getReconciliationIssues(params?: {
+  severity?: string;
+  unresolvedOnly?: boolean;
+  limit?: number;
+}): Promise<ReconciliationIssue[]> {
+  const { data, error } = await insforge.database
+    .rpc('get_reconciliation_issues', {
+      p_severity: params?.severity || null,
+      p_unresolved_only: params?.unresolvedOnly ?? true,
+      p_limit: params?.limit || 100,
+    });
+  if (error) throw error;
+  return (data ?? []) as ReconciliationIssue[];
+}
+
+export async function resolveReconciliationIssue(id: string, resolution?: string): Promise<void> {
+  const { error } = await insforge.database
+    .rpc('resolve_reconciliation_issue', {
+      p_id: id,
+      p_resolution: resolution || null,
+    });
+  if (error) throw error;
+}
+
+export async function triggerReconciliation(params?: {
+  severity?: string;
+  limit?: number;
+}): Promise<SyncPushResult> {
+  const { data, error } = await insforge.functions.invoke('reconciliation', {
+    body: {
+      severity: params?.severity || null,
+      limit: params?.limit || 200,
+    },
+  });
+  if (error) throw error;
+  return data as SyncPushResult;
 }

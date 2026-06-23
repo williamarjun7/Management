@@ -86,6 +86,10 @@ export interface WebsiteBookingEvent {
   nightly_rate?: number;
   total_amount?: number;
   notes?: string;
+  payment_status?: string;
+  paid_amount?: number;
+  advance_amount?: number;
+  balance_amount?: number;
   source?: string;
   idempotency_key: string;
   timestamp: string;
@@ -116,4 +120,22 @@ export interface CircuitBreakerState {
   state: CircuitState;
   failure_count: number;
   open_until: string | null;
+}
+
+export type ReconciliationSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+export interface ReconciliationIssue {
+  id: string;
+  entity_type: string;
+  entity_id: string | null;
+  external_entity_id: string | null;
+  issue_type: string;
+  severity: ReconciliationSeverity;
+  field_name: string | null;
+  website_value: string | null;
+  pos_value: string | null;
+  details: Record<string, unknown>;
+  detected_at: string;
+  resolved_at: string | null;
+  resolution: string | null;
 }

@@ -46,8 +46,8 @@ export function CardTitle({ className, ref, ...props }: CardTitleProps) {
 }
 
 interface CardDescriptionProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {
-  ref?: React.Ref<HTMLParagraphElement>;
+  extends React.HTMLAttributes<HTMLDivElement> {
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 export function CardDescription({
@@ -56,7 +56,7 @@ export function CardDescription({
   ...props
 }: CardDescriptionProps) {
   return (
-    <p
+    <div
       ref={ref}
       className={cn('text-sm text-muted-foreground', className)}
       {...props}

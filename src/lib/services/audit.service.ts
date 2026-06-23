@@ -61,7 +61,7 @@ export async function writeAuditLog(entry: AuditEntryInput): Promise<void> {
 
   const userId = getCurrentUserId();
   if (!userId) {
-    logger.warn('audit_skipped_no_user', 'audit', {
+    logger.debug('audit_skipped_no_user', 'audit', {
       metadata: { action: entry.action, entity_type: entry.entity_type },
     });
     return;

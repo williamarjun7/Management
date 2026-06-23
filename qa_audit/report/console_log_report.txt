@@ -1,0 +1,112 @@
+================================================================================
+CONSOLE LOG REPORT - Highlands Cafe & Motel Inn
+================================================================================
+
+
+--- http://localhost:5173/admin ---
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/auth/refresh - Failed to load resource: the server responded with a status of 401 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/auth/refresh - Failed to load resource: the server responded with a status of 401 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/auth/refresh - Failed to load resource: the server responded with a status of 401 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/auth/refresh - Failed to load resource: the server responded with a status of 401 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Cstatus%2Ccreated_at%2Cpayment_method&status=in.%28completed%2Cserved%29&created_at=gte.2026-06-16T08%3A36%3A31.446Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A31.446Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=id%2Cname%2Csku%2Ccategory%2Cunit%2Creorder_level%2Cstock_quantity&reorder_level=not.is.null - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A31.447Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Cstatus%2Ccreated_at%2Cpayment_method&status=in.%28completed%2Cserved%29&created_at=gte.2026-06-16T08%3A36%3A32.971Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A33.246Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=id%2Cname%2Csku%2Ccategory%2Cunit%2Creorder_level%2Cstock_quantity&reorder_level=not.is.null - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A33.298Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Cstatus%2Ccreated_at%2Cpayment_method&status=in.%28completed%2Cserved%29&created_at=gte.2026-06-16T08%3A36%3A35.263Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A35.539Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=id%2Cname%2Csku%2Ccategory%2Cunit%2Creorder_level%2Cstock_quantity&reorder_level=not.is.null - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A35.589Z&order=created_at.asc - Failed to load resource: the server responded with a status of 400 ()
+  [ERROR] http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=91b3b15d 1772:366 "In HTML, %s cannot be a descendant of \u003C%s>.\nThis will cause a hydration error.%s" "\u003Cdiv>" "p" "\n\n  ...\n    \u003CRenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>\n      \u003
+  [ERROR] http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=91b3b15d 1774:12 "\u003C%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace." "p" "\u003Cdiv>"
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:19.938Z] [WARN] [sentry] [tab:7451b221] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:19.945Z] [WARN] [sentry] [tab:7451b221] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:23.644Z] [WARN] [audit] [tab:7451b221] audit_skipped_no_user" Object
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:24.433Z] [WARN] [sentry] [tab:c18f37b7] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:24.435Z] [WARN] [sentry] [tab:c18f37b7] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:32.791Z] [WARN] [sentry] [tab:b9e8ddc7] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:32.793Z] [WARN] [sentry] [tab:b9e8ddc7] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:41.322Z] [WARN] [sentry] [tab:b7a31cc9] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:41.326Z] [WARN] [sentry] [tab:b7a31cc9] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:50.005Z] [WARN] [sentry] [tab:02db2476] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:50.008Z] [WARN] [sentry] [tab:02db2476] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:58.754Z] [WARN] [sentry] [tab:c2b558bd] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:32:58.756Z] [WARN] [sentry] [tab:c2b558bd] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:07.711Z] [WARN] [sentry] [tab:88be57bd] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:07.715Z] [WARN] [sentry] [tab:88be57bd] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:24.136Z] [WARN] [queue-leader] [tab:88be57bd] leader_stale_recontesting" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:28.908Z] [WARN] [sentry] [tab:062d1d7d] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:28.911Z] [WARN] [sentry] [tab:062d1d7d] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:44.738Z] [WARN] [sentry] [tab:d222f176] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:33:44.740Z] [WARN] [sentry] [tab:d222f176] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:00.607Z] [WARN] [sentry] [tab:b81a35a1] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:00.609Z] [WARN] [sentry] [tab:b81a35a1] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:15.856Z] [WARN] [sentry] [tab:a8c2965e] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:15.858Z] [WARN] [sentry] [tab:a8c2965e] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:30.304Z] [WARN] [sentry] [tab:e12ba19f] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:30.306Z] [WARN] [sentry] [tab:e12ba19f] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:42.678Z] [WARN] [sentry] [tab:897e2eef] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:42.680Z] [WARN] [sentry] [tab:897e2eef] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:57.948Z] [WARN] [sentry] [tab:59119445] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:34:57.950Z] [WARN] [sentry] [tab:59119445] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:12.563Z] [WARN] [sentry] [tab:4cf1554b] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:12.566Z] [WARN] [sentry] [tab:4cf1554b] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:25.563Z] [WARN] [sentry] [tab:14316cef] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:25.565Z] [WARN] [sentry] [tab:14316cef] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:38.352Z] [WARN] [sentry] [tab:d76d608c] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:38.354Z] [WARN] [sentry] [tab:d76d608c] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:51.139Z] [WARN] [sentry] [tab:fadd1e6e] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:35:51.144Z] [WARN] [sentry] [tab:fadd1e6e] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:03.549Z] [WARN] [sentry] [tab:223f76e2] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:03.553Z] [WARN] [sentry] [tab:223f76e2] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:15.748Z] [WARN] [sentry] [tab:0a33b87b] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:15.752Z] [WARN] [sentry] [tab:0a33b87b] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:30.163Z] [WARN] [sentry] [tab:374f1640] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:30.166Z] [WARN] [sentry] [tab:374f1640] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:44.572Z] [WARN] [sentry] [tab:b4fd15aa] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:44.574Z] [WARN] [sentry] [tab:b4fd15aa] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:59.992Z] [WARN] [sentry] [tab:cf86d1d2] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:36:59.996Z] [WARN] [sentry] [tab:cf86d1d2] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:15.387Z] [WARN] [sentry] [tab:54718b5a] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:15.391Z] [WARN] [sentry] [tab:54718b5a] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:29.946Z] [WARN] [sentry] [tab:2eaa8cee] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:29.949Z] [WARN] [sentry] [tab:2eaa8cee] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:44.696Z] [WARN] [sentry] [tab:c650e774] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:44.699Z] [WARN] [sentry] [tab:c650e774] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:59.849Z] [WARN] [sentry] [tab:dc559374] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:37:59.852Z] [WARN] [sentry] [tab:dc559374] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:38:15.095Z] [WARN] [sentry] [tab:0aaa5bb8] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/src/lib/services/logger.ts 69:11 "[2026-06-23T08:38:15.098Z] [WARN] [sentry] [tab:0aaa5bb8] SENTRY_DSN not configured — skipping Sentry init" ""
+  [WARN]  http://localhost:5173/node_modules/.vite/deps/@insforge_sdk.js?v=847f0c04 7841 WebSocket connection to 'wss://8cvkfu8m.us-east.insforge.app/socket.io/?EIO=4&transport=websocket' failed: WebSocket is closed before the connection is established.
+
+
+=== END OF CONSOLE REPORT ===

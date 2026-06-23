@@ -152,7 +152,7 @@ function watchForLeaderLoss() {
   clearTimers();
   watchTimer = setInterval(() => {
     if (isLeaderStale() && currentState === 'following') {
-      logger.warn('leader_stale_recontesting', 'queue-leader');
+      logger.debug('leader_stale_recontesting', 'queue-leader');
       currentState = 'contesting';
       contestLeadership(onBecomeLeader!, onLoseLeadership!);
     }

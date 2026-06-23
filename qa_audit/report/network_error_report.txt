@@ -1,0 +1,291 @@
+================================================================================
+NETWORK ERROR REPORT - Highlands Cafe & Motel Inn
+================================================================================
+
+
+--- http://localhost:5173/login ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (298ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (319ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (322ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (308ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (595ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/signup ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (651ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin/login ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (295ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (305ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (301ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (612ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin/signup ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (295ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (578ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (579ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (604ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/verify-email ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (605ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/staff ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (299ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (296ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (601ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/ ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (296ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (298ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (303ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (593ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (375ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (313ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Crestaurant_tables%28table_number%29%2Corder_items%28*%29&status=in.%28active%29&order=created_at.asc&limit=50 (327ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (658ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/room_types?select=*&is_active=eq.true&order=name.asc (658ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=*%2Crooms%28*%2Croom_types%28*%29%29&status=in.%28confirmed%2Cchecked_in%29&order=created_at.desc&limit=50 (658ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/dashboard ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (291ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (321ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (615ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (380ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (404ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (407ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Crestaurant_tables%28table_number%29%2Corder_items%28*%29&status=in.%28active%29&order=created_at.asc&limit=50 (409ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=*%2Crooms%28*%2Croom_types%28*%29%29&status=in.%28confirmed%2Cchecked_in%29&order=created_at.desc&limit=50 (409ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/room_types?select=*&is_active=eq.true&order=name.asc (472ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/pos ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (301ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (596ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/menu_categories?select=*&order=name.asc&limit=100 (325ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/menu_items?select=*&order=name.asc&limit=200 (320ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (326ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/orders ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (299ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (820ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (1112ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&status=eq.active&limit=100 (307ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/orders/new ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (306ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (296ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (568ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (301ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (330ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/menu_categories?select=*&order=name.asc&limit=100 (326ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (316ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/menu_items?select=*&order=name.asc&limit=200 (323ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/kitchen ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (564ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (328ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Crestaurant_tables%28table_number%29%2Corder_items%28*%29&status=in.%28active%29&order=created_at.asc&limit=50 (304ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/menu ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (564ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (305ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (340ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/menu_categories?select=*&order=name.asc&limit=100 (314ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/menu_items?select=*&order=name.asc&limit=200 (308ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/storage/buckets/cafe-images/objects/menu-items%2F1778928219973-vtr9dh.webp (548ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/storage/buckets/cafe-images/objects/menu-items%2F1778927907573-qf1874.jpeg (539ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/storage/buckets/cafe-images/objects/menu-items%2F1778927673553-mwhiew.jpg (800ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/storage/buckets/cafe-images/objects/menu-items%2F1778927510137-7oiw4b.png (924ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/storage/buckets/cafe-images/objects/menu-items%2F1778927588003-2wvgh3.png (1015ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/inventory ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (298ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (301ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (304ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (597ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=*&is_active=eq.true&order=name.asc&limit=200 (314ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/stock_movements?select=*%2Cproducts%28name%29&order=created_at.desc&limit=100 (313ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/billing ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (298ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (293ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (308ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (608ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/invoices?select=*%2Cinvoice_items%28*%29%2Cpayment_logs%28*%29&order=created_at.desc&limit=100 (312ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/motel ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (300ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (294ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (303ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (318ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (614ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (322ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/room_types?select=*&is_active=eq.true&order=name.asc (312ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=*%2Crooms%28*%2Croom_types%28*%29%29&check_in=gte.2026-06-23&check_in=lt.2026-06-24T00%3A00%3A00.000Z&order=check_in.asc&limi (327ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/reports ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (575ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (576ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (575ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (575ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (305ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (603ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (322ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (327ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=*&is_active=eq.true&order=name.asc&limit=200 (314ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/settings ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (647ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (646ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (644ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (303ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (601ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/audit ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (566ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (566ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (294ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (302ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (340ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/system_events?select=id%2Cevent_type%2Centity_type%2Centity_id%2Cpayload%2Ccreated_at&order=created_at.desc&limit=500 (304ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/analytics ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (646ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (645ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (646ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (314ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (616ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (794ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (795ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Cstatus%2Ccreated_at%2Cpayment_method&status=in.%28completed%2Cserved%29&created_at=gte.2026-06-16T08%3A36%3A31.446Z&ord (517ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/payment_logs?select=method%2Camount%2Cstatus&order=created_at.desc&limit=500 (795ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A31.446Z&order=created_at.asc (793ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=role%2Cis_active (792ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=id%2Cname%2Cemail%2Crole%2Cis_active&is_active=eq.true (792ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=created_by%2Cstatus&created_at=gte.2026-06-16T08%3A36%3A31.447Z (792ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=id%2Cname%2Csku%2Ccategory%2Cunit%2Creorder_level%2Cstock_quantity&reorder_level=not.is.null (793ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/stock_movements?select=movement_type%2Cquantity%2Ccreated_at&created_at=gte.2026-06-09T08%3A36%3A31.447Z&order=created_at.asc (515ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A31.447Z&order=created_at.asc (793ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=check_in%2Ccheck_out%2Cstatus&check_in=gte.2026-06-23T08%3A36%3A31.448Z&check_in=lte.2026-07-23T08%3A36%3A31.448Z&status=in.% (792ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=id&is_active=eq.true (298ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Cstatus%2Ccreated_at%2Cpayment_method&status=in.%28completed%2Cserved%29&created_at=gte.2026-06-16T08%3A36%3A32.971Z&ord (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A33.246Z&order=created_at.asc (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=id%2Cname%2Csku%2Ccategory%2Cunit%2Creorder_level%2Cstock_quantity&reorder_level=not.is.null (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A33.298Z&order=created_at.asc (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Cstatus%2Ccreated_at%2Cpayment_method&status=in.%28completed%2Cserved%29&created_at=gte.2026-06-16T08%3A36%3A35.263Z&ord (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A35.539Z&order=created_at.asc (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/products?select=id%2Cname%2Csku%2Ccategory%2Cunit%2Creorder_level%2Cstock_quantity&reorder_level=not.is.null (289ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=total%2Ccreated_at&status=in.%28completed%2Cserved%29&created_at=gte.2026-05-24T08%3A36%3A35.589Z&order=created_at.asc (289ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/system-health ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (291ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (564ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (299ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (326ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/tables ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (564ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (564ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (304ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (334ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (303ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin/users ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (371ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (370ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (371ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (307ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (607ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&order=created_at.desc (300ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin/activity ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (297ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (287ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (563ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (291ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (1060ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (1090ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/audit_logs?select=*&order=created_at.desc&limit=500 (313ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=id%2Cname%2Cemail (310ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin/features ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (566ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (294ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (566ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (304ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (334ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin/queue ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (564ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (290ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (563ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (312ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (340ms) - Resource with 0 transfer size (possibly failed/cached)
+
+--- http://localhost:5173/admin ---
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (652ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (288ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (651ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (292ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (359ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (301ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (474ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (417ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Crestaurant_tables%28table_number%29%2Corder_items%28*%29&status=in.%28active%29&order=created_at.asc&limit=50 (476ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (454ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/room_types?select=*&is_active=eq.true&order=name.asc (723ms) - Resource with 0 transfer size (possibly failed/cached)
+  [0] failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=*%2Crooms%28*%2Croom_types%28*%29%29&status=in.%28confirmed%2Cchecked_in%29&order=created_at.desc&limit=50 (723ms) - Resource with 0 transfer size (possibly failed/cached)
+
+
+=== END OF NETWORK REPORT ===

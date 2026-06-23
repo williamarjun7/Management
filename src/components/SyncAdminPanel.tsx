@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, Link, Trash2 } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, Link, Trash2, ShieldAlert } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { showSuccess, showError } from "./ui/toast";
-import { useRoomMappings, useCreateRoomMapping, useDeleteRoomMapping, useSyncLogs, useSyncQueue, useExternalBookings, useTriggerRetryQueue } from "../lib/hooks/booking-sync.hooks";
+import { useRoomMappings, useCreateRoomMapping, useDeleteRoomMapping, useSyncLogs, useSyncQueue, useExternalBookings, useTriggerRetryQueue, useReconciliationIssues, useResolveReconciliationIssue, useTriggerReconciliation } from "../lib/hooks/booking-sync.hooks";
 import { useRooms } from "../lib/hooks";
 import { ConfirmDialog } from "./ConfirmDialog";
 import type { RoomMapping } from "../lib/services/booking-sync.types";
@@ -18,8 +18,11 @@ export function SyncAdminPanel() {
   const createMapping = useCreateRoomMapping();
   const deleteMapping = useDeleteRoomMapping();
   const retryQueue = useTriggerRetryQueue();
+  const { data: recIssues, isLoading: recLoading } = useReconciliationIssues();
+  const resolveIssue = useResolveReconciliationIssue();
+  const triggerRec = useTriggerReconciliation();
 
-  const [tab, setTab] = useState<"logs" | "mappings" | "queue" | "external">("logs");
+  const [tab, setTab] = useState<"logs" | "mappings" | "queue" | "external" | "reconciliation">("logs");
   const [newMapping, setNewMapping] = useState({ pos_room_id: "", website_room_id: "", website_room_name: "" });
   const [deleteTarget, setDeleteTarget] = useState<RoomMapping | null>(null);
   const [showNewMapping, setShowNewMapping] = useState(false);
@@ -71,9 +74,9 @@ export function SyncAdminPanel() {
       </div>
 
       <div className="flex gap-2 border-b border-border">
-        {(["logs", "mappings", "queue", "external"] as const).map((t) => (
+        {(["logs", "mappings", "queue", "external", "reconciliation"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors min-h-[44px] ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            {t === "logs" ? "Sync Logs" : t === "mappings" ? "Room Mappings" : t === "queue" ? "Retry Queue" : "External Bookings"}
+            {t === "logs" ? "Sync Logs" : t === "mappings" ? "Room Mappings" : t === "queue" ? "Retry Queue" : t === "external" ? "External Bookings" : "Reconciliation"}
           </button>
         ))}
       </div>
@@ -239,6 +242,62 @@ export function SyncAdminPanel() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === "reconciliation" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-muted-foreground">Detected discrepancies between POS and Website booking data.</p>
+            <Button onClick={() => triggerRec.mutate({})} disabled={triggerRec.isPending} size="sm" className="min-h-[44px]">
+              <ShieldAlert className={`h-4 w-4 mr-1 ${triggerRec.isPending ? "animate-spin" : ""}`} />
+              Run Reconciliation
+            </Button>
+          </div>
+
+          <div className="rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Detected</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Issue Type</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Severity</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Entity</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Details</th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recLoading ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>
+                ) : recIssues?.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No reconciliation issues found</td></tr>
+                ) : recIssues?.map((issue) => (
+                  <tr key={issue.id} className="border-t border-border hover:bg-muted/30">
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(issue.detected_at).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{issue.issue_type}</td>
+                    <td className="px-4 py-3">{(
+                      issue.severity === "critical" ? <Badge variant="destructive">Critical</Badge> :
+                      issue.severity === "high" ? <Badge variant="destructive">High</Badge> :
+                      issue.severity === "medium" ? <Badge variant="warning">Medium</Badge> :
+                      <Badge variant="outline">Low</Badge>
+                    )}</td>
+                    <td className="px-4 py-3 text-xs">{issue.entity_id?.slice(0, 8) || "-"}</td>
+                    <td className="px-4 py-3 text-xs max-w-[200px] truncate">{issue.field_name ? `${issue.field_name}: website=${issue.website_value} pos=${issue.pos_value}` : issue.issue_type}</td>
+                    <td className="px-4 py-3 text-right">
+                      {issue.resolved_at ? (
+                        <Badge variant="success">Resolved</Badge>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => resolveIssue.mutate({ id: issue.id, resolution: "acknowledged" })} disabled={resolveIssue.isPending} className="min-h-[44px]">
+                          <CheckCircle className="h-3 w-3 mr-1" /> Acknowledge
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

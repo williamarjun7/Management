@@ -5,6 +5,7 @@ import { logger } from '../services/logger';
 import { recordTelemetry } from '../services/telemetry';
 import { captureError } from '../services/sentry';
 import { writeAuditLog, AuditActions, AuditEntityTypes } from '../services/audit.service';
+import { connectAfterAuth } from '../services/realtime';
 import { createMutex } from '../services/sync';
 import type { AuthUser, UserProfile, AuthStatus } from '../../types';
 
@@ -195,6 +196,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    const token = (() => { try { return localStorage.getItem('insforge-auth-token'); } catch { return null; } })();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     insforge.auth.getCurrentUser().then(async ({ data, error }) => {
       if (cancelled) return;
       if (data?.user && !error) {
@@ -213,6 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!built.emailVerified) {
               setPendingEmail(built.email);
             }
+            connectAfterAuth();
           }
         }
       }
@@ -315,6 +322,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthStatus('authenticated');
       setPendingEmail(null);
       resetRefreshAnomaly();
+      connectAfterAuth();
       writeAuditLog({
         action: AuditActions.LOGIN,
         entity_type: AuditEntityTypes.USER,

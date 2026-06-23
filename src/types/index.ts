@@ -259,6 +259,8 @@ export interface Booking {
   guest_phone: string | null; check_in: string; check_out: string;
   adults: number; children: number; status: BookingStatus;
   nightly_rate: number; total_amount: number; paid_amount: number;
+  advance_amount: number; balance_amount: number;
+  payment_status: PaymentStatus;
   notes: string | null; created_by: string | null;
   idempotency_key: string | null; created_at: string; updated_at: string;
   rooms?: Room; room_services?: RoomService[];

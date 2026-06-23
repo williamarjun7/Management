@@ -14,7 +14,7 @@ export function useRevenueByPeriod(days = 7) {
       const { data, error } = await insforge.database
         .from('orders')
         .select('total, status, created_at, payment_method')
-        .in('status', ['completed', 'served'])
+        .eq('status', 'completed')
         .gte('created_at', new Date(Date.now() - days * 86400000).toISOString())
         .order('created_at', { ascending: true });
       if (error) throw error;
@@ -68,7 +68,7 @@ export function useAverageOrderValue(days = 30) {
       const { data, error } = await insforge.database
         .from('orders')
         .select('total, created_at')
-        .in('status', ['completed', 'served'])
+        .eq('status', 'completed')
         .gte('created_at', new Date(Date.now() - days * 86400000).toISOString())
         .order('created_at', { ascending: true });
       if (error) throw error;
@@ -187,11 +187,11 @@ export function useLowStockProducts() {
     queryFn: async () => {
       const { data, error } = await insforge.database
         .from('products')
-        .select('id, name, sku, category, unit, reorder_level, stock_quantity')
+        .select('id, name, sku, category, unit, reorder_level, is_active')
         .not('reorder_level', 'is', null);
       if (error) throw error;
-      const products = (data ?? []) as Array<Product & { stock_quantity: number }>;
-      return products.filter(p => p.stock_quantity <= (p.reorder_level ?? 0));
+      const products = (data ?? []) as Product[];
+      return products.filter(p => (p.is_active ?? false) && (p.reorder_level ?? 0) > 0);
     },
   });
 }
@@ -228,7 +228,7 @@ export function useRevenueForecast(days = 7) {
       const { data, error } = await insforge.database
         .from('orders')
         .select('total, created_at')
-        .in('status', ['completed', 'served'])
+        .eq('status', 'completed')
         .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
         .order('created_at', { ascending: true });
       if (error) throw error;

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA Audit Report - Highlands Cafe & Motel Inn</title>
+<style>
+:root { --bg: #0f172a; --surface: #1e293b; --border: #334155; --text: #e2e8f0; --text-secondary: #94a3b8; --critical: #ef4444; --high: #f97316; --medium: #eab308; --low: #22c55e; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 2rem; }
+.container { max-width: 1400px; margin: 0 auto; }
+h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+h2 { font-size: 1.5rem; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
+.summary-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.25rem; }
+.card .label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.card .value { font-size: 2rem; font-weight: 700; margin: 0.25rem 0; }
+.card .value.critical { color: var(--critical); } .card .value.high { color: var(--high); } .card .value.medium { color: var(--medium); } .card .value.low { color: var(--low); }
+.severity-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.severity-badge.Critical { background: rgba(239,68,68,0.2); color: var(--critical); }
+.severity-badge.High { background: rgba(249,115,22,0.2); color: var(--high); }
+.severity-badge.Medium { background: rgba(234,179,8,0.2); color: var(--medium); }
+.severity-badge.Low { background: rgba(34,197,94,0.2); color: var(--low); }
+.issue { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 1rem; }
+.issue .type { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; min-width: 70px; }
+.issue .detail { flex: 1; }
+.issue .page-url { font-size: 0.8rem; color: var(--text-secondary); word-break: break-all; }
+.page-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.75rem; }
+.page-item { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; font-size: 0.9rem; }
+.page-item .url { word-break: break-all; }
+.page-item .title { color: var(--text-secondary); font-size: 0.8rem; }
+.page-item .ok { color: var(--low); } .page-item .error { color: var(--critical); }
+.page-item .meta { display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap; }
+.page-item .meta span { font-size: 0.75rem; padding: 0.1rem 0.4rem; background: rgba(255,255,255,0.05); border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.filter-bar { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+.filter-bar button { padding: 0.4rem 1rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+.filter-bar button.active { background: var(--critical); color: white; border-color: var(--critical); }
+.percentile { display: inline-block; width: 60px; height: 6px; background: var(--border); border-radius: 3px; margin-left: 0.5rem; vertical-align: middle; }
+.percentile .fill { height: 100%; border-radius: 3px; }
+@media (max-width: 768px) { body { padding: 1rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🛡 QA Audit Report</h1>
+<p style="color: var(--text-secondary);">Highlands Cafe & Motel Inn | <strong>Base URL:</strong> http://localhost:5173 | <strong>Session:</strong> 2026-06-23</p>
+
+<h2>Summary</h2>
+<div class="summary-cards">
+    <div class="card"><div class="label">Pages Discovered</div><div class="value">27</div></div>
+    <div class="card"><div class="label">Pages Crawled</div><div class="value">27</div></div>
+    <div class="card"><div class="label">Failed Pages</div><div class="value" style="color: var(--critical)">0</div></div>
+    <div class="card"><div class="label">Avg Load Time</div><div class="value">0ms</div></div>
+</div>
+
+<div class="summary-cards">
+    <div class="card"><div class="label">Console Errors</div><div class="value critical">18</div></div>
+    <div class="card"><div class="label">Network Failures</div><div class="value high">230</div></div>
+    <div class="card"><div class="label">Broken Links</div><div class="value high">0</div></div>
+    <div class="card"><div class="label">UI Issues</div><div class="value medium">44</div></div>
+    <div class="card"><div class="label">A11y Issues</div><div class="value medium">40</div></div>
+    <div class="card"><div class="label">SEO Issues</div><div class="value low">97</div></div>
+    <div class="card"><div class="label">Form Issues</div><div class="value medium">0</div></div>
+</div>
+
+<h2>Issue Severity Breakdown</h2>
+<div class="summary-cards">
+    <div class="card"><div class="label">Critical</div><div class="value critical">0</div></div>
+    <div class="card"><div class="label">High</div><div class="value high">0</div></div>
+    <div class="card"><div class="label">Medium</div><div class="value medium">100</div></div>
+    <div class="card"><div class="label">Low</div><div class="value low">0</div></div>
+</div>
+
+<h2>Performance Metrics</h2>
+<table>
+<tr><th>Metric</th><th>Avg</th><th>Min</th><th>Max</th></tr>
+<tr><td>Page Load Time</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
+<tr><td>DOM Content</td><td>4266.6ms</td><td>4100.5ms</td><td>4451.2ms</td></tr>
+<tr><td>LCP</td><td>1242.1ms</td><td>392.0ms</td><td>2416.0ms</td></tr>
+<tr><td>CLS</td><td>0.004</td><td>0.000</td><td>0.050</td></tr>
+</table>
+
+<h2>All Issues (by severity)</h2>
+<h3 style="color: var(--medium)">Medium (100)</h3>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Crestaurant_tables%28table_number%29%2Corder_items%28*%29&status=in.%28active%29&order=created_at.asc&limit=50 (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/room_types?select=*&is_active=eq.true&order=name.asc (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=*%2Crooms%28*%2Croom_types%28*%29%29&status=in.%28confirmed%2Cchecked_in%29&order=created_at.desc&limit=50 (0)</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">ui</span>
+    <div class="detail">broken_icon: SVG with zero dimensions</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">ui</span>
+    <div class="detail">broken_icon: SVG with zero dimensions</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">a11y</span>
+    <div class="detail">contrast_warning: Found 2 elements with potential contrast issues</div>
+    <div class="page-url">http://localhost:5173/</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/auth/refresh (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/user_profiles?select=*&id=eq.b9201087-56a2-4858-904a-e00e24bc89b0 (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Corder_items%28*%29%2Crestaurant_tables%28table_number%29&order=created_at.desc&limit=100 (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/restaurant_tables?select=* (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/orders?select=*%2Crestaurant_tables%28table_number%29%2Corder_items%28*%29&status=in.%28active%29&order=created_at.asc&limit=50 (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/rooms?select=*%2Croom_types%28*%29&is_active=eq.true&order=room_number.asc&limit=200 (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/room_types?select=*&is_active=eq.true&order=name.asc (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">network</span>
+    <div class="detail">failed_resource: https://8cvkfu8m.us-east.insforge.app/api/database/records/bookings?select=*%2Crooms%28*%2Croom_types%28*%29%29&status=in.%28confirmed%2Cchecked_in%29&order=created_at.desc&limit=50 (0)</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">ui</span>
+    <div class="detail">broken_icon: SVG with zero dimensions</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">ui</span>
+    <div class="detail">broken_icon: SVG with zero dimensions</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<div class="issue">
+    <span class="severity-badge Medium">Medium</span>
+    <span class="type">a11y</span>
+    <div class="detail">contrast_warning: Found 2 elements with potential contrast issues</div>
+    <div class="page-url">http://localhost:5173/admin</div>
+</div>
+<p style="color: var(--text-secondary);">... and 70 more medium issues</p>
+
+<h2>All Crawled Pages</h2>
+<div class="page-list">
+<div class="page-item">
+    <div class="url"><strong>/login</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>0 UI</span>
+        <span>2 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/signup</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>0 UI</span>
+        <span>2 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin/login</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>1 UI</span>
+        <span>2 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin/signup</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>1 UI</span>
+        <span>2 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/verify-email</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>0 UI</span>
+        <span>2 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/staff</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>0 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/dashboard</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/pos</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>2 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/orders</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>2 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/orders/new</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/kitchen</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/menu</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/inventory</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/billing</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/motel</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>2 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/reports</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/settings</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/audit</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>6 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/analytics</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/system-health</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/tables</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin/users</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin/activity</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>3 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin/features</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin/queue</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+<div class="page-item">
+    <div class="url"><strong>/admin</strong></div>
+    <div class="title">Highlands Hospitality OS</div>
+    <div class="meta">
+        <span class="ok">ok</span>
+        <span>0ms</span>
+        <span>0 errors</span>
+        <span>2 UI</span>
+        <span>1 a11y</span>
+        <span>4 SEO</span>
+        <span>📸</span>
+    </div>
+</div>
+</div>
+
+<h2>Pages With Most Issues</h2>
+<table>
+<tr><th>Page</th><th>Errors</th><th>Network</th><th>UI</th><th>A11y</th><th>SEO</th><th>Load</th></tr>
+<tr><td>analytics</td><td>0</td><td>27</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>menu</td><td>0</td><td>13</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>/</td><td>0</td><td>12</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>dashboard</td><td>0</td><td>12</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>admin</td><td>0</td><td>12</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>pos</td><td>0</td><td>9</td><td>2</td><td>2</td><td>4</td><td>0ms</td></tr>
+<tr><td>new</td><td>0</td><td>9</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>motel</td><td>0</td><td>9</td><td>2</td><td>2</td><td>4</td><td>0ms</td></tr>
+<tr><td>reports</td><td>0</td><td>9</td><td>2</td><td>1</td><td>3</td><td>0ms</td></tr>
+<tr><td>inventory</td><td>0</td><td>8</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>activity</td><td>0</td><td>8</td><td>2</td><td>1</td><td>3</td><td>0ms</td></tr>
+<tr><td>orders</td><td>0</td><td>7</td><td>2</td><td>2</td><td>3</td><td>0ms</td></tr>
+<tr><td>kitchen</td><td>0</td><td>7</td><td>2</td><td>1</td><td>3</td><td>0ms</td></tr>
+<tr><td>billing</td><td>0</td><td>7</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>audit</td><td>0</td><td>7</td><td>2</td><td>6</td><td>3</td><td>0ms</td></tr>
+<tr><td>tables</td><td>0</td><td>7</td><td>2</td><td>1</td><td>4</td><td>0ms</td></tr>
+<tr><td>users</td><td>0</td><td>7</td><td>2</td><td>1</td><td>3</td><td>0ms</td></tr>
+<tr><td>login</td><td>0</td><td>6</td><td>0</td><td>2</td><td>3</td><td>0ms</td></tr>
+<tr><td>signup</td><td>0</td><td>6</td><td>0</td><td>2</td><td>3</td><td>0ms</td></tr>
+<tr><td>login</td><td>0</td><td>6</td><td>1</td><td>2</td><td>3</td><td>0ms</td></tr>
+</table>
+
+<p style="margin-top: 3rem; color: var(--text-secondary); font-size: 0.85rem;">
+Generated by Automated QA Audit System | Highlands Cafe & Motel Inn | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
+</p>
+</div>
+</body>
+</html>

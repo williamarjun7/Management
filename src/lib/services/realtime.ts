@@ -16,6 +16,8 @@ const RECONNECT_DEBOUNCE_MS = 2000;
 
 let realtimeInitialized = false;
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+let authReady = false;
+let connectPending = false;
 
 interface ChannelInfo {
   key: string;
@@ -333,16 +335,10 @@ export async function initRealtime(): Promise<void> {
     reconnectTimeout = setTimeout(async () => {
       tracking.reconnectCount++;
       recordTelemetry('websocket_reconnect', 'realtime', { reconnectCount: tracking.reconnectCount });
-      try {
-        await insforge.realtime.connect();
-        tracking.reconnectCount = 0;
-        tracking.lastConnect = Date.now();
-        recordTelemetry('websocket_connected', 'realtime', { afterReconnect: true });
-      } catch (err) {
-        logger.error('websocket_reconnect_failed', 'realtime', {
-          metadata: { error: (err as Error)?.message, reconnectCount: tracking.reconnectCount },
-        });
-      }
+      await safeConnect();
+      tracking.reconnectCount = 0;
+      tracking.lastConnect = Date.now();
+      recordTelemetry('websocket_connected', 'realtime', { afterReconnect: true });
       reconnectToChannels();
       processMutationQueue();
     }, jitterMs);
@@ -350,10 +346,20 @@ export async function initRealtime(): Promise<void> {
 
   window.addEventListener('online', handleOnline);
 
-  await insforge.realtime.connect();
-  tracking.reconnectCount = 0;
-  tracking.lastConnect = Date.now();
-  recordTelemetry('websocket_connected', 'realtime');
+  if (authReady) {
+    try {
+      await insforge.realtime.connect();
+      tracking.reconnectCount = 0;
+      tracking.lastConnect = Date.now();
+      recordTelemetry('websocket_connected', 'realtime');
+    } catch (err) {
+      logger.error('websocket_initial_connect_failed', 'realtime', {
+        metadata: { error: (err as Error)?.message },
+      });
+    }
+  } else {
+    connectPending = true;
+  }
 
   contestLeadership(
     () => {
@@ -395,10 +401,10 @@ function startHealthCheck(): void {
         metadata: { silentDuration, subscribedChannels: subscribedChannelSet.size },
       });
       recordTelemetry('websocket_silent_disconnect', 'realtime', { silentDuration });
-      insforge.realtime.connect().then(() => {
+      safeConnect().then(() => {
         tracking.lastMessageAt = Date.now();
         tracking.reconnectCount = 0;
-      }).catch(() => {});
+      });
     }
   }, HEALTH_CHECK_INTERVAL_MS);
 }
@@ -671,6 +677,30 @@ export function subscribePaymentStatus(
     removeChannel(channelKey);
     cleanup();
   };
+}
+
+export function connectAfterAuth(): void {
+  authReady = true;
+  if (connectPending) {
+    connectPending = false;
+    insforge.realtime.connect().then(() => {
+      tracking.reconnectCount = 0;
+      tracking.lastConnect = Date.now();
+      recordTelemetry('websocket_connected', 'realtime');
+    }).catch((err) => {
+      logger.error('websocket_connect_after_auth_failed', 'realtime', {
+        metadata: { error: (err as Error)?.message },
+      });
+    });
+  }
+}
+
+async function safeConnect(): Promise<void> {
+  try {
+    await insforge.realtime.connect();
+  } catch {
+    /* SDK logs its own WebSocket errors */
+  }
 }
 
 export function getRealtimeDiagnostics() {

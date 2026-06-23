@@ -5,8 +5,9 @@ import {
   getSyncQueue,
   getExternalBookings, getExternalBookingByPosId,
   pushBookingToWebsite, pushStatusUpdateToWebsite, triggerRetryQueue,
+  getReconciliationIssues, resolveReconciliationIssue, triggerReconciliation,
 } from '../services/booking-sync';
-import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking } from '../services/booking-sync.types';
+import type { RoomMapping, SyncLog, SyncQueueItem, ExternalBooking, ReconciliationIssue } from '../services/booking-sync.types';
 
 export function useRoomMappings() {
   return useQuery<RoomMapping[]>({
@@ -96,6 +97,36 @@ export function useTriggerRetryQueue() {
     mutationFn: triggerRetryQueue,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sync-queue'] });
+      qc.invalidateQueries({ queryKey: ['sync-logs'] });
+    },
+  });
+}
+
+// ── Reconciliation Hooks ──
+
+export function useReconciliationIssues(severity?: string, unresolvedOnly?: boolean) {
+  return useQuery<ReconciliationIssue[]>({
+    queryKey: ['reconciliation-issues', severity, unresolvedOnly],
+    queryFn: () => getReconciliationIssues({ severity, unresolvedOnly }),
+    refetchInterval: 30000,
+  });
+}
+
+export function useResolveReconciliationIssue() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, resolution }: { id: string; resolution?: string }) =>
+      resolveReconciliationIssue(id, resolution),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reconciliation-issues'] }),
+  });
+}
+
+export function useTriggerReconciliation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: triggerReconciliation,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reconciliation-issues'] });
       qc.invalidateQueries({ queryKey: ['sync-logs'] });
     },
   });
