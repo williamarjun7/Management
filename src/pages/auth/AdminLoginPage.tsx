@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { useAuth } from '../../lib/core/auth-context';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
-import { ShieldCheck, Hotel, ChevronRight } from 'lucide-react';
+import { ShieldCheck, ChevronRight } from 'lucide-react';
+import logoSrc from '../../assets/logo.png';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -49,11 +50,9 @@ export default function AdminLoginPage() {
         <div className="absolute bottom-20 -right-20 w-80 h-80 bg-secondary/5 rounded-full blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-              <Hotel className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-10 w-10 rounded-full object-cover" />
             <div>
-              <p className="text-lg font-bold text-foreground">Highlands Suite</p>
+              <p className="text-lg font-bold text-foreground">Highlands Cafe & Motel Inn</p>
               <p className="text-xs text-muted-foreground">Administration</p>
             </div>
           </div>
@@ -81,11 +80,9 @@ export default function AdminLoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-muted/30">
         <div className="w-full max-w-sm space-y-8">
           <div className="flex lg:hidden items-center gap-3 mb-8">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <Hotel className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-9 w-9 rounded-full object-cover" />
             <div>
-              <p className="text-base font-bold text-foreground">Highlands Suite</p>
+              <p className="text-base font-bold text-foreground">Highlands Cafe & Motel Inn</p>
               <p className="text-[10px] text-muted-foreground">Administration</p>
             </div>
           </div>

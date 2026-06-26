@@ -9,6 +9,7 @@ import { Select } from "../../components/ui/select";
 import { showSuccess, showError } from "../../components/ui/toast";
 import { FonepayQRDialog } from "../../components/FonepayQRDialog";
 import { CASH_QUICK_AMOUNTS, PAYMENT_METHOD_LABELS, type Invoice } from "../../types";
+import { formatCurrency } from "../../lib/core/format-currency";
 
 const paymentMethods = [
   { value: "cash", label: "Cash" },
@@ -33,6 +34,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
   const [customerName, setCustomerName] = useState("");
   const [cashReceived, setCashReceived] = useState(String(remaining));
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const processPayment = useProcessPayment();
   const processCashPayment = useProcessCashPayment();
   const submitLockRef = useRef(false);
@@ -41,9 +43,16 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
 
   const change = Math.max(0, Number(cashReceived) - remaining);
 
+  const payAmount = Math.min(Number(amount), remaining);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || submitted || submitLockRef.current) return;
+
+    if (payAmount <= 0) {
+      showError('Payment amount must be greater than 0');
+      return;
+    }
 
     if (method === "fonepay") {
       setShowFonepayQR(true);
@@ -57,7 +66,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
       if (method === "cash") {
         await processCashPayment.mutateAsync({
           p_invoice_id: invoice.id,
-          p_amount: Number(amount),
+          p_amount: payAmount,
           p_processed_by: user.id,
           p_idempotency_key: key,
           p_notes: notes || undefined,
@@ -65,7 +74,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
       } else {
         await processPayment.mutateAsync({
           p_invoice_id: invoice.id,
-          p_amount: Number(amount),
+          p_amount: payAmount,
           p_method: method,
           p_processed_by: user.id,
           p_idempotency_key: key,
@@ -73,7 +82,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
           p_notes: notes || undefined,
         });
       }
-      showSuccess(`${PAYMENT_METHOD_LABELS[method as keyof typeof PAYMENT_METHOD_LABELS] || method} payment of Rs. ${Number(amount).toFixed(2)} recorded`);
+      showSuccess(`${PAYMENT_METHOD_LABELS[method as keyof typeof PAYMENT_METHOD_LABELS] || method} payment of ${formatCurrency(payAmount)} recorded`);
       onClose();
     } catch (err) {
       const msg = (err as Error)?.message || "Payment failed";
@@ -81,6 +90,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
         showSuccess("Payment was already processed successfully. No duplicate charge was created.");
         onClose();
       } else {
+        setErrorMessage(msg);
         showError(msg);
         submitLockRef.current = false;
         setSubmitted(false);
@@ -90,19 +100,21 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
 
   const handleQuickCash = async (received: number) => {
     if (!user || submitted) return;
+    const payAmt = Math.min(received, remaining);
+    if (payAmt <= 0) return;
     setSubmitted(true);
     try {
       const key = `cash:${invoice.id}:${Date.now()}`;
       await processCashPayment.mutateAsync({
         p_invoice_id: invoice.id,
-        p_amount: remaining,
+        p_amount: payAmt,
         p_processed_by: user.id,
         p_idempotency_key: key,
       });
-      const chg = Math.max(0, received - remaining);
+      const chg = Math.max(0, received - payAmt);
       const msg = chg > 0
-        ? `Payment received. Change due: Rs. ${chg.toFixed(2)}`
-        : `Cash payment of Rs. ${remaining.toFixed(2)} completed`;
+        ? `Payment received. Change due: ${formatCurrency(chg)}`
+        : `Cash payment of ${formatCurrency(payAmt)} completed`;
       showSuccess(msg);
       onClose();
     } catch (err) {
@@ -147,11 +159,11 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total</span>
-            <span className="font-medium">Rs. {Number(invoice.total).toFixed(2)}</span>
+            <span className="font-medium">{formatCurrency(Number(invoice.total))}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Remaining</span>
-            <span className="font-bold text-primary">Rs. {remaining.toFixed(2)}</span>
+            <span className="font-bold text-primary">{formatCurrency(remaining)}</span>
           </div>
         </div>
 
@@ -171,7 +183,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
                       : "border-border hover:border-primary/50"
                   }`}
                 >
-                  Rs. {amt.toLocaleString()}
+                  {formatCurrency(amt)}
                 </button>
               ))}
             </div>
@@ -180,7 +192,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
                 Custom Amount
               </Button>
               <Button onClick={() => handleQuickCash(remaining)} disabled={submitted} className="flex-1 min-h-[44px]">
-                Exact Rs. {remaining.toFixed(2)}
+                Exact {formatCurrency(remaining)}
               </Button>
             </div>
           </div>
@@ -195,7 +207,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
                 min="0.01"
                 max={remaining}
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => { setAmount(e.target.value); setErrorMessage(''); }}
                 required
               />
             </div>
@@ -226,7 +238,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
                 />
                 {Number(cashReceived) > remaining && (
                   <p className="text-xs text-emerald-600 font-medium">
-                    Change due: Rs. {change.toFixed(2)}
+                    Change due: {formatCurrency(change)}
                   </p>
                 )}
               </div>
@@ -277,10 +289,8 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
           </form>
         )}
 
-        {processPayment.isError && !submitted && (
-          <p className="mt-2 text-sm text-destructive">
-            {(processPayment.error as Error)?.message || "Payment failed"}
-          </p>
+        {errorMessage && (
+          <p className="mt-2 text-sm text-destructive">{errorMessage}</p>
         )}
       </div>
     </div>

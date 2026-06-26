@@ -283,61 +283,6 @@ export interface AuthUser {
 
 export type AuthStatus = 'anonymous' | 'verification_pending' | 'authenticated';
 
-// ─── Split Bill Types ───
-
-export type SplitType = 'equal' | 'item_based' | 'custom';
-export type SplitPaymentStatus = 'unpaid' | 'partially_paid' | 'paid' | 'refunded';
-
-export interface BillSplit {
-  id: string;
-  invoice_id: string;
-  order_id: string | null;
-  split_type: SplitType;
-  guest_name: string;
-  subtotal: number;
-  tax_amount: number;
-  service_charge: number;
-  discount_amount: number;
-  total_amount: number;
-  payment_status: SplitPaymentStatus;
-  sort_order: number;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-  split_items?: SplitItem[];
-  split_payments?: SplitPayment[];
-}
-
-export interface SplitItem {
-  id: string;
-  split_id: string;
-  order_item_id: string | null;
-  item_name: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-  created_at: string;
-}
-
-export interface SplitPayment {
-  id: string;
-  split_id: string;
-  payment_method: PaymentMethod | 'digital_wallet' | 'mixed';
-  amount: number;
-  transaction_reference: string | null;
-  notes: string | null;
-  processed_by: string | null;
-  paid_at: string;
-  created_at: string;
-}
-
-export interface SplitGuest {
-  id: string;
-  name: string;
-  items?: { order_item_id: string; item_name: string; quantity: number; unit_price: number }[];
-  amount?: number;
-}
-
 export interface PaymentFormData {
   invoice_id: string; amount: number; method: PaymentMethod;
   reference?: string; notes?: string;

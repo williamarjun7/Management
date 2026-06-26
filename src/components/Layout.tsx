@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { OfflineBanner, useConnectionState } from './OfflineBanner';
+import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
 
 interface NavItem {
@@ -84,8 +85,9 @@ export default function Layout() {
         )}
       >
         <div className="flex h-16 items-center justify-between px-6 border-b">
-          <Link to="/dashboard" className="font-bold text-lg">
-            Highlands OS
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover" />
+            <span className="font-bold text-lg">Highlands Cafe & Motel Inn</span>
           </Link>
           <button
             className="lg:hidden"

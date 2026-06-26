@@ -8,6 +8,7 @@ import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { showSuccess, showError } from "../../components/ui/toast";
+import { formatCurrency } from "../../lib/core/format-currency";
 import type { Invoice } from "../../types";
 
 const statusBadgeVariant = (status: string) => {
@@ -62,7 +63,7 @@ export default function BillingPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {totalUnpaid.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalUnpaid)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -71,7 +72,7 @@ export default function BillingPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {totalPaidToday.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalPaidToday)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -80,7 +81,7 @@ export default function BillingPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {totalOutstanding.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalOutstanding)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -89,7 +90,7 @@ export default function BillingPage() {
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
           </CardContent>
         </Card>
       </div>
@@ -141,7 +142,7 @@ export default function BillingPage() {
                             {new Date(inv.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3 text-right text-sm font-medium">
-                            Rs. {Number(inv.total).toFixed(2)}
+                            {formatCurrency(Number(inv.total))}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <Badge variant={statusBadgeVariant(inv.status)}>
@@ -171,7 +172,7 @@ export default function BillingPage() {
         open={confirmDeleteInvoice !== null}
         onOpenChange={(open) => { if (!open) setConfirmDeleteInvoice(null); }}
         title="Void Invoice"
-        description={`Void invoice ${confirmDeleteInvoice?.invoice_number} (Rs. ${Number(confirmDeleteInvoice?.total ?? 0).toFixed(2)})?`}
+        description={`Void invoice ${confirmDeleteInvoice?.invoice_number} (${formatCurrency(Number(confirmDeleteInvoice?.total ?? 0))})?`}
         consequence="The invoice will be marked as refunded/voided. This cannot be undone. Customer balance will be adjusted."
         entity={`Invoice: ${confirmDeleteInvoice?.invoice_number ?? ""}`}
         confirmLabel="Void Invoice"

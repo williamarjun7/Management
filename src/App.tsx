@@ -68,6 +68,7 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/menu', element: <SuspenseWrapper><MenuPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/inventory', element: <SuspenseWrapper><InventoryPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/billing', element: <SuspenseWrapper><BillingPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
+  { path: '/billing/new', element: <Navigate to="/pos" replace /> },
   { path: '/billing/:id', element: <SuspenseWrapper><InvoiceDetailPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/motel', element: <SuspenseWrapper><MotelPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'reception', 'staff'] },
   { path: '/reports', element: <SuspenseWrapper><ReportsPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'owner', 'reception'] },

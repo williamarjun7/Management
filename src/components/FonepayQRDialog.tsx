@@ -282,7 +282,7 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     }
     if (invoice.booking_id) return "Room Booking";
     if (invoice.order_id) return "Cafe Order";
-    return "Highlands Cafe";
+    return "Highlands Cafe & Motel Inn";
   };
 
   const handleGenerateQR = async () => {

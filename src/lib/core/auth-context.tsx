@@ -196,11 +196,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    const token = (() => { try { return localStorage.getItem('insforge-auth-token'); } catch { return null; } })();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
     insforge.auth.getCurrentUser().then(async ({ data, error }) => {
       if (cancelled) return;
       if (data?.user && !error) {

@@ -3,10 +3,8 @@ import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
 import { generateFonepayQR, checkFonepayStatus, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
-import type { Invoice, BillSplit, CreditCustomer } from '../../types';
+import type { Invoice, CreditCustomer } from '../../types';
 import { queryKeys } from '../core/query-keys';
-import { showSuccess } from '../../components/ui/toast';
-
 // ─────────────── INVOICES ───────────────
 
 export function useInvoices(status?: string) {
@@ -194,38 +192,6 @@ export function useDeleteInvoice() {
   });
 }
 
-// ─────────────── SPLIT BILL ───────────────
-
-export function useSplitBill() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      p_source_invoice_id: string;
-      p_split_amounts: number[];
-      p_split_items?: string[][];
-      p_processed_by: string;
-      p_idempotency_key: string;
-    }) => {
-      const { data, error } = await insforge.database.rpc('split_bill', params);
-      if (error) {
-        logger.error('split_bill_failed', 'hooks', {
-          metadata: { invoice_id: params.p_source_invoice_id, error: (error as Error)?.message },
-          operation: 'split_bill',
-        });
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: (_data, vars) => {
-      writeAuditLog(createAuditEntry(AuditActions.SPLIT_BILL, AuditEntityTypes.INVOICE, vars.p_source_invoice_id, {
-        metadata: { split_amounts: vars.p_split_amounts },
-        event_type: AuditEventTypes.SPLIT_BILL,
-      }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
-    },
-  });
-}
-
 // ─────────────── PARTIAL PAYMENT ───────────────
 
 export function usePartialPayment() {
@@ -332,7 +298,7 @@ export function useReconciliationReport(date?: string) {
       const targetDate = date ?? new Date().toISOString().split('T')[0];
       const { data: payments, error: payErr } = await insforge.database
         .from('payment_logs')
-        .select('*, invoices(invoice_number, total)')
+        .select('*')
         .gte('created_at', targetDate)
         .lt('created_at', new Date(new Date(targetDate).getTime() + 86400000).toISOString())
         .order('created_at', { ascending: true });
@@ -369,135 +335,6 @@ export function useGenerateReceipt() {
   });
 }
 
-// ─────────────── SPLIT BILL FRONTEND ───────────────
-
-export function useSplits(invoiceId: string | undefined) {
-  return useQuery({
-    queryKey: queryKeys.splitsByInvoice(invoiceId ?? ''),
-    enabled: !!invoiceId,
-    queryFn: async () => {
-      const { data, error } = await insforge.database.rpc('get_splits_for_invoice', {
-        p_invoice_id: invoiceId,
-      });
-      if (error) throw error;
-      const result = data as { success: boolean; invoice_id: string; splits: BillSplit[] };
-      return result?.splits ?? [];
-    },
-  });
-}
-
-export function useCreateSplitBill() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      p_invoice_id: string;
-      p_order_id?: string;
-      p_split_type: string;
-      p_guests: { guest_name: string; sort_order: number }[];
-      p_processed_by: string;
-    }) => {
-      const { data, error } = await insforge.database.rpc('create_split_bill', params);
-      if (error) {
-        logger.error('create_split_bill_failed', 'hooks', {
-          metadata: { invoice_id: params.p_invoice_id, error: (error as Error)?.message },
-          operation: 'create_split_bill',
-        });
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: (_data: unknown, vars) => {
-      const data = _data as { success: boolean; invoice_id: string; split_type: string; split_count: number };
-      writeAuditLog(createAuditEntry(AuditActions.SPLIT_CREATED, AuditEntityTypes.BILL_SPLIT, vars.p_invoice_id, {
-        metadata: { split_type: vars.p_split_type, guest_count: vars.p_guests.length },
-        event_type: 'SPLIT_CREATED',
-      }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.splitsByInvoice(vars.p_invoice_id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
-      if (data?.success) {
-        showSuccess(`Bill split into ${data.split_count} parts`);
-      }
-    },
-  });
-}
-
-export function useAddSplitPayment() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      p_split_id: string;
-      p_amount: number;
-      p_payment_method: string;
-      p_transaction_reference?: string;
-      p_notes?: string;
-      p_processed_by: string;
-      p_idempotency_key: string;
-    }) => {
-      const { data, error } = await insforge.database.rpc('add_split_payment', params);
-      if (error) {
-        logger.error('add_split_payment_failed', 'hooks', {
-          metadata: { split_id: params.p_split_id, error: (error as Error)?.message },
-          operation: 'add_split_payment',
-        });
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: (_data: unknown, vars) => {
-      const data = _data as { success: boolean; split_id: string; amount: number; payment_status: string };
-      writeAuditLog(createAuditEntry(AuditActions.SPLIT_PAID, AuditEntityTypes.SPLIT_PAYMENT, vars.p_split_id, {
-        new_state: { amount: vars.p_amount, method: vars.p_payment_method },
-        event_type: 'SPLIT_PAID',
-      }));
-      queryClient.invalidateQueries({ queryKey: ['splits'] });
-      if (data?.success) {
-        showSuccess(`Payment of Rs. ${Number(vars.p_amount).toFixed(2)} recorded`);
-      }
-    },
-  });
-}
-
-export function useFinalizeSplit() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      p_split_id: string;
-      p_processed_by: string;
-    }) => {
-      const { data, error } = await insforge.database.rpc('finalize_split', params);
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['splits'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
-    },
-  });
-}
-
-export function useRefundSplit() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      p_split_id: string;
-      p_reason?: string;
-      p_processed_by: string;
-    }) => {
-      const { data, error } = await insforge.database.rpc('refund_split', params);
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_data: unknown, vars) => {
-      writeAuditLog(createAuditEntry(AuditActions.SPLIT_REFUNDED, AuditEntityTypes.BILL_SPLIT, vars.p_split_id, {
-        reason: vars.p_reason ?? 'Split refunded',
-        event_type: 'SPLIT_REFUNDED',
-      }));
-      queryClient.invalidateQueries({ queryKey: ['splits'] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
-    },
-  });
-}
-
 // ─────────────── FONEPAY ───────────────
 
 export function useFonepayQR() {
@@ -525,19 +362,27 @@ export function useCreditCustomers() {
   return useQuery({
     queryKey: queryKeys.creditCustomers,
     queryFn: async () => {
-      const { data, error } = await insforge.database
+      const { data: payments, error: payErr } = await insforge.database
         .from('payment_logs')
-        .select('invoices!inner(customer_name, customer_phone)')
+        .select('invoice_id, created_at')
         .eq('method', 'credit_account')
         .eq('status', 'paid')
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((item: Record<string, unknown>) => ({
-        id: '',
-        name: (item as { invoices: { customer_name: string } }).invoices?.customer_name ?? '',
-        phone: (item as { invoices: { customer_phone: string } }).invoices?.customer_phone ?? null,
-        total_balance: 0,
-        outstanding: 0,
+      if (payErr) throw payErr;
+      const invoiceIds = [...new Set((payments ?? []).map((p: { invoice_id: string }) => p.invoice_id))];
+      if (invoiceIds.length === 0) return [] as CreditCustomer[];
+      const { data: invoices, error: invErr } = await insforge.database
+        .from('invoices')
+        .select('id, customer_name, customer_phone, total')
+        .in('id', invoiceIds)
+        .order('created_at', { ascending: false });
+      if (invErr) throw invErr;
+      return ((invoices ?? []) as { id: string; customer_name: string; customer_phone: string | null; total: number }[]).map((inv) => ({
+        id: inv.id,
+        name: inv.customer_name ?? '',
+        phone: inv.customer_phone ?? null,
+        total_balance: Number(inv.total) || 0,
+        outstanding: Number(inv.total) || 0,
         last_payment: null,
       })) as CreditCustomer[];
     },

@@ -49,6 +49,77 @@ export function useOrders(statusFilter?: string) {
   });
 }
 
+// ─────────────── ACTIVE ORDER BY TABLE ───────────────
+
+export function useActiveOrderByTable(tableId?: string | null) {
+  return useQuery({
+    queryKey: queryKeys.activeOrderByTable(tableId ?? ''),
+    queryFn: async () => {
+      if (!tableId) return null;
+      const { data, error } = await insforge.database
+        .from(T.orders)
+        .select('*, order_items(*)')
+        .eq('table_id', tableId)
+        .not('status', 'in', '("cancelled","refunded")')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return ((data ?? []) as Order[])?.[0] ?? null;
+    },
+    enabled: !!tableId,
+  });
+}
+
+// ─────────────── ADD ITEMS TO EXISTING ORDER ───────────────
+
+export function useAddOrderItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      order_id: string;
+      items: { menu_item_id: string; item_name: string; quantity: number; unit_price: number; notes?: string }[];
+      discount?: number;
+    }) => {
+      const { order_id, items } = values;
+
+      const { error: ie } = await insforge.database
+        .from(T.orderItems)
+        .insert(items.map((i) => ({
+          order_id,
+          menu_item_id: i.menu_item_id,
+          item_name: i.item_name,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          notes: i.notes || null,
+        })));
+      if (ie) throw ie;
+
+      const { data: existingOrder, error: fe } = await insforge.database
+        .from(T.orders)
+        .select('*, order_items(*)')
+        .eq('id', order_id)
+        .single();
+      if (fe) throw fe;
+      const order = existingOrder as Order;
+      const newSubtotal = (order.order_items ?? []).reduce((s, i) => s + Number(i.unit_price) * i.quantity, 0);
+      const discount = Math.max(0, Math.min(values.discount ?? order.discount, newSubtotal));
+      const newTotal = newSubtotal - discount;
+
+      const { error: ue } = await insforge.database
+        .from(T.orders)
+        .update({ subtotal: newSubtotal, discount, total: newTotal })
+        .eq('id', order_id);
+      if (ue) throw ue;
+
+      return order;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: queryKeys.orders });
+      qc.invalidateQueries({ queryKey: queryKeys.activeOrderByTable((data as Order).table_id ?? '') });
+    },
+  });
+}
+
 export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
