@@ -35,7 +35,7 @@ export const createOrderSchema = z.object({
 
 export type CreateOrderFormData = z.infer<typeof createOrderSchema>;
 
-const paymentMethodEnum = z.enum(["cash", "card", "upi", "credit_account"]);
+const paymentMethodEnum = z.enum(["cash", "credit_account"]);
 const movementTypeEnum = z.enum(["purchase", "sale", "wastage", "adjustment", "room_usage"]);
 const serviceTypeEnum = z.enum(["room_service", "minibar", "housekeeping", "other"]);
 

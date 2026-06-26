@@ -21,8 +21,11 @@ import {
   Table2,
   Flag,
   List,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTheme } from '../lib/core/theme-context';
 import { OfflineBanner, useConnectionState } from './OfflineBanner';
 import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
@@ -55,6 +58,7 @@ const navItems: NavItem[] = [
 
 export default function Layout() {
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const conn = useConnectionState();
@@ -133,6 +137,16 @@ export default function Layout() {
           <QueueStatusBadge />
 
           <div className="flex-1" />
+
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <span key={theme} className="flex animate-theme-icon">
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </span>
+          </button>
 
           <div className="flex items-center gap-3">
             <div className="text-right">

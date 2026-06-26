@@ -1,20 +1,16 @@
 export type Role = 'admin' | 'manager' | 'owner' | 'staff' | 'kitchen' | 'reception';
 export type OrderStatus = 'active' | 'completed' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
-export type PaymentMethod = 'cash' | 'card' | 'upi' | 'credit_account' | 'fonepay';
+export type PaymentMethod = 'cash' | 'credit_account' | 'fonepay';
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Cash',
-  card: 'Card',
-  upi: 'UPI',
   credit_account: 'Credit Account',
   fonepay: 'FonePay',
 };
 
 export const PAYMENT_METHOD_ICONS: Record<PaymentMethod, string> = {
   cash: '💰',
-  card: '💳',
-  upi: '📱',
   credit_account: '📋',
   fonepay: '📷',
 };

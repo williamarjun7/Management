@@ -13,8 +13,6 @@ import { formatCurrency } from "../../lib/core/format-currency";
 
 const paymentMethods = [
   { value: "cash", label: "Cash" },
-  { value: "card", label: "Card" },
-  { value: "upi", label: "UPI" },
   { value: "credit_account", label: "Credit Account" },
   { value: "fonepay", label: "FonePay" },
 ];

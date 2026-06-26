@@ -130,10 +130,11 @@ export default function BillingPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {invoices?.map((inv: Invoice) => (
+                      {invoices?.map((inv: Invoice, idx: number) => (
                         <tr
                           key={inv.id}
-                          className="cursor-pointer border-b transition-colors hover:bg-muted/50"
+                          className="cursor-pointer border-b transition-colors hover:bg-muted/50 animate-row"
+                          style={{ animationDelay: `${idx * 40}ms` }}
                           onClick={() => navigate(`/billing/${inv.id}`)}
                         >
                           <td className="px-4 py-3 text-sm font-medium">{inv.invoice_number}</td>
