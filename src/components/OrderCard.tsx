@@ -2,6 +2,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { ORDER_STATUS_LABELS } from "../types";
+import { formatCurrency } from "../lib/core/format-currency";
 import type { Order, OrderStatus } from "../types";
 
 const statusBadgeVariant: Record<string, "default" | "secondary" | "warning" | "success" | "destructive"> = {
@@ -64,7 +65,7 @@ export default function OrderCard({ order, onStatusChange, onView, userRole }: P
                 {item.item_name || "(unknown item)"}
               </span>
               <span className="ml-2 shrink-0 text-muted-foreground">
-                Rs. {(item.unit_price * item.quantity).toFixed(2)}
+                {formatCurrency(item.unit_price * item.quantity)}
               </span>
             </li>
           ))}
@@ -78,7 +79,7 @@ export default function OrderCard({ order, onStatusChange, onView, userRole }: P
 
       <CardFooter className="flex items-center justify-between border-t pt-3">
         <span className="text-sm font-semibold">
-          Total: Rs. {(order.total ?? 0).toFixed(2)}
+          Total: {formatCurrency(order.total ?? 0)}
         </span>
         <div className="flex items-center gap-2">
           {onView && (

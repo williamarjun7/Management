@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Bed, UtensilsCrossed, ShoppingCart, ChefHat, ClipboardList, ChevronRight, Scan, CheckCircle, Clock } from 'lucide-react';
+import { Bell, Bed, UtensilsCrossed, ShoppingCart, ChefHat, ClipboardList, ChevronRight, Scan, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/core/auth-context';
+import { insforge } from '../../lib/core/insforge';
 import { showSuccess } from '../../components/ui/toast';
 
 interface TaskItem {
@@ -22,20 +24,75 @@ interface ActivityItem {
   priority?: string;
 }
 
-const tasks: TaskItem[] = [
-  { id: '1', icon: Bed, title: 'Room 204', subtitle: 'Deep Clean Requested', time: '15 mins ago', borderColor: 'border-l-[#FF8A00]', dotColor: 'bg-[#FF8A00]' },
-  { id: '2', icon: ChefHat, title: 'Room 112', subtitle: 'Breakfast Delivery', time: '08:30 AM', borderColor: 'border-l-secondary' },
-  { id: '3', icon: ClipboardList, title: 'Main Lobby', subtitle: 'Check Wifi Router', time: '09:00 AM', borderColor: 'border-l-muted-foreground' },
-];
-
-const activities: ActivityItem[] = [
-  { id: '1', icon: Bell, iconColor: 'text-destructive', text: 'Guest 301 triggered "Service Required" button', time: '2 mins ago', priority: 'High Priority' },
-  { id: '2', icon: CheckCircle, iconColor: 'text-secondary', text: 'Checkout complete for Room 105', time: '12 mins ago' },
-];
+function timeAgo(dateStr: string): string {
+  const ms = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} mins ago`;
+  const hrs = Math.floor(mins / 60);
+  return hrs < 24 ? `${hrs}h ago` : `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function StaffPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [cleanedRooms, setCleanedRooms] = useState(0);
+  const [totalRooms, setTotalRooms] = useState(0);
+  const [pendingTasks, setPendingTasks] = useState(0);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [roomsRes, hkRes, mtRes, eventsRes] = await Promise.all([
+        insforge.database.from('rooms').select('status'),
+        insforge.database.from('housekeeping_tasks').select('id, room_id, task_type, status, priority, created_at, updated_at').order('created_at', { ascending: false }).limit(10),
+        insforge.database.from('maintenance_tasks').select('id, room_id, issue_description, priority, status, created_at').order('created_at', { ascending: false }).limit(10),
+        insforge.database.from('system_events').select('id, event_type, entity_type, entity_id, payload, created_at').order('created_at', { ascending: false }).limit(10),
+      ]);
+
+      if (!roomsRes.error && roomsRes.data) {
+        const rooms = roomsRes.data as { status: string }[];
+        setTotalRooms(rooms.length);
+        setCleanedRooms(rooms.filter(r => r.status === 'available' || r.status === 'cleaning').length);
+      }
+
+      const housekeeping = ((hkRes.data ?? []) as { id: string; room_id: string; task_type: string; status: string; priority: string; created_at: string }[]);
+      const maintenance = ((mtRes.data ?? []) as { id: string; room_id: string; issue_description: string; priority: string; status: string; created_at: string }[]);
+
+      setPendingTasks(housekeeping.filter(t => t.status === 'pending').length + maintenance.filter(t => t.status === 'reported').length);
+
+      const taskList: TaskItem[] = [
+        ...housekeeping.slice(0, 3).map(t => ({
+          id: t.id, icon: Bed, title: `Room ${t.room_id?.slice(0, 8) ?? '?'}`, subtitle: t.task_type, time: timeAgo(t.created_at), borderColor: t.priority === 'high' ? 'border-l-[#FF8A00]' : 'border-l-secondary', dotColor: t.priority === 'high' ? 'bg-[#FF8A00]' : undefined,
+        })),
+        ...maintenance.slice(0, 2).map(t => ({
+          id: t.id, icon: ClipboardList, title: t.issue_description?.slice(0, 30) ?? 'Maintenance', subtitle: t.status, time: timeAgo(t.created_at), borderColor: 'border-l-muted-foreground',
+        })),
+      ];
+      setTasks(taskList.length > 0 ? taskList : [
+        { id: 'placeholder', icon: CheckCircle, title: 'No pending tasks', subtitle: 'All caught up', time: '', borderColor: 'border-l-secondary' },
+      ]);
+
+      const eventActivities: ActivityItem[] = ((eventsRes.data ?? []) as { id: string; event_type: string; entity_type: string; entity_id: string; payload: Record<string, unknown>; created_at: string }[]).slice(0, 5).map(e => {
+        const isHighPriority = e.event_type?.includes('ERROR') || e.event_type?.includes('FAILED');
+        return {
+          id: e.id,
+          icon: isHighPriority ? Bell : CheckCircle,
+          iconColor: isHighPriority ? 'text-destructive' : 'text-secondary',
+          text: `${e.event_type} ${e.entity_type ? `- ${e.entity_type} ${e.entity_id ?? ''}` : ''}`.trim(),
+          time: timeAgo(e.created_at),
+          priority: isHighPriority ? 'High Priority' : undefined,
+        };
+      });
+      setActivities(eventActivities.length > 0 ? eventActivities : [
+        { id: 'empty', icon: CheckCircle, iconColor: 'text-secondary', text: 'No recent activity', time: '' },
+      ]);
+
+      setLoading(false);
+    })();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0F1115] text-on-surface font-body-md relative pb-32">
@@ -57,22 +114,28 @@ export default function StaffPage() {
       </header>
 
       <main className="pt-20 pb-8 px-6 space-y-6">
-        <section className="grid grid-cols-2 gap-4">
-          <div className="rounded-xl border-l-4 border-primary p-4 flex flex-col justify-between h-32" style={{ background: 'rgba(32, 31, 31, 0.6)', backdropFilter: 'blur(20px)' }}>
-            <span className="text-xs font-semibold text-on-surface-variant tracking-wider">ROOMS CLEANED</span>
-            <div className="flex items-end justify-between">
-              <span className="text-5xl font-bold leading-none text-on-surface">12<span className="text-sm font-medium text-on-surface-variant ml-1">/15</span></span>
-              <CheckCircle className="h-6 w-6 text-primary" />
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-          <div className="rounded-xl border-l-4 border-secondary p-4 flex flex-col justify-between h-32" style={{ background: 'rgba(32, 31, 31, 0.6)', backdropFilter: 'blur(20px)' }}>
-            <span className="text-xs font-semibold text-on-surface-variant tracking-wider">PENDING TASKS</span>
-            <div className="flex items-end justify-between">
-              <span className="text-5xl font-bold leading-none text-on-surface">04</span>
-              <Clock className="h-6 w-6 text-secondary" />
+        ) : (
+          <section className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl border-l-4 border-primary p-4 flex flex-col justify-between h-32" style={{ background: 'rgba(32, 31, 31, 0.6)', backdropFilter: 'blur(20px)' }}>
+              <span className="text-xs font-semibold text-on-surface-variant tracking-wider">ROOMS READY</span>
+              <div className="flex items-end justify-between">
+                <span className="text-5xl font-bold leading-none text-on-surface">{cleanedRooms}<span className="text-sm font-medium text-on-surface-variant ml-1">/{totalRooms}</span></span>
+                <CheckCircle className="h-6 w-6 text-primary" />
+              </div>
             </div>
-          </div>
-        </section>
+            <div className="rounded-xl border-l-4 border-secondary p-4 flex flex-col justify-between h-32" style={{ background: 'rgba(32, 31, 31, 0.6)', backdropFilter: 'blur(20px)' }}>
+              <span className="text-xs font-semibold text-on-surface-variant tracking-wider">PENDING TASKS</span>
+              <div className="flex items-end justify-between">
+                <span className="text-5xl font-bold leading-none text-on-surface">{String(pendingTasks).padStart(2, '0')}</span>
+                <Clock className="h-6 w-6 text-secondary" />
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-on-surface">Quick Entry</h2>
@@ -107,10 +170,10 @@ export default function StaffPage() {
             <button onClick={() => navigate('/orders')} className="text-primary text-xs font-medium">View All</button>
           </div>
           <div className="space-y-3">
-            {tasks.map((task) => {
+              {tasks.map((task) => {
               const Icon = task.icon;
               return (
-                <div key={task.id} className="relative group" onClick={() => navigate('/motel')}>
+                <div key={task.id} className="relative group" onClick={() => task.id !== 'placeholder' ? navigate('/motel') : undefined}>
                   <div className={`rounded-xl border-l-4 p-5 flex items-center justify-between relative z-10 transition-transform active:scale-[0.98] ${task.borderColor}`} style={{ background: 'rgba(32, 31, 31, 0.6)', backdropFilter: 'blur(20px)' }}>
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center">
@@ -124,10 +187,12 @@ export default function StaffPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-on-surface">{task.time}</p>
-                      <ChevronRight className="h-4 w-4 text-on-surface-variant opacity-50 ml-auto" />
-                    </div>
+                    {task.time && (
+                      <div className="text-right">
+                        <p className="text-sm text-on-surface">{task.time}</p>
+                        <ChevronRight className="h-4 w-4 text-on-surface-variant opacity-50 ml-auto" />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -145,9 +210,11 @@ export default function StaffPage() {
                   <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${a.iconColor}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-on-surface">{a.text}</p>
-                    <p className="text-xs text-on-surface-variant mt-0.5">
-                      {a.time}{a.priority && ` • ${a.priority}`}
-                    </p>
+                    {a.time && (
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        {a.time}{a.priority && ` • ${a.priority}`}
+                      </p>
+                    )}
                   </div>
                 </div>
               );

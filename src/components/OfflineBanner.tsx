@@ -7,7 +7,6 @@ type ConnectionState = "connected" | "offline" | "reconnecting" | "replaying";
 export function useConnectionState() {
   const [state, setState] = useState<ConnectionState>("connected");
   const [lastSynced, setLastSynced] = useState<Date>(new Date());
-  const [replayProgress, setReplayProgress] = useState<{ current: number; total: number } | null>(null);
 
   useEffect(() => {
     function handleOnline() {
@@ -34,7 +33,7 @@ export function useConnectionState() {
     };
   }, []);
 
-  return { state, lastSynced, replayProgress, setReplayProgress };
+  return { state, lastSynced };
 }
 
 const config: Record<ConnectionState, {

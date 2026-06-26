@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Printer, Table2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/core/utils';
@@ -44,7 +44,6 @@ export function KitchenOrderCard({
   isUpdating,
 }: KitchenOrderCardProps) {
   const [elapsed, setElapsed] = useState(() => getElapsedMinutes(order.created_at));
-  const prevOrderIdRef = useRef(order.id);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -52,10 +51,6 @@ export function KitchenOrderCard({
     }, 1000);
     return () => clearInterval(timer);
   }, [order.created_at]);
-
-  useEffect(() => {
-    prevOrderIdRef.current = order.id;
-  }, [order.id]);
 
   const isUrgent = elapsed > 15;
   const isWarning = elapsed > 10 && !isUrgent;

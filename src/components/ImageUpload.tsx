@@ -13,6 +13,7 @@ export default function ImageUpload({ currentUrl, onUpload, onRemove, uploading 
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -41,7 +42,7 @@ export default function ImageUpload({ currentUrl, onUpload, onRemove, uploading 
     onRemove?.();
   }
 
-  const displayUrl = preview || currentUrl;
+  const displayUrl = (preview || currentUrl) && !imgError ? preview || currentUrl : null;
 
   return (
     <div className="space-y-2">
@@ -52,9 +53,7 @@ export default function ImageUpload({ currentUrl, onUpload, onRemove, uploading 
               src={displayUrl}
               alt="Preview"
               className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "";
-              }}
+              onError={() => setImgError(true)}
             />
             <button
               type="button"

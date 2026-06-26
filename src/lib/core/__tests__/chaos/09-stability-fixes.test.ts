@@ -125,13 +125,13 @@ describe('Chaos: Stability Fix Verification', () => {
       expect(flags1).toBeDefined();
 
       const flagPayload = JSON.stringify({
-        indexDbEnabled: false,
-        dualWriteEnabled: false,
-        circuitBreakerEnabled: false,
-        realtimeReplayEnabled: false,
-        sentryReplayEnabled: false,
-        queueProcessingEnabled: false,
-        chaosModeEnabled: true,
+        indexDbMode: false,
+        dualWriteMode: false,
+        circuitBreaker: false,
+        realtimeReplay: false,
+        sentryReplay: false,
+        queueProcessing: false,
+        chaosMode: true,
       });
       localStorage.setItem('highlands_feature_flags', flagPayload);
       window.dispatchEvent(new StorageEvent('storage', {

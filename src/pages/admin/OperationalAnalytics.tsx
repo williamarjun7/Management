@@ -390,8 +390,8 @@ export default function OperationalAnalytics() {
                     <p className="text-[10px] text-muted-foreground">{p.category ?? 'Uncategorized'} · {p.unit}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-medium ${p.stock_quantity <= 0 ? 'text-red-500' : 'text-amber-500'}`}>
-                      {p.stock_quantity} {p.unit}
+                    <p className={`text-sm font-medium ${(p as unknown as { stock_balance: number }).stock_balance <= 0 ? 'text-red-500' : 'text-amber-500'}`}>
+                      {(p as unknown as { stock_balance: number }).stock_balance} {p.unit}
                     </p>
                     <p className="text-[10px] text-muted-foreground">Reorder at: {p.reorder_level}</p>
                   </div>

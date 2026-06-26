@@ -185,13 +185,9 @@ export function useLowStockProducts() {
   return useQuery({
     queryKey: ['analytics', 'inventory', 'low-stock'],
     queryFn: async () => {
-      const { data, error } = await insforge.database
-        .from('products')
-        .select('id, name, sku, category, unit, reorder_level, is_active')
-        .not('reorder_level', 'is', null);
+      const { data, error } = await insforge.database.rpc('get_low_stock_products');
       if (error) throw error;
-      const products = (data ?? []) as Product[];
-      return products.filter(p => (p.is_active ?? false) && (p.reorder_level ?? 0) > 0);
+      return (data ?? []) as Product[];
     },
   });
 }
@@ -280,12 +276,12 @@ export function useOccupancyForecast(days = 7) {
         dailyBookings[day] = (dailyBookings[day] || 0) + 1;
       });
 
-      const { data: roomCount } = await insforge.database
+      const { count: roomCount } = await insforge.database
         .from('rooms')
         .select('id', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      const totalRooms = (roomCount as unknown as number) ?? 20;
+      const totalRooms = (roomCount as number) ?? 20;
 
       return {
         dailyBookings,
