@@ -43,6 +43,9 @@ nul
 scripts/exec-*
 scripts/run-*
 
+# Database migrations (applied; kept locally for reference)
+migrations/
+
 # InsForge & AI agent skills
 .insforge
 .agent
