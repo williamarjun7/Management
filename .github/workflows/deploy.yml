@@ -1,0 +1,62 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy via rsync over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 103.233.58.46
+          username: highlandscafe
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p /tmp/pos-deploy
+            rm -rf /tmp/pos-deploy/*
+
+      - name: Copy build to server
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avzr --delete --checksum
+          path: dist/
+          remote_path: /tmp/pos-deploy
+          remote_host: 103.233.58.46
+          remote_user: highlandscafe
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Finalize deployment
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 103.233.58.46
+          username: highlandscafe
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            release_id=$(date +%s)
+            release_dir="/var/www/highlands-motel/releases/$release_id"
+            mkdir -p "$release_dir"
+            cp -r /tmp/pos-deploy/* "$release_dir/"
+            ln -sfn "$release_dir" /var/www/highlands-motel/current_new
+            mv -T /var/www/highlands-motel/current_new /var/www/highlands-motel/current
+            ls -1 /var/www/highlands-motel/releases/ | sort | head -n -5 | while read dir; do
+              rm -rf "/var/www/highlands-motel/releases/$dir"
+            done
+            rm -rf /tmp/pos-deploy
+            echo "Deployed release: $release_id"
