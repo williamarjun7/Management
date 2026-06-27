@@ -46,6 +46,11 @@ scripts/run-*
 # Database migrations (applied; kept locally for reference)
 migrations/
 
+# Capacitor / Android native project (generated, recreate with `npx cap add android`)
+android/
+*.apk
+*.aab
+
 # InsForge & AI agent skills
 .insforge
 .agent

@@ -12,6 +12,9 @@
     "test:watch": "node ./node_modules/vitest/vitest.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/splash-screen": "^8.0.1",
     "@hookform/resolvers": "^5.2.2",
     "@insforge/cli": "^0.1.81",
     "@insforge/sdk": "^1.2.9",
@@ -55,6 +58,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.6.0",
+    "jimp": "^1.6.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
