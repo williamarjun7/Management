@@ -36,7 +36,8 @@ const QueueInspectorPage = lazy(() => import('./pages/admin/QueueInspectorPage')
 
 function RoleRedirect() {
   const { user } = useAuth();
-  const target = user?.role === 'owner' ? '/analytics' : '/dashboard';
+  const isPosDomain = typeof window !== 'undefined' && window.location.hostname.startsWith('pos.');
+  const target = isPosDomain ? '/pos' : user?.role === 'owner' ? '/analytics' : '/dashboard';
   return <Navigate to={target} replace />;
 }
 
