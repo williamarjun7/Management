@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './lib/core/auth-context';
+import { AuthProvider } from './lib/core/auth-context';
 import { initSentry, Sentry } from './lib/services/sentry';
 import { initRealtime, shutdownRealtime } from './lib/services/realtime';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -35,10 +35,7 @@ const FeatureFlagsPage = lazy(() => import('./pages/admin/FeatureFlagsPage'));
 const QueueInspectorPage = lazy(() => import('./pages/admin/QueueInspectorPage'));
 
 function RoleRedirect() {
-  const { user } = useAuth();
-  const isPosDomain = typeof window !== 'undefined' && window.location.hostname.startsWith('pos.');
-  const target = isPosDomain ? '/pos' : user?.role === 'owner' ? '/analytics' : '/dashboard';
-  return <Navigate to={target} replace />;
+  return <Navigate to="/pos" replace />;
 }
 
 type RouteConfig = {
@@ -102,6 +99,7 @@ export default function App() {
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="/verify-email" element={<SuspenseWrapper><VerifyEmail /></SuspenseWrapper>} />
           <Route path="/staff" element={<SuspenseWrapper><StaffPage /></SuspenseWrapper>} />
+          <Route path="/pos" element={<SuspenseWrapper><PosPage /></SuspenseWrapper>} />
           <Route path="*" element={<RoleRedirect />} />
           <Route
             element={

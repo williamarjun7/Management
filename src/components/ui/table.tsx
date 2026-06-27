@@ -20,7 +20,11 @@ interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
 }
 
 export function Table({ className, ref, ...props }: TableProps) {
-  return <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />;
+  return (
+    <div className="w-full overflow-x-auto">
+      <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
+    </div>
+  );
 }
 export function TableHeader({ className, ref, ...props }: TableHeaderProps) {
   return <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />;
@@ -32,8 +36,8 @@ export function TableRow({ className, ref, ...props }: TableRowProps) {
   return <tr ref={ref} className={cn('border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted', className)} {...props} />;
 }
 export function TableHead({ className, ref, ...props }: TableHeadProps) {
-  return <th ref={ref} className={cn('h-10 px-4 text-left align-middle font-medium text-muted-foreground', className)} {...props} />;
+  return <th ref={ref} className={cn('h-10 md:h-11 px-3 md:px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap', className)} {...props} />;
 }
 export function TableCell({ className, ref, ...props }: TableCellProps) {
-  return <td ref={ref} className={cn('p-4 align-middle', className)} {...props} />;
+  return <td ref={ref} className={cn('p-3 md:p-4 align-middle whitespace-nowrap', className)} {...props} />;
 }

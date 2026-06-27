@@ -88,7 +88,7 @@ export default function Layout() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center justify-between px-6 border-b">
+        <div className="flex h-16 items-center justify-between px-4 md:px-6 border-b">
           <Link to="/dashboard" className="flex items-center gap-2">
             <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover" />
             <span className="font-bold text-lg">Highlands Cafe & Motel Inn</span>
@@ -126,7 +126,7 @@ export default function Layout() {
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
           <button
             className="lg:hidden"
             onClick={() => setSidebarOpen(true)}
@@ -170,7 +170,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="p-6">
+        <main className="p-4 md:p-6">
           <OfflineBanner state={conn.state} lastSynced={conn.lastSynced} />
           <Outlet />
         </main>
