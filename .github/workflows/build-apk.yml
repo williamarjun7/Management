@@ -95,7 +95,9 @@ jobs:
 
       - name: Rename APK
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk ${{ steps.version.outputs.apk_filename }}
+          APK=$(find android -name "*.apk" -path "*/release/*" | head -1)
+          echo "Found APK: $APK"
+          cp "$APK" ${{ steps.version.outputs.apk_filename }}
 
       - name: Upload APK to server
         uses: appleboy/scp-action@v0.1.7
