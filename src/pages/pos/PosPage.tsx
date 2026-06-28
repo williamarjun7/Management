@@ -25,7 +25,7 @@ async function generateInvoiceNumber(): Promise<string> {
   const next = lastSeq ? parseInt(lastSeq.slice(-3), 10) + 1 : 1;
   return `${prefix}${String(next).padStart(3, '0')}`;
 }
-import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3 } from 'lucide-react';
+import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3, ArrowLeft } from 'lucide-react';
 import { PaymentCheckout } from '../../components/PaymentCheckout';
 
 interface CartItem {
@@ -329,7 +329,17 @@ export default function PosPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-dvh">
+    <div className="flex flex-col h-dvh">
+      {/* Mobile top bar */}
+      <div className="flex items-center gap-2 px-4 h-12 border-b border-border bg-card shrink-0 lg:hidden">
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />
+          <span>Home</span>
+        </button>
+        <span className="text-xs text-muted-foreground ml-auto">POS</span>
+      </div>
+
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
       {/* Category sidebar: horizontal scroll on mobile, vertical on lg+ */}
       <div className="flex lg:flex-col items-center gap-2 lg:gap-1 p-2 lg:p-0 lg:py-4 lg:w-auto overflow-x-auto lg:overflow-x-visible border-b lg:border-b-0 lg:border-r border-border shrink-0">
         <button
@@ -858,6 +868,7 @@ export default function PosPage() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

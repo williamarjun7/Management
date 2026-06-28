@@ -56,6 +56,13 @@ const navItems: NavItem[] = [
   { label: 'Queue Inspector', href: '/admin/queue', icon: List, roles: ['admin'] },
 ];
 
+const bottomNavItems: { label: string; href: string; icon: React.ElementType }[] = [
+  { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'POS', href: '/pos', icon: ShoppingCart },
+  { label: 'Orders', href: '/orders', icon: ClipboardList },
+  { label: 'Billing', href: '/billing', icon: Receipt },
+];
+
 export default function Layout() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -101,7 +108,7 @@ export default function Layout() {
           </button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 overflow-y-auto pb-20">
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.href;
@@ -170,11 +177,41 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="p-4 md:p-6">
+        <main className="p-4 md:p-6 pb-20 lg:pb-6">
           <OfflineBanner state={conn.state} lastSynced={conn.lastSynced} />
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t bg-card/95 backdrop-blur-md lg:hidden safe-area-bottom">
+        {bottomNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                'flex flex-col items-center justify-center gap-0.5 flex-1 h-14 text-[11px] font-medium transition-colors',
+                active
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className={cn('h-5 w-5', active && 'fill-current')} />
+              {item.label}
+            </Link>
+          );
+        })}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-14 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+          More
+        </button>
+      </nav>
     </div>
   );
 }
