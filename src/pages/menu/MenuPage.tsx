@@ -12,7 +12,7 @@ import {
 } from "../../lib/hooks";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { showSuccess, showError } from "../../components/ui/toast";
-import { List, Plus, X } from "lucide-react";
+import { List } from "lucide-react";
 import type { MenuCategory, MenuItem } from "../../types";
 import MenuCategoryDialog from "./MenuCategoryDialog";
 import MenuItemDialog from "./MenuItemDialog";

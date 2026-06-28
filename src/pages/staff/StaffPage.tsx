@@ -230,11 +230,11 @@ export default function StaffPage() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-outline-variant/10 safe-area-bottom">
         <div className="flex items-center justify-around h-20 px-6">
           {([
-            { label: 'Operations', href: '/dashboard', icon: ChefHat },
-            { label: 'Rooms', href: '/motel', icon: Bed },
+            { label: 'Operations', href: '/dashboard', icon: ChefHat, fab: false },
+            { label: 'Rooms', href: '/motel', icon: Bed, fab: false },
             { label: 'Scan', href: '/pos', icon: Scan, fab: true },
-            { label: 'KDS', href: '/kitchen', icon: UtensilsCrossed },
-            { label: 'Analytics', href: '/analytics', icon: ClipboardList },
+            { label: 'KDS', href: '/kitchen', icon: UtensilsCrossed, fab: false },
+            { label: 'Analytics', href: '/analytics', icon: ClipboardList, fab: false },
           ] as const).map((item) => {
             const active = location.pathname === item.href;
             if (item.fab) {

@@ -4,12 +4,12 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+
 import { BottomSheet } from "../../components/ui/bottom-sheet";
 import { useMenuCategories, useMenuItems, useCreateOrder, useTables } from "../../lib/hooks";
 import { formatCurrency } from "../../lib/core/format-currency";
 import {
-  Percent, Search, Plus, Minus, ShoppingCart, X, Table2, User,
+  Search, Plus, Minus, ShoppingCart, Table2,
   ChevronRight, UtensilsCrossed
 } from "lucide-react";
 import type { MenuItem } from "../../types";
@@ -134,7 +134,7 @@ export default function CreateOrderPage() {
     navigate("/orders");
   }
 
-  function CartContent({ close }: { close?: () => void }) {
+  function CartContent() {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto space-y-2 px-1 py-1">
@@ -453,7 +453,7 @@ export default function CreateOrderPage() {
                 />
               </div>
             </div>
-            <CartContent close={() => setMobileCartOpen(false)} />
+            <CartContent />
           </BottomSheet>
         )}
 

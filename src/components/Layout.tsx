@@ -27,7 +27,7 @@ import {
   ChevronRight,
   RefreshCw,
 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../lib/core/theme-context';
 import { OfflineBanner, useConnectionState } from './OfflineBanner';
 import { BottomSheet } from './ui/bottom-sheet';
@@ -85,7 +85,7 @@ export default function Layout() {
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const conn = useConnectionState();
   const { keyboardHeight, isKeyboardOpen } = useKeyboardAware();
-  const [refreshing, setRefreshing] = useState(false);
+
   const mainRef = useRef<HTMLElement>(null);
 
   const userRole = user?.role ?? 'staff';
@@ -130,14 +130,6 @@ export default function Layout() {
       }
     };
   }, [location.pathname]);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
-
-  const bottomPadding = isKeyboardOpen ? `pb-[${keyboardHeight}px]` : 'pb-20 lg:pb-6';
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,10 +206,6 @@ export default function Layout() {
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </span>
           </button>
-
-          {refreshing && (
-            <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-          )}
 
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
