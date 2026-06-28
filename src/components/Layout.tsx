@@ -60,6 +60,7 @@ const navItems: NavItem[] = [
   { label: 'Audit Log', href: '/audit', icon: ScrollText, roles: ['admin'] },
   { label: 'Settings', href: '/settings', icon: Settings, roles: ['admin'] },
   { label: 'System Health', href: '/system-health', icon: Activity, roles: ['admin'] },
+  { label: 'App Updates', href: '/admin/updates', icon: RefreshCw, roles: ['admin'] },
   { label: 'Feature Flags', href: '/admin/features', icon: Flag, roles: ['admin'] },
   { label: 'Queue Inspector', href: '/admin/queue', icon: List, roles: ['admin'] },
 ];

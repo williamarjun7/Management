@@ -21,6 +21,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.ref_name == 'main' && '1.5.0' || '0.0.0' }}
 
       - name: Deploy via rsync over SSH
         uses: appleboy/ssh-action@v1.2.2
@@ -55,6 +57,7 @@ jobs:
             cp -r /tmp/pos-deploy/* "$release_dir/"
             ln -sfn "$release_dir" /var/www/highlands-motel/current_new
             mv -T /var/www/highlands-motel/current_new /var/www/highlands-motel/current
+            mkdir -p /var/www/highlands-motel/current/downloads
             ls -1 /var/www/highlands-motel/releases/ | sort | head -n -5 | while read dir; do
               rm -rf "/var/www/highlands-motel/releases/$dir"
             done

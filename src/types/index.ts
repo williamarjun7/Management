@@ -292,6 +292,31 @@ export interface PaymentFormData {
   reference?: string; notes?: string;
 }
 
+export interface AppVersion {
+  id: string;
+  version: string;
+  version_code: number;
+  min_version: string;
+  min_version_code: number;
+  force_update: boolean;
+  apk_url: string;
+  release_notes: string[];
+  is_current: boolean;
+  published_at: string;
+  created_at: string;
+}
+
+export interface AppVersionCheckResult {
+  latestVersion: string;
+  latestVersionCode: number;
+  minimumSupportedVersion: string;
+  minimumSupportedVersionCode: number;
+  forceUpdate: boolean;
+  apkUrl: string;
+  releaseNotes: string[];
+  publishedAt: string;
+}
+
 export interface ProductFormData {
   name: string; sku?: string; category?: string; unit: string; reorder_level?: number;
 }

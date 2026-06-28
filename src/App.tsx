@@ -1,6 +1,8 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/core/auth-context';
+import { UpdateProvider } from './lib/core/update-context';
+import { UpdateOverlay } from './components/UpdateOverlay';
 import { initSentry, Sentry } from './lib/services/sentry';
 import { initRealtime, shutdownRealtime } from './lib/services/realtime';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -34,6 +36,7 @@ const StaffActivityLogs = lazy(() => import('./pages/admin/StaffActivityLogs'));
 const FeatureFlagsPage = lazy(() => import('./pages/admin/FeatureFlagsPage'));
 const QueueInspectorPage = lazy(() => import('./pages/admin/QueueInspectorPage'));
 const DiningRoomsPage = lazy(() => import('./pages/admin/DiningRoomsPage'));
+const AppUpdatesPage = lazy(() => import('./pages/admin/AppUpdatesPage'));
 
 function RoleRedirect() {
   return <Navigate to="/pos" replace />;
@@ -81,6 +84,7 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/admin/features', element: <SuspenseWrapper><FeatureFlagsPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/admin/queue', element: <SuspenseWrapper><QueueInspectorPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/admin/rooms', element: <SuspenseWrapper><DiningRoomsPage /></SuspenseWrapper>, roles: ['admin', 'manager'] },
+  { path: '/admin/updates', element: <SuspenseWrapper><AppUpdatesPage /></SuspenseWrapper>, roles: ['admin'] },
 ];
 
 export default function App() {
@@ -93,7 +97,9 @@ export default function App() {
   return (
     <AuthProvider>
       <Sentry.ErrorBoundary fallback={<ErrorFallback />}>
-        <Routes>
+        <UpdateProvider>
+          <UpdateOverlay />
+          <Routes>
           <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
           <Route path="/signup" element={<SuspenseWrapper><SignUpPage /></SuspenseWrapper>} />
           <Route path="/admin/login" element={<SuspenseWrapper><AdminLoginPage /></SuspenseWrapper>} />
@@ -127,6 +133,7 @@ export default function App() {
             ))}
           </Route>
         </Routes>
+        </UpdateProvider>
       </Sentry.ErrorBoundary>
     </AuthProvider>
   );

@@ -11,10 +11,13 @@ import {
   Save, Bell, Globe, Palette, Sun, Moon, Loader2,
   ShoppingCart, Receipt, Hotel, CookingPot, Lock, Users,
   Clock, Printer, Percent, DollarSign, KeyRound,
+  Smartphone, Download,
 } from 'lucide-react';
 import { insforge } from '../../lib/core/insforge';
 import { useAuth } from '../../lib/core/auth-context';
 import { useTheme } from '../../lib/core/theme-context';
+import { getCurrentAppVersion } from '../../lib/services/app-update';
+import { useUpdate } from '../../lib/core/update-context';
 import ColorPicker from '../../components/ColorPicker';
 
 const ALL_ROLES = ['admin', 'manager', 'staff', 'kitchen', 'reception'] as const;
@@ -79,6 +82,7 @@ const DEFAULT_SETTINGS = {
 export default function SettingsPage() {
   const { user } = useAuth();
   const { theme, setTheme, resetTheme } = useTheme();
+  const { updateInfo, updateAvailable } = useUpdate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -515,6 +519,26 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Smartphone className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">App Version</p>
+              <p className="text-xs text-muted-foreground">Highlands Cafe POS v{getCurrentAppVersion()}</p>
+            </div>
+          </div>
+          <a
+            href={updateInfo?.apkUrl ?? '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-lg border border-input px-3 py-1.5 text-xs font-medium hover:bg-accent"
+          >
+            <Download className="h-3.5 w-3.5" /> {updateAvailable ? `v${updateInfo!.latestVersion} Available` : 'Up to date'}
+          </a>
+        </div>
+      </Card>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving || saved}>

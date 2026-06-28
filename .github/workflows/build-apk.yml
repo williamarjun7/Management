@@ -1,0 +1,142 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App version (e.g., 1.5.0)'
+        required: true
+        type: string
+      version_code:
+        description: 'Version code (incrementing integer)'
+        required: true
+        type: number
+      force_update:
+        description: 'Force update (mandatory)'
+        required: false
+        default: false
+        type: boolean
+      release_notes:
+        description: 'Release notes (comma-separated or multi-line)'
+        required: false
+        default: 'Bug fixes and improvements'
+        type: string
+
+env:
+  APK_FILENAME: highlands-pos-${{ inputs.version }}.apk
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ inputs.version }}
+          VITE_APP_VERSION_CODE: ${{ inputs.version_code }}
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/highlands-release.keystore
+
+      - name: Build release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Rename APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk ${{ env.APK_FILENAME }}
+
+      - name: Upload APK to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 103.233.58.46
+          username: highlandscafe
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ${{ env.APK_FILENAME }}
+          target: /tmp/pos-apk
+
+      - name: Move APK to downloads directory & publish version
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 103.233.58.46
+          username: highlandscafe
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p /var/www/highlands-motel/current/downloads
+            mv /tmp/pos-apk/${{ env.APK_FILENAME }} /var/www/highlands-motel/current/downloads/${{ env.APK_FILENAME }}
+            rm -rf /tmp/pos-apk
+
+      - name: Publish version metadata
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 103.233.58.46
+          username: highlandscafe
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Parse release notes from input (line breaks)
+            IFS=';' read -ra NOTES <<< "${{ inputs.release_notes }}"
+            NOTES_JSON="["
+            FIRST=true
+            for note in "${NOTES[@]}"; do
+              if [ "$FIRST" = true ]; then
+                FIRST=false
+              else
+                NOTES_JSON+=","
+              fi
+              NOTES_JSON+="\"$(echo "$note" | xargs)\""
+            done
+            NOTES_JSON+="]"
+            
+            curl -X POST "https://8cvkfu8m.us-east.insforge.app/api/query" \
+              -H "Content-Type: application/json" \
+              -H "apikey: ${{ secrets.INSFORGE_SERVICE_KEY }}" \
+              -H "Authorization: Bearer ${{ secrets.INSFORGE_SERVICE_KEY }}" \
+              -d "UPDATE app_versions SET is_current = false WHERE is_current = true;"
+            
+            curl -X POST "https://8cvkfu8m.us-east.insforge.app/api/query" \
+              -H "Content-Type: application/json" \
+              -H "apikey: ${{ secrets.INSFORGE_SERVICE_KEY }}" \
+              -H "Authorization: Bearer ${{ secrets.INSFORGE_SERVICE_KEY }}" \
+              -d "INSERT INTO app_versions (version, version_code, min_version, min_version_code, force_update, apk_url, release_notes, is_current) VALUES ('${{ inputs.version }}', ${{ inputs.version_code }}, '1.0.0', 1, ${{ inputs.force_update == true && 'true' || 'false' }}, 'https://pos.highlandscafemotelinn.com/downloads/${{ env.APK_FILENAME }}', '${{ inputs.release_notes }}', true);"
+
+      - name: Send Telegram notification
+        if: always()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ${{ job.status == 'success' && '✅' || '❌' }} Highlands POS APK Build ${{ job.status }}
+            
+            Version: ${{ inputs.version }} (code ${{ inputs.version_code }})
+            Force Update: ${{ inputs.force_update }}
+            
+            ${{ job.status == 'success' && format('Download: https://pos.highlandscafemotelinn.com/downloads/{0}', env.APK_FILENAME) || 'Build failed - check Actions logs' }}
