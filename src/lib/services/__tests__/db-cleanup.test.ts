@@ -69,7 +69,7 @@ describe('db-cleanup', () => {
   describe('scheduleCleanup', () => {
     it('should run cleanup on interval and return a cancel function', async () => {
       vi.useFakeTimers();
-      const { runCleanup, scheduleCleanup } = await import('../db-cleanup');
+      const { scheduleCleanup } = await import('../db-cleanup');
 
       const cancel = await scheduleCleanup(1000);
       expect(typeof cancel).toBe('function');

@@ -25,7 +25,7 @@ describe('createMutex', () => {
     order.push(1);
 
     const p2 = mutex.acquire().then((release) => { order.push(2); release(); });
-    const p3 = mutex.acquire().then((release) => { order.push(3); release(); });
+    mutex.acquire().then((release) => { order.push(3); release(); });
 
     expect(order).toEqual([1]);
     release1();

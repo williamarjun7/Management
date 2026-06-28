@@ -2,14 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { exportCsv } from '../csv-export';
 
 describe('exportCsv', () => {
-  let linkHref: string;
-  let linkDownload: string;
-
   beforeEach(() => {
     URL.createObjectURL = vi.fn(() => 'blob:test');
     URL.revokeObjectURL = vi.fn();
-    document.body.appendChild = vi.fn((el: HTMLElement) => el);
-    document.body.removeChild = vi.fn();
+    document.body.appendChild = vi.fn() as any;
+    document.body.removeChild = vi.fn() as any;
   });
 
   afterEach(() => {
@@ -28,7 +25,7 @@ describe('exportCsv', () => {
 
     exportCsv(rows, columns, 'test-report');
 
-    const link = document.body.appendChild.mock.calls[0][0] as HTMLAnchorElement;
+    const link = vi.mocked(document.body.appendChild).mock.calls[0][0] as HTMLAnchorElement;
     expect(link.href).toBe('blob:test');
     expect(link.download).toBe('test-report.csv');
   });
@@ -43,7 +40,7 @@ describe('exportCsv', () => {
     ];
 
     exportCsv(rows, columns, 'escape-test');
-    const link = document.body.appendChild.mock.calls[0][0] as HTMLAnchorElement;
+    const link = vi.mocked(document.body.appendChild).mock.calls[0][0] as HTMLAnchorElement;
     expect(link).toBeTruthy();
   });
 
@@ -55,7 +52,7 @@ describe('exportCsv', () => {
     ];
 
     exportCsv(rows, columns, 'null-test');
-    const link = document.body.appendChild.mock.calls[0][0] as HTMLAnchorElement;
+    const link = vi.mocked(document.body.appendChild).mock.calls[0][0] as HTMLAnchorElement;
     expect(link).toBeTruthy();
   });
 

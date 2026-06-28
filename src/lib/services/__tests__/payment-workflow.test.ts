@@ -56,7 +56,7 @@ describe('payment-workflow', () => {
 
   describe('processFonepayPayment', () => {
     it('should call process_payment RPC with fonepay method', async () => {
-      setRpcHandler('process_payment', (params) => ({
+      setRpcHandler('process_payment', () => ({
         data: { success: true, payment_log_id: 'pl-2', invoice_status: 'paid' },
       }));
 

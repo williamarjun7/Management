@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, vi, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -26,18 +26,6 @@ vi.mock('../../../lib/services/realtime', () => ({
   initRealtime: vi.fn(),
   shutdownRealtime: vi.fn(),
 }));
-
-function renderPosPage() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const PosPage = vi.importActual('../../../pages/pos/PosPage');
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <PosPage />
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
-}
 
 describe('PosPage', () => {
   beforeEach(() => {
