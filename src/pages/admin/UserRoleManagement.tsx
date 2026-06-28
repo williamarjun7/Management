@@ -174,7 +174,7 @@ export default function UserRoleManagement() {
           <p className="text-muted-foreground">No users found</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
+        <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">

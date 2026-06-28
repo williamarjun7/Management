@@ -23,10 +23,15 @@ import {
   List,
   Sun,
   Moon,
+  ChevronRight,
+  RefreshCw,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../lib/core/theme-context';
 import { OfflineBanner, useConnectionState } from './OfflineBanner';
+import { BottomSheet } from './ui/bottom-sheet';
+import { PageTransition } from './PageTransition';
+import { useKeyboardAware } from '../lib/hooks/useKeyboardAware';
 import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
 
@@ -63,12 +68,21 @@ const bottomNavItems: { label: string; href: string; icon: React.ElementType }[]
   { label: 'Billing', href: '/billing', icon: Receipt },
 ];
 
+function isActiveRoute(pathname: string, href: string): boolean {
+  if (href === '/dashboard') return pathname === '/dashboard';
+  return pathname.startsWith(href) || pathname === href;
+}
+
 export default function Layout() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const conn = useConnectionState();
+  const { keyboardHeight, isKeyboardOpen } = useKeyboardAware();
+  const [refreshing, setRefreshing] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
 
   const userRole = user?.role ?? 'staff';
 
@@ -80,28 +94,62 @@ export default function Layout() {
     await signOut();
   };
 
+  const isMoreActive = !bottomNavItems.some(
+    (item) => item.href === location.pathname || location.pathname.startsWith(item.href + '/')
+  ) && location.pathname !== '/';
+
+  const scrollPositions = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const key = location.pathname;
+    const main = mainRef.current;
+    if (main) {
+      const saved = scrollPositions.current[key];
+      if (saved !== undefined) {
+        requestAnimationFrame(() => {
+          main.scrollTop = saved;
+        });
+      } else {
+        main.scrollTop = 0;
+      }
+    }
+    return () => {
+      if (main) {
+        scrollPositions.current[key] = main.scrollTop;
+      }
+    };
+  }, [location.pathname]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setRefreshing(false);
+  }, []);
+
+  const bottomPadding = isKeyboardOpen ? `pb-[${keyboardHeight}px]` : 'pb-20 lg:pb-6';
+
   return (
     <div className="min-h-screen bg-background">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-64 border-r bg-card transition-transform duration-200 lg:translate-x-0',
+          'fixed top-0 left-0 z-50 h-full w-64 border-r bg-card transition-transform duration-200 ease-out lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex h-16 items-center justify-between px-4 md:px-6 border-b">
-          <Link to="/dashboard" className="flex items-center gap-2">
+          <Link to="/dashboard" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
             <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover" />
             <span className="font-bold text-lg">Highlands Cafe & Motel Inn</span>
           </Link>
           <button
-            className="lg:hidden"
+            className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-5 w-5" />
@@ -111,31 +159,32 @@ export default function Layout() {
         <nav className="p-4 space-y-1 overflow-y-auto pb-20">
           {visibleItems.map((item) => {
             const Icon = item.icon;
-            const active = location.pathname === item.href;
+            const active = isActiveRoute(location.pathname, item.href);
             return (
               <Link
                 key={item.href}
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150',
                   active
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{item.label}</span>
+                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
               </Link>
             );
           })}
         </nav>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <div className={cn('lg:pl-64 flex flex-col min-h-screen', isKeyboardOpen ? 'lg:pb-0' : '')}>
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur-sm px-4 md:px-6">
           <button
-            className="lg:hidden"
+            className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors -ml-1.5"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
@@ -147,7 +196,7 @@ export default function Layout() {
 
           <button
             onClick={toggleTheme}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             <span key={theme} className="flex animate-theme-icon">
@@ -155,8 +204,12 @@ export default function Layout() {
             </span>
           </button>
 
+          {refreshing && (
+            <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+
           <div className="flex items-center gap-3">
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium">
                 {user?.name ?? user?.email}
               </p>
@@ -169,7 +222,7 @@ export default function Layout() {
             </div>
             <button
               onClick={handleSignOut}
-              className="ml-2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="ml-1 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               title="Sign out"
             >
               <LogOut className="h-4 w-4" />
@@ -177,41 +230,116 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="p-4 md:p-6 pb-20 lg:pb-6">
-          <OfflineBanner state={conn.state} lastSynced={conn.lastSynced} />
-          <Outlet />
+        <main
+          ref={mainRef}
+          className={cn(
+            'flex-1 overflow-y-auto',
+            isKeyboardOpen ? '' : 'pb-20 lg:pb-6'
+          )}
+          style={isKeyboardOpen ? { paddingBottom: keyboardHeight } : undefined}
+        >
+          <div className="p-4 md:p-6">
+            <OfflineBanner state={conn.state} lastSynced={conn.lastSynced} />
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
+          </div>
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t bg-card/95 backdrop-blur-md lg:hidden safe-area-bottom">
         {bottomNavItems.map((item) => {
           const Icon = item.icon;
-          const active = location.pathname === item.href;
+          const active = isActiveRoute(location.pathname, item.href);
           return (
             <Link
               key={item.href}
               to={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 flex-1 h-14 text-[11px] font-medium transition-colors',
+                'flex flex-col items-center justify-center gap-0.5 flex-1 h-14 text-[11px] font-medium transition-colors relative',
                 active
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <Icon className={cn('h-5 w-5', active && 'fill-current')} />
+              <div className="relative">
+                <Icon className={cn('h-5 w-5 transition-transform duration-200', active && 'fill-current')} />
+              </div>
               {item.label}
+              {active && (
+                <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}
         <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-14 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setMoreSheetOpen(true)}
+          className={cn(
+            'flex flex-col items-center justify-center gap-0.5 flex-1 h-14 text-[11px] font-medium transition-colors relative',
+            isMoreActive
+              ? 'text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
         >
           <Menu className="h-5 w-5" />
           More
+          {isMoreActive && (
+            <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+          )}
         </button>
       </nav>
+
+      <BottomSheet
+        open={moreSheetOpen}
+        onClose={() => setMoreSheetOpen(false)}
+        title="All Pages"
+      >
+        <div className="space-y-0.5">
+          {visibleItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActiveRoute(location.pathname, item.href);
+            const isInBottomNav = bottomNavItems.some((b) => b.href === item.href);
+            if (isInBottomNav) return null;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={() => setMoreSheetOpen(false)}
+                className={cn(
+                  'flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150',
+                  active
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <div className={cn(
+                  'flex items-center justify-center w-9 h-9 rounded-lg',
+                  active ? 'bg-primary/15' : 'bg-muted'
+                )}>
+                  <Icon className={cn('h-4 w-4', active && 'text-primary')} />
+                </div>
+                <span className="flex-1">{item.label}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-border px-4">
+          <button
+            onClick={() => {
+              setMoreSheetOpen(false);
+              handleSignOut();
+            }}
+            className="flex items-center gap-4 w-full px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-destructive/10">
+              <LogOut className="h-4 w-4" />
+            </div>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

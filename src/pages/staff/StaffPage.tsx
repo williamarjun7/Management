@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, Bed, UtensilsCrossed, ShoppingCart, ChefHat, ClipboardList, ChevronRight, Scan, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { cn } from '../../lib/core/utils';
 import { useAuth } from '../../lib/core/auth-context';
 import logoSrc from '../../assets/logo.png';
 import { insforge } from '../../lib/core/insforge';
@@ -36,6 +37,7 @@ function timeAgo(dateStr: string): string {
 
 export default function StaffPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cleanedRooms, setCleanedRooms] = useState(0);
@@ -225,29 +227,42 @@ export default function StaffPage() {
         </section>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-outline-variant/10">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-outline-variant/10 safe-area-bottom">
         <div className="flex items-center justify-around h-20 px-6">
-          <button onClick={() => navigate('/dashboard')} className="flex flex-col items-center gap-1 text-primary">
-            <ChefHat className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Operations</span>
-          </button>
-          <button onClick={() => navigate('/motel')} className="flex flex-col items-center gap-1 text-on-surface-variant opacity-60">
-            <Bed className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Rooms</span>
-          </button>
-          <button onClick={() => navigate('/pos')} className="-mt-6 flex items-center justify-center">
-            <div className="w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform">
-              <Scan className="h-7 w-7" />
-            </div>
-          </button>
-          <button onClick={() => navigate('/kitchen')} className="flex flex-col items-center gap-1 text-on-surface-variant opacity-60">
-            <UtensilsCrossed className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">KDS</span>
-          </button>
-          <button onClick={() => navigate('/analytics')} className="flex flex-col items-center gap-1 text-on-surface-variant opacity-60">
-            <ClipboardList className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Analytics</span>
-          </button>
+          {([
+            { label: 'Operations', href: '/dashboard', icon: ChefHat },
+            { label: 'Rooms', href: '/motel', icon: Bed },
+            { label: 'Scan', href: '/pos', icon: Scan, fab: true },
+            { label: 'KDS', href: '/kitchen', icon: UtensilsCrossed },
+            { label: 'Analytics', href: '/analytics', icon: ClipboardList },
+          ] as const).map((item) => {
+            const active = location.pathname === item.href;
+            if (item.fab) {
+              return (
+                <button key={item.href} onClick={() => navigate(item.href)} className="-mt-6 flex items-center justify-center">
+                  <div className={cn(
+                    'w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform',
+                    active ? 'bg-primary text-on-primary ring-4 ring-primary/20' : 'bg-primary text-on-primary'
+                  )}>
+                    <item.icon className="h-7 w-7" />
+                  </div>
+                </button>
+              );
+            }
+            return (
+              <button
+                key={item.href}
+                onClick={() => navigate(item.href)}
+                className={cn(
+                  'flex flex-col items-center gap-1 transition-all duration-150',
+                  active ? 'text-primary' : 'text-on-surface-variant opacity-60'
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="text-[10px] font-semibold">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </nav>
 

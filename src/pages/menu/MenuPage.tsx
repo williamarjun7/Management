@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import { BottomSheet } from "../../components/ui/bottom-sheet";
 import { useAuth } from "../../lib/core/auth-context";
 import {
   useMenuCategories,
@@ -11,6 +12,7 @@ import {
 } from "../../lib/hooks";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { showSuccess, showError } from "../../components/ui/toast";
+import { List, Plus, X } from "lucide-react";
 import type { MenuCategory, MenuItem } from "../../types";
 import MenuCategoryDialog from "./MenuCategoryDialog";
 import MenuItemDialog from "./MenuItemDialog";
@@ -23,6 +25,7 @@ export default function MenuPage() {
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [mobileCatOpen, setMobileCatOpen] = useState(false);
 
   const { data: categories, isLoading: catsLoading } = useMenuCategories();
   const { data: items, isLoading: itemsLoading } = useMenuItems(selectedCategoryId ?? undefined);
@@ -53,10 +56,85 @@ export default function MenuPage() {
     setItemDialogOpen(true);
   }
 
+  function selectCategory(id: string | null) {
+    setSelectedCategoryId(id);
+    setMobileCatOpen(false);
+  }
+
+  const CategoryList = ({ onSelect }: { onSelect: (id: string | null) => void }) => (
+    <ul className="space-y-1">
+      <li>
+        <button
+          onClick={() => onSelect(null)}
+          className={`w-full rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${
+            selectedCategoryId === null ? "bg-accent font-medium" : ""
+          }`}
+        >
+          All Items
+        </button>
+      </li>
+      {(categories ?? []).map((cat) => (
+        <li key={cat.id} className="group flex items-center">
+          <button
+            onClick={() => onSelect(cat.id)}
+            className={`flex-1 rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${
+              selectedCategoryId === cat.id ? "bg-accent font-medium" : ""
+            }`}
+          >
+            {cat.name}
+          </button>
+          {isAdminOrManager && (
+            <div className="hidden shrink-0 gap-0.5 pr-1 group-hover:flex">
+              <button
+                onClick={() => openEditCategory(cat)}
+                className="rounded p-1.5 text-xs text-muted-foreground hover:bg-accent min-h-[36px] min-w-[36px]"
+                title="Edit"
+              >
+                ✎
+              </button>
+              <button
+                onClick={() => setConfirmDeleteCategory(cat)}
+                className="rounded p-1.5 text-xs text-destructive hover:bg-accent min-h-[36px] min-w-[36px]"
+                title="Delete"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
-    <div className="flex h-full gap-6 p-6">
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0">
+    <div className="flex h-full gap-4 md:gap-6 flex-col lg:flex-row">
+      {/* Mobile category trigger */}
+      <div className="flex items-center justify-between lg:hidden">
+        <h1 className="text-lg font-semibold">
+          {selectedCategoryId
+            ? categories?.find((c) => c.id === selectedCategoryId)?.name ?? "Menu Items"
+            : "All Menu Items"}
+        </h1>
+        <div className="flex items-center gap-2">
+          {isAdminOrManager && (
+            <Button size="sm" onClick={openAddItem}>
+              + Add Item
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMobileCatOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <List className="h-4 w-4" />
+            Categories
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-64 shrink-0">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Categories</h2>
           {isAdminOrManager && (
@@ -69,54 +147,29 @@ export default function MenuPage() {
         {catsLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
-          <ul className="space-y-1">
-            <li>
-              <button
-                onClick={() => setSelectedCategoryId(null)}
-                className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-                  selectedCategoryId === null ? "bg-accent font-medium" : ""
-                }`}
-              >
-                All Items
-              </button>
-            </li>
-            {(categories ?? []).map((cat) => (
-              <li key={cat.id} className="group flex items-center">
-                <button
-                  onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`flex-1 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-                    selectedCategoryId === cat.id ? "bg-accent font-medium" : ""
-                  }`}
-                >
-                  {cat.name}
-                </button>
-                {isAdminOrManager && (
-                  <div className="hidden shrink-0 gap-0.5 pr-1 group-hover:flex">
-                    <button
-                      onClick={() => openEditCategory(cat)}
-                      className="rounded p-1 text-xs text-muted-foreground hover:bg-accent"
-                      title="Edit"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteCategory(cat)}
-                      className="rounded p-1 text-xs text-destructive hover:bg-accent"
-                      title="Delete"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          <CategoryList onSelect={selectCategory} />
         )}
       </aside>
 
+      {/* Mobile category bottom sheet */}
+      <BottomSheet open={mobileCatOpen} onClose={() => setMobileCatOpen(false)} title="Categories">
+        <div className="flex items-center justify-between mb-3">
+          {isAdminOrManager && (
+            <Button size="sm" onClick={() => { openAddCategory(); setMobileCatOpen(false); }}>
+              + Add Category
+            </Button>
+          )}
+        </div>
+        {catsLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          <CategoryList onSelect={selectCategory} />
+        )}
+      </BottomSheet>
+
       {/* Main */}
-      <main className="flex-1">
-        <div className="mb-4 flex items-center justify-between">
+      <main className="flex-1 min-h-0">
+        <div className="hidden lg:flex mb-4 items-center justify-between">
           <h2 className="text-lg font-semibold">
             {selectedCategoryId
               ? categories?.find((c) => c.id === selectedCategoryId)?.name ?? "Menu Items"
@@ -174,7 +227,7 @@ export default function MenuPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {isAdminOrManager && (
                     <Button
                       variant="outline"

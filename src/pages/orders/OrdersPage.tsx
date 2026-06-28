@@ -7,6 +7,7 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { showSuccess, showError } from "../../components/ui/toast";
 import { useOrders, useTransitionOrderStatus } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
+import { refreshTableStatus } from "../../lib/services/table-occupancy";
 import { ORDER_STATUS_LABELS } from "../../types";
 import type { Order } from "../../types";
 
@@ -67,8 +68,11 @@ export default function OrdersPage() {
       p_user_id: user.id,
       p_idempotency_key: getIdempotencyKey('order', cancelTarget.id, 'cancelled'),
     }, {
-      onSuccess: () => {
+      onSuccess: async () => {
         showSuccess(`Order #${cancelTarget.order_number} cancelled`);
+        if (cancelTarget.table_id) {
+          await refreshTableStatus(cancelTarget.table_id).catch(() => {});
+        }
         setCancelTarget(null);
       },
       onError: (err) => showError(err?.message || "Failed to cancel order"),
@@ -76,7 +80,7 @@ export default function OrdersPage() {
   }, [cancelTarget, user, transitionStatus]);
 
   return (
-    <div className="flex h-full flex-col p-6">
+    <div className="flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Orders</h1>
         <Button onClick={() => navigate("/orders/new")}>+ New Order</Button>

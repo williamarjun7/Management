@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { X } from "lucide-react";
 import { useProcessPayment, useProcessCashPayment } from "../../lib/hooks";
 import { useAuth } from "../../lib/core/auth-context";
+import { insforge } from "../../lib/core/insforge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -10,6 +11,7 @@ import { showSuccess, showError } from "../../components/ui/toast";
 import { FonepayQRDialog } from "../../components/FonepayQRDialog";
 import { CASH_QUICK_AMOUNTS, PAYMENT_METHOD_LABELS, type Invoice } from "../../types";
 import { formatCurrency } from "../../lib/core/format-currency";
+import { refreshTableStatus } from "../../lib/services/table-occupancy";
 
 const paymentMethods = [
   { value: "cash", label: "Cash" },
@@ -81,6 +83,15 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
         });
       }
       showSuccess(`${PAYMENT_METHOD_LABELS[method as keyof typeof PAYMENT_METHOD_LABELS] || method} payment of ${formatCurrency(payAmount)} recorded`);
+      try {
+        const { data: inv } = await insforge.database.from('invoices').select('order_id').eq('id', invoice.id).single();
+        if (inv?.order_id) {
+          const { data: ord } = await insforge.database.from('orders').select('table_id').eq('id', inv.order_id).single();
+          if (ord?.table_id) await refreshTableStatus(ord.table_id);
+        }
+      } catch {
+        // non-blocking
+      }
       onClose();
     } catch (err) {
       const msg = (err as Error)?.message || "Payment failed";

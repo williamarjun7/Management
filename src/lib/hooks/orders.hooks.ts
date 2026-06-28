@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
+import { refreshTableStatus } from '../services/table-occupancy';
 import type { Order } from '../../types';
 import { queryKeys } from '../core/query-keys';
 
@@ -237,10 +238,24 @@ export function useTransitionOrderStatus() {
       }
       return data;
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: async (_data, vars) => {
       writeAuditLog(createAuditEntry(AuditActions.ORDER_STATUS_CHANGE, AuditEntityTypes.ORDER, vars.p_order_id, { new_state: { status: vars.p_new_status }, event_type: AuditEventTypes.ORDER_STATUS_CHANGE }));
       queryClient.invalidateQueries({ queryKey: queryKeys.kitchenOrders });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+
+      try {
+        const { data: order } = await insforge.database
+          .from('orders')
+          .select('table_id')
+          .eq('id', vars.p_order_id)
+          .single();
+        if (order?.table_id) {
+          await refreshTableStatus(order.table_id);
+          queryClient.invalidateQueries({ queryKey: queryKeys.tables });
+        }
+      } catch {
+        // non-blocking - table status refresh is best-effort
+      }
     },
   });
 }

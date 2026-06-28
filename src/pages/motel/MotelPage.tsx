@@ -137,14 +137,14 @@ export default function MotelPage() {
           <h1 className="text-2xl font-bold tracking-tight">Room Management</h1>
           <p className="text-muted-foreground">Manage rooms, bookings, and operations.</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowRoomDialog(true)} variant="outline" className="min-h-[44px]">
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Button onClick={() => setShowRoomDialog(true)} variant="outline" className="min-h-[44px] hidden sm:inline-flex">
             <Plus className="mr-2 h-4 w-4" /> Add Room
           </Button>
           <Button onClick={() => setShowBookingForm(true)} className="min-h-[44px]">
             <Plus className="mr-2 h-4 w-4" /> New Booking
           </Button>
-          <Button onClick={() => setShowSyncPanel(!showSyncPanel)} variant="ghost" className="min-h-[44px]">
+          <Button onClick={() => setShowSyncPanel(!showSyncPanel)} variant="ghost" className="min-h-[44px] hidden sm:inline-flex">
             <Activity className="mr-2 h-4 w-4" /> Sync
           </Button>
         </div>

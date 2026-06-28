@@ -99,6 +99,7 @@ export default function InvoiceDetailPage() {
           </CardHeader>
           <CardContent>
             <Separator className="mb-4" />
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
@@ -119,6 +120,7 @@ export default function InvoiceDetailPage() {
                 ))}
               </tbody>
             </table>
+            </div>
 
             <div className="mt-4 space-y-1 border-t pt-4">
               <div className="flex justify-between text-sm">

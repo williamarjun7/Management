@@ -6,6 +6,7 @@ import { playKitchenAlert } from '../../lib/services/kitchen-sound';
 import { subscribeKitchenOrders } from '../../lib/services/realtime';
 import type { Order } from '../../types';
 import { Clock, List, ArrowUpDown } from 'lucide-react';
+import { refreshTableStatus } from '../../lib/services/table-occupancy';
 
 type KdsFilter = 'all' | 'active';
 
@@ -36,8 +37,17 @@ export default function KitchenPage() {
       p_new_status: newStatus,
       p_user_id: user.id,
       p_idempotency_key: idempotencyKeys.current.get(key)!,
+    }, {
+      onSuccess: () => {
+        if (newStatus === 'completed') {
+          const order = (orders ?? []).find((o: Order) => o.id === orderId);
+          if (order?.table_id) {
+            refreshTableStatus(order.table_id).catch(() => {});
+          }
+        }
+      },
     });
-  }, [user, transitionStatus]);
+  }, [user, transitionStatus, orders]);
 
   const activeOrders = (orders ?? []).filter((o: Order) => o.status === 'active');
 
@@ -129,7 +139,7 @@ export default function KitchenPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))' }}>
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {displayedOrders.map((order: Order) => (
               <KitchenOrderCard
                 key={order.id}

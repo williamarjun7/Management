@@ -1,5 +1,6 @@
 import { insforge } from '../core/insforge';
 import { executeWorkflowStep } from '../../workbench/workflows';
+import { refreshTableStatus } from './table-occupancy';
 
 export type PaymentWorkflowAction = 'cash' | 'fonepay' | 'credit';
 
@@ -120,10 +121,7 @@ export async function markInvoicePaidAndSync(
       table_session_id: sessionId,
     }).catch(() => {});
 
-    await executeWorkflowStep('billing', 'reset_table', {
-      invoice_id: invoiceId,
-      table_id: tableId,
-    }).catch(() => {});
+    await refreshTableStatus(tableId);
   }
 
   // Notify system via event

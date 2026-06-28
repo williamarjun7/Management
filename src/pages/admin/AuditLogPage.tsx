@@ -183,48 +183,44 @@ export default function AuditLogPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="w-44">
-          <Select
-            value={eventFilter}
-            onChange={(e) => { setEventFilter(e.target.value); resetPagination(); }}
-            options={EVENT_TYPES}
-          />
-        </div>
-        <div className="w-44">
-          <Select
-            value={entityFilter}
-            onChange={(e) => { setEntityFilter(e.target.value); resetPagination(); }}
-            options={ENTITY_TYPES}
-          />
-        </div>
-        <div className="w-56">
-          <Input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); resetPagination(); }}
-            placeholder="Search entity ID, type..."
-          />
-        </div>
-        <div className="w-48">
-          <Input
-            value={traceSearch}
-            onChange={(e) => { setTraceSearch(e.target.value); resetPagination(); }}
-            placeholder="Trace / correlation ID..."
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+        <Select
+          value={eventFilter}
+          onChange={(e) => { setEventFilter(e.target.value); resetPagination(); }}
+          options={EVENT_TYPES}
+          className="w-full sm:w-44"
+        />
+        <Select
+          value={entityFilter}
+          onChange={(e) => { setEntityFilter(e.target.value); resetPagination(); }}
+          options={ENTITY_TYPES}
+          className="w-full sm:w-44"
+        />
+        <Input
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); resetPagination(); }}
+          placeholder="Search entity ID, type..."
+          className="w-full sm:w-56"
+        />
+        <Input
+          value={traceSearch}
+          onChange={(e) => { setTraceSearch(e.target.value); resetPagination(); }}
+          placeholder="Trace / correlation ID..."
+          className="w-full sm:w-48"
+        />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
           <Input
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); resetPagination(); }}
-            className="w-36"
+            className="flex-1 sm:w-36"
           />
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground shrink-0">—</span>
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); resetPagination(); }}
-            className="w-36"
+            className="flex-1 sm:w-36"
           />
         </div>
         <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
