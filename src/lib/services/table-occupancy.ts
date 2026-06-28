@@ -31,3 +31,33 @@ export async function refreshTableStatus(tableId: string): Promise<void> {
     // non-blocking notification
   }
 }
+
+export async function syncAllTables(): Promise<void> {
+  const [activeResult, tablesResult] = await Promise.all([
+    insforge.database
+      .from('orders')
+      .select('table_id')
+      .not('status', 'in', '("cancelled","refunded")'),
+    insforge.database
+      .from('restaurant_tables')
+      .select('id, status'),
+  ]);
+
+  const activeTableIds = new Set((activeResult.data ?? []).map(o => o.table_id));
+  const tables = tablesResult.data;
+  if (!tables) return;
+
+  await Promise.allSettled(
+    tables.map(async (table) => {
+      const shouldBeOccupied = activeTableIds.has(table.id);
+      if (shouldBeOccupied && table.status === 'occupied') return;
+      if (!shouldBeOccupied && table.status === 'available') return;
+
+      const newStatus: TableStatus = shouldBeOccupied ? 'occupied' : 'available';
+      await insforge.database
+        .from('restaurant_tables')
+        .update({ status: newStatus })
+        .eq('id', table.id);
+    })
+  );
+}

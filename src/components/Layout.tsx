@@ -32,6 +32,7 @@ import { OfflineBanner, useConnectionState } from './OfflineBanner';
 import { BottomSheet } from './ui/bottom-sheet';
 import { PageTransition } from './PageTransition';
 import { useKeyboardAware } from '../lib/hooks/useKeyboardAware';
+import { syncAllTables } from '../lib/services/table-occupancy';
 import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
 
@@ -99,6 +100,13 @@ export default function Layout() {
   ) && location.pathname !== '/';
 
   const scrollPositions = useRef<Record<string, number>>({});
+  const syncedRef = useRef(false);
+
+  useEffect(() => {
+    if (syncedRef.current) return;
+    syncedRef.current = true;
+    syncAllTables();
+  }, []);
 
   useEffect(() => {
     const key = location.pathname;
