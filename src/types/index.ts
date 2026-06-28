@@ -137,6 +137,14 @@ export interface UserProfile {
 export interface RestaurantTable {
   id: string; table_number: string; capacity: number; section: string | null;
   is_active: boolean; status: TableStatus;
+  room_id: string | null; display_order: number | null; notes: string | null; deleted_at: string | null;
+  created_at: string; updated_at: string;
+  dining_rooms?: DiningRoom | null;
+}
+
+export interface DiningRoom {
+  id: string; name: string; description: string | null;
+  display_order: number; is_enabled: boolean;
   created_at: string; updated_at: string;
 }
 

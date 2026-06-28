@@ -10,15 +10,21 @@ const T = {
 
 // ─────────────── TABLES ───────────────
 
-export function useTables() {
+export function useTables(options?: { all?: boolean }) {
+  const all = options?.all ?? false;
   return useQuery({
-    queryKey: queryKeys.tables,
+    queryKey: all ? ['tables', 'all'] : queryKeys.tables,
     queryFn: async () => {
-      const { data, error } = await insforge.database
+      const query = insforge.database
         .from(T.tables)
-        .select('*');
+        .select('*, dining_rooms(*)');
+      if (!all) {
+        query.eq('is_active', true);
+      }
+      query.is('deleted_at', null);
+      const { data, error } = await query;
       if (error) throw error;
-      return ((data ?? []) as RestaurantTable[]).sort(
+      return ((data ?? []) as unknown as RestaurantTable[]).sort(
         (a, b) => Number(a.table_number) - Number(b.table_number)
       );
     },

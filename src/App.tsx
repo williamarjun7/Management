@@ -33,6 +33,7 @@ const UserRoleManagement = lazy(() => import('./pages/admin/UserRoleManagement')
 const StaffActivityLogs = lazy(() => import('./pages/admin/StaffActivityLogs'));
 const FeatureFlagsPage = lazy(() => import('./pages/admin/FeatureFlagsPage'));
 const QueueInspectorPage = lazy(() => import('./pages/admin/QueueInspectorPage'));
+const DiningRoomsPage = lazy(() => import('./pages/admin/DiningRoomsPage'));
 
 function RoleRedirect() {
   return <Navigate to="/pos" replace />;
@@ -79,6 +80,7 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/admin/activity', element: <SuspenseWrapper><StaffActivityLogs /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/admin/features', element: <SuspenseWrapper><FeatureFlagsPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/admin/queue', element: <SuspenseWrapper><QueueInspectorPage /></SuspenseWrapper>, roles: ['admin'] },
+  { path: '/admin/rooms', element: <SuspenseWrapper><DiningRoomsPage /></SuspenseWrapper>, roles: ['admin', 'manager'] },
 ];
 
 export default function App() {
