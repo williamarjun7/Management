@@ -134,16 +134,3 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.INSFORGE_SERVICE_KEY }}" \
               -d "INSERT INTO app_versions (version, version_code, min_version, min_version_code, force_update, apk_url, release_notes, is_current) VALUES ('${{ steps.version.outputs.version }}', ${{ steps.version.outputs.version_code }}, '1.0.0', 1, ${{ steps.version.outputs.force_update }}, 'https://pos.highlandscafemotelinn.com/downloads/${{ steps.version.outputs.apk_filename }}', '${{ steps.version.outputs.release_notes }}', true);"
 
-      - name: Send Telegram notification
-        if: always()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            ${{ job.status == 'success' && '✅' || '❌' }} Highlands POS APK Build ${{ job.status }}
-            
-            Version: ${{ steps.version.outputs.version }} (code ${{ steps.version.outputs.version_code }})
-            Force Update: ${{ steps.version.outputs.force_update }}
-            
-            ${{ job.status == 'success' && format('Download: https://pos.highlandscafemotelinn.com/downloads/{0}', steps.version.outputs.apk_filename) || 'Build failed - check Actions logs' }}
