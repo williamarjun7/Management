@@ -76,8 +76,10 @@ jobs:
           VITE_APP_VERSION: ${{ steps.version.outputs.version }}
           VITE_APP_VERSION_CODE: ${{ steps.version.outputs.version_code }}
 
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Add & Sync Capacitor Android
+        run: |
+          npx cap add android
+          npx cap sync android
 
       - name: Decode keystore
         run: |
