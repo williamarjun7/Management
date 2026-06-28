@@ -45,7 +45,7 @@ export default function BillingPage() {
     .reduce((s, i) => s + Number(i.total), 0) ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
@@ -119,7 +119,7 @@ export default function BillingPage() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead>
+                    <thead className="sticky top-0 z-10 bg-background">
                       <tr className="border-b">
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Invoice</th>
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Customer</th>
@@ -130,12 +130,14 @@ export default function BillingPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {invoices?.map((inv: Invoice, idx: number) => (
+                      {invoices?.map((inv: Invoice) => (
                         <tr
                           key={inv.id}
-                          className="cursor-pointer border-b transition-colors hover:bg-muted/50 animate-row"
-                          style={{ animationDelay: `${idx * 40}ms` }}
+                          className="cursor-pointer border-b transition-colors hover:bg-muted/50"
                           onClick={() => navigate(`/billing/${inv.id}`)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/billing/${inv.id}`); } }}
+                          tabIndex={0}
+                          role="link"
                         >
                           <td className="px-4 py-3 text-sm font-medium">{inv.invoice_number}</td>
                           <td className="px-4 py-3 text-sm">{inv.customer_name || "Walk-in"}</td>

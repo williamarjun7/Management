@@ -26,11 +26,11 @@ const icons: Record<ToastVariant, React.ElementType> = {
 };
 
 const styles: Record<ToastVariant, string> = {
-  success: "border-green-500 bg-green-50 text-green-900",
-  error: "border-red-500 bg-red-50 text-red-900",
-  warning: "border-yellow-500 bg-yellow-50 text-yellow-900",
-  info: "border-blue-500 bg-blue-50 text-blue-900",
-  pending: "border-gray-500 bg-gray-50 text-gray-900",
+  success: "border-primary/20 bg-primary/10 text-primary-foreground dark:bg-primary/20",
+  error: "border-destructive/20 bg-destructive/10 text-destructive-foreground dark:bg-destructive/20",
+  warning: "border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-300",
+  info: "border-border bg-card text-card-foreground",
+  pending: "border-border bg-card text-muted-foreground",
 };
 
 function ToastItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }) {
@@ -55,6 +55,7 @@ function ToastItem({ t, onRemove }: { t: Toast; onRemove: (id: string) => void }
       <button
         onClick={() => onRemove(t.id)}
         className="shrink-0 rounded p-0.5 opacity-60 hover:opacity-100"
+        aria-label="Dismiss notification"
       >
         <X className="h-4 w-4" />
       </button>
@@ -80,7 +81,7 @@ export function ToastContainer() {
   }, [addToast]);
 
   return (
-    <div className="pointer-events-none fixed bottom-20 lg:bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] flex flex-col gap-2 sm:max-w-sm">
+    <div role="region" aria-live="polite" aria-label="Notifications" className="pointer-events-none fixed bottom-20 lg:bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-[100] flex flex-col gap-2 sm:max-w-sm">
       {toasts.map((t) => (
         <ToastItem key={t.id} t={t} onRemove={removeToast} />
       ))}

@@ -152,8 +152,9 @@ export default function Layout() {
             <span className="font-bold text-lg">Highlands Cafe & Motel Inn</span>
           </Link>
           <button
-            className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors"
+            className="lg:hidden p-3 rounded-md hover:bg-muted transition-colors"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
           </button>
@@ -187,8 +188,9 @@ export default function Layout() {
       <div className={cn('lg:pl-64 flex flex-col min-h-screen', isKeyboardOpen ? 'lg:pb-0' : '')}>
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur-sm px-4 md:px-6">
           <button
-            className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors -ml-1.5"
+            className="lg:hidden p-3 rounded-md hover:bg-muted transition-colors -ml-1.5"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -201,6 +203,7 @@ export default function Layout() {
             onClick={toggleTheme}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             <span key={theme} className="flex animate-theme-icon">
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -223,6 +226,7 @@ export default function Layout() {
               onClick={handleSignOut}
               className="ml-1 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               title="Sign out"
+              aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
             </button>

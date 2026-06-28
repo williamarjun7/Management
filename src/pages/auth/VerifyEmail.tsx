@@ -21,6 +21,7 @@ export default function VerifyEmail() {
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const verifyButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!loading && authStatus === 'authenticated') {
@@ -79,6 +80,12 @@ export default function VerifyEmail() {
   const otpString = otp.join('');
   const isValid = otpString.length === OTP_LENGTH;
 
+  useEffect(() => {
+    if (isValid && verifyButtonRef.current) {
+      verifyButtonRef.current.click();
+    }
+  }, [isValid]);
+
   async function handleVerify() {
     if (!isValid || verifying) return;
     setVerifying(true);
@@ -119,7 +126,7 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      <div className="w-full max-w-md space-y-6 bg-card p-8 rounded-xl border shadow-sm">
+      <div className="w-full max-w-md space-y-6 bg-card p-4 sm:p-8 rounded-xl border shadow-sm">
         <div className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Mail className="h-7 w-7 text-primary" />
@@ -140,7 +147,7 @@ export default function VerifyEmail() {
         )}
 
         <div className="space-y-4">
-          <div className="flex justify-center gap-2" role="group" aria-label="Verification code input">
+          <div className="flex justify-center gap-1 sm:gap-2" role="group" aria-label="Verification code input">
             {otp.map((digit, i) => (
               <input
                 key={i}
@@ -153,7 +160,7 @@ export default function VerifyEmail() {
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 onPaste={i === 0 ? handlePaste : undefined}
                 maxLength={1}
-                className="h-14 w-11 rounded-lg border border-border bg-background text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                className="h-14 w-10 sm:w-11 rounded-lg border border-border bg-background text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 disabled={verifying}
                 aria-label={`Digit ${i + 1}`}
               />
@@ -161,6 +168,7 @@ export default function VerifyEmail() {
           </div>
 
           <button
+            ref={verifyButtonRef}
             onClick={handleVerify}
             disabled={!isValid || verifying}
             className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"

@@ -70,7 +70,7 @@ export default function DashboardPage() {
     (o: Order) => o.status === 'active'
   );
   const pendingPayments = (orders ?? []).filter(
-    (o: Order) => o.status === 'active'
+    (o: Order) => o.status === 'completed'
   );
   const recentOrders = (orders ?? []).slice(0, 8);
   const kitchenCount = (kitchenOrders ?? []).length;
@@ -142,7 +142,7 @@ export default function DashboardPage() {
   }, [confirmAction, updateStatus]);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {user?.profile?.name ?? 'User'}</h1>
@@ -281,6 +281,9 @@ export default function DashboardPage() {
                       <div
                         key={table.id}
                         onClick={() => handleTableClick(table)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTableClick(table); } }}
+                        role="button"
+                        tabIndex={0}
                         className="flex flex-col items-center gap-2 group cursor-pointer"
                       >
                         <div className={`relative w-full aspect-square rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 ${
@@ -293,13 +296,13 @@ export default function DashboardPage() {
                           <span className={`text-lg font-extrabold leading-none ${isOccupied ? 'text-orange-700 dark:text-orange-300' : isReserved ? 'text-blue-700 dark:text-blue-300' : 'text-foreground group-hover:text-primary transition-colors'}`}>
                             T{table.table_number}
                           </span>
-                          <Users className={`h-3 w-3 ${isOccupied ? 'text-orange-500/60' : isReserved ? 'text-blue-500/60' : 'text-muted-foreground/40'}`} />
-                          <span className={`text-[10px] font-medium leading-none ${isOccupied ? 'text-orange-600/80' : isReserved ? 'text-blue-600/80' : 'text-muted-foreground/50'}`}>
+                          <Users className={`h-3 w-3 ${isOccupied ? 'text-orange-500/60 dark:text-orange-400/60' : isReserved ? 'text-blue-500/60 dark:text-blue-400/60' : 'text-muted-foreground/40'}`} />
+                          <span className={`text-[10px] font-medium leading-none ${isOccupied ? 'text-orange-600/80 dark:text-orange-400/80' : isReserved ? 'text-blue-600/80 dark:text-blue-400/80' : 'text-muted-foreground/50'}`}>
                             {table.capacity}pax
                           </span>
                           {isOccupied && (
                             <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40 opacity-75" />
                               <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-500 border-2 border-white dark:border-gray-900" />
                             </span>
                           )}
@@ -327,6 +330,9 @@ export default function DashboardPage() {
                     <div
                       key={table.id}
                       onClick={() => handleTableClick(table)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTableClick(table); } }}
+                      role="button"
+                      tabIndex={0}
                       className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 cursor-pointer hover:bg-accent transition-colors"
                     >
                       <div className="flex items-center gap-3">
@@ -398,7 +404,7 @@ export default function DashboardPage() {
             )}
             {(kitchenOrders ?? []).slice(0, 5).map((order: Order) => (
               <div key={order.id} className="flex items-start gap-3 rounded-lg bg-muted p-3">
-                <div className="w-9 h-9 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
                   {Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}'
                 </div>
                 <div className="min-w-0">

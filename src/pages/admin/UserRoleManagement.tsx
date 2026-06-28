@@ -9,12 +9,12 @@ import { UserCheck, UserX, Search, Settings, X, Mail, KeyRound, Phone, User, Shi
 const ROLES: Role[] = ['admin', 'manager', 'owner', 'staff', 'kitchen', 'reception'];
 
 const ROLE_BADGE: Record<Role, string> = {
-  admin: 'bg-red-500/10 text-red-500',
-  manager: 'bg-blue-500/10 text-blue-500',
-  owner: 'bg-amber-500/10 text-amber-500',
+  admin: 'bg-destructive/10 text-destructive',
+  manager: 'bg-primary/10 text-primary',
+  owner: 'bg-primary/10 text-primary',
   staff: 'bg-muted text-muted-foreground',
-  kitchen: 'bg-orange-500/10 text-orange-500',
-  reception: 'bg-purple-500/10 text-purple-500',
+  kitchen: 'bg-secondary text-secondary-foreground',
+  reception: 'bg-accent text-accent-foreground',
 };
 
 export default function UserRoleManagement() {
@@ -148,7 +148,7 @@ export default function UserRoleManagement() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">User Management</h1>
@@ -161,6 +161,7 @@ export default function UserRoleManagement() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent outline-none w-48 text-sm"
+            aria-label="Search users"
           />
         </div>
       </div>
@@ -209,7 +210,7 @@ export default function UserRoleManagement() {
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`flex items-center gap-1.5 text-xs ${profile.is_active ? 'text-emerald-500' : 'text-destructive'}`}>
+                    <span className={`flex items-center gap-1.5 text-xs ${profile.is_active ? 'text-primary' : 'text-destructive'}`}>
                       <span className={`h-1.5 w-1.5 rounded-full ${profile.is_active ? 'bg-emerald-500' : 'bg-destructive'}`} />
                       {profile.is_active ? 'Active' : 'Inactive'}
                     </span>
@@ -220,6 +221,7 @@ export default function UserRoleManagement() {
                         onClick={() => openEditor(profile)}
                         className="p-1.5 rounded-md hover:bg-accent transition-colors"
                         title="Account settings"
+                        aria-label={`Account settings for ${profile.name}`}
                       >
                         <Settings className="h-4 w-4 text-muted-foreground" />
                       </button>
@@ -228,13 +230,15 @@ export default function UserRoleManagement() {
                         disabled={toggleActive.isPending}
                         className="p-1.5 rounded-md hover:bg-accent transition-colors disabled:opacity-50"
                         title={profile.is_active ? 'Deactivate user' : 'Activate user'}
+                        aria-label={profile.is_active ? 'Deactivate user' : 'Activate user'}
                       >
-                        {profile.is_active ? <UserX className="h-4 w-4 text-destructive" /> : <UserCheck className="h-4 w-4 text-emerald-500" />}
+                        {profile.is_active ? <UserX className="h-4 w-4 text-destructive" /> : <UserCheck className="h-4 w-4 text-primary" />}
                       </button>
                       <button
                         onClick={() => setConfirmDeleteUser(profile)}
                         className="p-1.5 rounded-md hover:bg-accent transition-colors"
-                        title="Delete user"
+                        title="Deactivate user"
+                        aria-label={`Deactivate ${profile.name}`}
                       >
                         <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </button>
@@ -248,7 +252,7 @@ export default function UserRoleManagement() {
       )}
 
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditingUser(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setEditingUser(null)} role="dialog" aria-modal="true">
           <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">

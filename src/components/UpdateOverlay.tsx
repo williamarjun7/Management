@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { useUpdate } from '../lib/core/update-context';
 import { getCurrentAppVersion } from '../lib/services/app-update';
 import { ForceUpdateScreen } from './ForceUpdateScreen';
@@ -15,6 +16,10 @@ import { Download, Sparkles } from 'lucide-react';
 export function UpdateOverlay() {
   const { updateAvailable, forceUpdateRequired, updateInfo, dismissed, startUpdate, dismissUpdate } = useUpdate();
   const currentVersion = getCurrentAppVersion();
+
+  if (!Capacitor.isNativePlatform()) {
+    return null;
+  }
 
   if (forceUpdateRequired) {
     return <ForceUpdateScreen />;

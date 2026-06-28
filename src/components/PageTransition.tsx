@@ -5,8 +5,21 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [animClass, setAnimClass] = useState('');
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setAnimClass('opacity-100');
+      return;
+    }
     setAnimClass('opacity-0');
     const frame = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -14,7 +27,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [location.pathname]);
+  }, [location.pathname, reducedMotion]);
 
   return (
     <div ref={containerRef} className={animClass}>

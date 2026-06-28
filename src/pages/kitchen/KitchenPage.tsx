@@ -71,7 +71,7 @@ export default function KitchenPage() {
   }).length;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] -m-6">
+    <div className="flex flex-col min-h-0 flex-1">
       <header className="flex items-center justify-between px-6 h-14 border-b bg-card shrink-0">
         <div className="flex items-center gap-4">
           <h1 className="text-sm font-bold tracking-widest">KITCHEN DISPLAY</h1>
@@ -96,7 +96,7 @@ export default function KitchenPage() {
               <button
                 key={t.key}
                 onClick={() => setFilter(t.key as KdsFilter)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-md text-xs font-medium transition-colors ${
                   active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
                 }`}
               >
@@ -109,7 +109,7 @@ export default function KitchenPage() {
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <button
             onClick={() => setSortByTable((s) => !s)}
-            className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${sortByTable ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
+            className={`flex items-center gap-1 px-3 py-2 rounded text-xs font-medium transition-colors ${sortByTable ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
           >
             <ArrowUpDown className="h-3 w-3" />
             Table
@@ -139,7 +139,7 @@ export default function KitchenPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {displayedOrders.map((order: Order) => (
               <KitchenOrderCard
                 key={order.id}

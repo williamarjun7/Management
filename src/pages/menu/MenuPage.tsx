@@ -84,18 +84,20 @@ export default function MenuPage() {
             {cat.name}
           </button>
           {isAdminOrManager && (
-            <div className="hidden shrink-0 gap-0.5 pr-1 group-hover:flex">
+            <div className="flex shrink-0 gap-0.5 pr-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
               <button
+                type="button"
                 onClick={() => openEditCategory(cat)}
                 className="rounded p-1.5 text-xs text-muted-foreground hover:bg-accent min-h-[36px] min-w-[36px]"
-                title="Edit"
+                aria-label={`Edit ${cat.name}`}
               >
                 ✎
               </button>
               <button
+                type="button"
                 onClick={() => setConfirmDeleteCategory(cat)}
                 className="rounded p-1.5 text-xs text-destructive hover:bg-accent min-h-[36px] min-w-[36px]"
-                title="Delete"
+                aria-label={`Delete ${cat.name}`}
               >
                 ✕
               </button>
@@ -107,7 +109,7 @@ export default function MenuPage() {
   );
 
   return (
-    <div className="flex h-full gap-4 md:gap-6 flex-col lg:flex-row">
+    <div className="mx-auto w-full max-w-7xl flex h-full gap-4 md:gap-6 flex-col lg:flex-row">
       {/* Mobile category trigger */}
       <div className="flex items-center justify-between lg:hidden">
         <h1 className="text-lg font-semibold">

@@ -71,7 +71,7 @@ export default function AppUpdatesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowHistory(false)} className="p-2 rounded-lg hover:bg-accent">
+            <button onClick={() => setShowHistory(false)} className="p-2 rounded-lg hover:bg-accent" aria-label="Back to app updates">
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
@@ -98,7 +98,7 @@ export default function AppUpdatesPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">v{v.version}</span>
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${v.force_update ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${v.force_update ? 'bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive' : 'bg-muted text-muted-foreground'}`}>
                         {v.force_update ? 'Mandatory' : 'Optional'}
                       </span>
                     </div>
@@ -110,6 +110,7 @@ export default function AppUpdatesPage() {
                 <button
                   onClick={() => setRollbackConfirm(v)}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                  aria-label={`Rollback to version v${v.version}`}
                 >
                   <RefreshCw className="h-3.5 w-3.5" /> Rollback
                 </button>
@@ -148,7 +149,7 @@ export default function AppUpdatesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">App Updates</h1>
@@ -191,7 +192,7 @@ export default function AppUpdatesPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-bold">v{currentRelease.version}</h2>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${currentRelease.force_update ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${currentRelease.force_update ? 'bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive' : 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary'}`}>
                       {currentRelease.force_update ? 'Mandatory' : 'Optional'}
                     </span>
                   </div>
@@ -256,9 +257,9 @@ export default function AppUpdatesPage() {
       )}
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)} role="dialog" aria-modal="true" aria-labelledby="publish-version-title">
           <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-4">Publish New Version</h2>
+            <h2 id="publish-version-title" className="text-lg font-bold mb-4">Publish New Version</h2>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>

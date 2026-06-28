@@ -27,13 +27,13 @@ function formatMs(ms: number): string {
 
 function statusBadge(status: string) {
   const colors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    dead: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    pending: 'bg-secondary text-secondary-foreground',
+    processing: 'bg-accent text-accent-foreground',
+    completed: 'bg-primary text-primary-foreground',
+    failed: 'bg-destructive text-destructive-foreground',
+    dead: 'bg-muted text-muted-foreground',
   };
-  return colors[status] || 'bg-gray-100 text-gray-800';
+  return colors[status] || 'bg-muted text-muted-foreground';
 }
 
 export default function QueueInspectorPage() {
@@ -101,7 +101,7 @@ export default function QueueInspectorPage() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Queue Inspector</h1>
@@ -132,7 +132,7 @@ export default function QueueInspectorPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0">
-              <p className="text-2xl font-bold text-yellow-500">{health.pendingCount}</p>
+              <p className="text-2xl font-bold text-amber-500">{health.pendingCount}</p>
             </CardContent>
           </Card>
           <Card>
@@ -142,7 +142,7 @@ export default function QueueInspectorPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0">
-              <p className="text-2xl font-bold text-blue-500">{health.processingCount}</p>
+              <p className="text-2xl font-bold text-primary">{health.processingCount}</p>
             </CardContent>
           </Card>
           <Card>
@@ -162,7 +162,7 @@ export default function QueueInspectorPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0">
-              <p className="text-2xl font-bold text-red-500">{health.failedCount}</p>
+              <p className="text-2xl font-bold text-destructive">{health.failedCount}</p>
             </CardContent>
           </Card>
           <Card>
@@ -189,6 +189,7 @@ export default function QueueInspectorPage() {
                     value={filterStatus}
                     onChange={e => setFilterStatus(e.target.value)}
                     className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                    aria-label="Filter by status"
                   >
                     <option value="all">All ({items.length})</option>
                     <option value="pending">Pending ({statusCounts['pending'] || 0})</option>
@@ -197,7 +198,7 @@ export default function QueueInspectorPage() {
                     <option value="failed">Failed ({statusCounts['failed'] || 0})</option>
                     <option value="dead">Dead ({statusCounts['dead'] || 0})</option>
                   </select>
-                  <Button variant="ghost" size="sm" onClick={handleClearCompleted}>
+                  <Button variant="ghost" size="sm" onClick={handleClearCompleted} aria-label="Clear completed items">
                     <Trash2 className="h-3 w-3 mr-1" />
                     Clear Done
                   </Button>
@@ -233,7 +234,7 @@ export default function QueueInspectorPage() {
                     <tbody>
                       {sorted.map(item => (
                         <>
-                          <tr key={item.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
+                          <tr key={item.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} tabIndex={0} role="button" onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(expandedId === item.id ? null : item.id); } }}>
                             <td className="p-2">
                               <Badge variant="outline" className={`text-xs ${statusBadge(item.status)}`}>
                                 {item.status}
@@ -246,7 +247,9 @@ export default function QueueInspectorPage() {
                               <div className="flex gap-1">
                                 {expandedId === item.id ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                                 {(item.status === 'failed' || item.status === 'dead') && (
-                                  <RotateCcw className="h-3 w-3 text-blue-500 cursor-pointer" onClick={e => { e.stopPropagation(); handleRetry(item.id); }} />
+                                  <button aria-label="Retry failed mutation" onClick={e => { e.stopPropagation(); handleRetry(item.id); }}>
+                                    <RotateCcw className="h-3 w-3 text-primary" />
+                                  </button>
                                 )}
                               </div>
                             </td>

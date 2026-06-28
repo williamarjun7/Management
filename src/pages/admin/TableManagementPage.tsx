@@ -88,7 +88,7 @@ export default function TableManagementPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Table Management</h1>
@@ -110,12 +110,14 @@ export default function TableManagementPage() {
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by table number..."
             className="w-full rounded-lg border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            aria-label="Search by table number"
           />
         </div>
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          aria-label="Filter by status"
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
@@ -125,6 +127,7 @@ export default function TableManagementPage() {
           value={roomFilter}
           onChange={e => setRoomFilter(e.target.value)}
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          aria-label="Filter by room"
         >
           <option value="all">All Rooms</option>
           {(rooms ?? []).map(r => (
@@ -218,10 +221,10 @@ export default function TableManagementPage() {
                           <button onClick={() => {
                             setEditingId(table.id);
                             setEditForm({ table_number: table.table_number, capacity: table.capacity, room_id: table.room_id ?? '', notes: table.notes ?? '' });
-                          }} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                          }} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" aria-label="Edit table">
                             <Settings2 className="h-4 w-4" />
                           </button>
-                          <button onClick={() => handleToggle(table)} className={`p-1.5 rounded-lg hover:bg-accent transition-colors ${table.is_active ? 'text-muted-foreground hover:text-destructive' : 'text-muted-foreground hover:text-emerald-500'}`}>
+                          <button onClick={() => handleToggle(table)} className={`p-1.5 rounded-lg hover:bg-accent transition-colors ${table.is_active ? 'text-muted-foreground hover:text-destructive' : 'text-muted-foreground hover:text-emerald-500'}`} aria-label={table.is_active ? 'Disable table' : 'Enable table'}>
                             {table.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
@@ -241,9 +244,9 @@ export default function TableManagementPage() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)} role="dialog" aria-modal="true" aria-labelledby="create-table-title">
           <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-4">New Table</h2>
+            <h2 id="create-table-title" className="text-lg font-bold mb-4">New Table</h2>
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Table Number *</label>

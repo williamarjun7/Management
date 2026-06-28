@@ -126,18 +126,18 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
       <div className="w-full max-w-md rounded-xl border bg-background p-0 shadow-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
             {tab !== "select" && (
-              <button onClick={() => setTab("select")} className="min-h-[44px] min-w-[44px]">
+              <button onClick={() => setTab("select")} className="min-h-[44px] min-w-[44px]" aria-label="Back to payment method selection">
                 <ArrowLeft className="h-4 w-4" />
               </button>
             )}
-            <h2 className="text-lg font-semibold">Payment</h2>
+            <h2 id="payment-modal-title" className="text-lg font-semibold">Payment</h2>
           </div>
-          <button onClick={onClose} className="min-h-[44px] min-w-[44px] opacity-70 hover:opacity-100">
+          <button onClick={onClose} className="min-h-[44px] min-w-[44px] opacity-70 hover:opacity-100" aria-label="Close payment modal">
             <X className="h-4 w-4" />
           </button>
         </div>

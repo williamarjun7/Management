@@ -31,9 +31,9 @@ const FLAG_DESCRIPTIONS: Record<keyof FeatureFlags, string> = {
 };
 
 const CHANNEL_COLORS: Record<ReleaseChannel, string> = {
-  stable: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  beta: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  canary: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  stable: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
+  beta: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  canary: 'bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive',
 };
 
 export default function FeatureFlagsPage() {
@@ -70,7 +70,7 @@ export default function FeatureFlagsPage() {
   const flagKeys = Object.keys(FLAG_DESCRIPTIONS) as (keyof FeatureFlags)[];
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Feature Flags</h1>
@@ -181,7 +181,7 @@ export default function FeatureFlagsPage() {
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs capitalize">{gate.minChannel}</Badge>
                         {available ? (
-                          <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle className="h-3.5 w-3.5 text-primary" />
                         ) : (
                           <span className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30" />
                         )}

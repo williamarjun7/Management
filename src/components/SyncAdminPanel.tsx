@@ -68,7 +68,7 @@ export function SyncAdminPanel() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Syncs</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{syncLogs?.length ?? 0}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-red-600">Failed</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{failedCount}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-destructive">Failed</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-destructive">{failedCount}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-amber-600">Queued Retries</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-amber-600">{queuedCount}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Room Mappings</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{mappings?.length ?? 0}</div></CardContent></Card>
       </div>

@@ -108,12 +108,12 @@ export default function MenuItemDialog({ open, onClose, item, preselectedCategor
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="menu-item-dialog-title">
       <div
-        className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border bg-card p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-4 text-lg font-semibold">
+        <h2 id="menu-item-dialog-title" className="mb-4 text-lg font-semibold">
           {item ? "Edit Menu Item" : "Add Menu Item"}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">

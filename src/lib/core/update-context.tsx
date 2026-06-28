@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import {
   getCurrentAppVersion,
@@ -48,7 +49,11 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    performCheck();
+    if (Capacitor.isNativePlatform()) {
+      performCheck();
+    } else {
+      setChecking(false);
+    }
   }, [performCheck]);
 
   const startUpdate = useCallback(async () => {

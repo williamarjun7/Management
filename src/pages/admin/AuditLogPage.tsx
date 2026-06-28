@@ -9,19 +9,19 @@ import { Download, ChevronDown, ChevronRight, Calendar } from "lucide-react";
 import type { SystemEvent } from "../../types";
 
 const EVENT_COLORS: Record<string, string> = {
-  ORDER_CONFIRMED: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  ORDER_STATUS_CHANGED: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  PAYMENT_RECEIVED: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  PAYMENT_REVERSED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  ROOM_CHECKED_IN: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400",
-  ROOM_CHECKED_OUT: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-  STOCK_LOW: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  STOCK_MOVEMENT: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-  BOOKING_CREATED: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
-  TABLE_SESSION_STARTED: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
-  TABLE_SESSION_CLOSED: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400",
-  WORKFLOW_STEP_CHANGED: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
-  ORDER_CREATED: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400",
+  ORDER_CONFIRMED: "bg-primary/10 text-primary dark:bg-primary/20",
+  ORDER_STATUS_CHANGED: "bg-secondary text-secondary-foreground",
+  PAYMENT_RECEIVED: "bg-primary text-primary-foreground",
+  PAYMENT_REVERSED: "bg-destructive/10 text-destructive dark:bg-destructive/20",
+  ROOM_CHECKED_IN: "bg-secondary/80 text-secondary-foreground",
+  ROOM_CHECKED_OUT: "bg-accent text-accent-foreground",
+  STOCK_LOW: "bg-muted text-muted-foreground",
+  STOCK_MOVEMENT: "bg-muted/80 text-muted-foreground",
+  BOOKING_CREATED: "bg-secondary text-secondary-foreground",
+  TABLE_SESSION_STARTED: "bg-accent/80 text-accent-foreground",
+  TABLE_SESSION_CLOSED: "bg-muted text-muted-foreground",
+  WORKFLOW_STEP_CHANGED: "bg-accent text-accent-foreground",
+  ORDER_CREATED: "bg-secondary text-secondary-foreground",
 };
 
 const EVENT_TYPES = [
@@ -67,9 +67,9 @@ function getSeverityFromEventType(eventType: string): string {
 
 function severityColor(severity: string): string {
   switch (severity) {
-    case 'critical': return 'text-red-600 dark:text-red-400';
-    case 'warning': return 'text-amber-600 dark:text-amber-400';
-    default: return 'text-green-600 dark:text-green-400';
+    case 'critical': return 'text-destructive';
+    case 'warning': return 'text-amber-500';
+    default: return 'text-green-500';
   }
 }
 
@@ -167,7 +167,7 @@ export default function AuditLogPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
@@ -200,12 +200,14 @@ export default function AuditLogPage() {
           onChange={(e) => { setSearch(e.target.value); resetPagination(); }}
           placeholder="Search entity ID, type..."
           className="w-full sm:w-56"
+          aria-label="Search events"
         />
         <Input
           value={traceSearch}
           onChange={(e) => { setTraceSearch(e.target.value); resetPagination(); }}
           placeholder="Trace / correlation ID..."
           className="w-full sm:w-48"
+          aria-label="Search by trace ID"
         />
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -349,6 +351,7 @@ export default function AuditLogPage() {
                             <button
                               onClick={() => toggleRow(event.id)}
                               className="text-muted-foreground hover:text-foreground"
+                              aria-label="Toggle event details"
                             >
                               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </button>

@@ -12,6 +12,7 @@ export function ErrorAlert({ message = 'Something went wrong', onRetry }: ErrorA
       <p className="text-sm font-medium">{message}</p>
       {onRetry && (
         <button
+          type="button"
           onClick={onRetry}
           className="mt-3 inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
         >

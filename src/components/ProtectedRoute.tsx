@@ -32,7 +32,7 @@ export default function ProtectedRoute({
 
   const userRole = user.role;
 
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-2">

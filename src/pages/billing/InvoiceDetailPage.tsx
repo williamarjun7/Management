@@ -140,7 +140,7 @@ export default function InvoiceDetailPage() {
                 <span>{formatCurrency(Number(invoice.total))}</span>
               </div>
               {paidAmount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
+                <div className="flex justify-between text-sm text-primary">
                   <span>Paid</span>
                   <span>{formatCurrency(paidAmount)}</span>
                 </div>

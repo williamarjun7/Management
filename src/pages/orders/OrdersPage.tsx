@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { RefreshCw, ClipboardList } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import OrderCard from "../../components/OrderCard";
@@ -20,7 +21,7 @@ export default function OrdersPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: orders, isLoading } = useOrders(activeTab);
+  const { data: orders, isLoading, error, refetch } = useOrders(activeTab);
   const transitionStatus = useTransitionOrderStatus();
   const idempotencyKeys = useRef<Map<string, string>>(new Map());
 
@@ -80,10 +81,15 @@ export default function OrdersPage() {
   }, [cancelTarget, user, transitionStatus]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="mx-auto w-full max-w-7xl flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Orders</h1>
-        <Button onClick={() => navigate("/orders/new")}>+ New Order</Button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => refetch()} className="p-2 rounded-md hover:bg-muted transition-colors" aria-label="Refresh data">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+          <Button onClick={() => navigate("/orders/new")}>+ New Order</Button>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -111,12 +117,28 @@ export default function OrdersPage() {
         ))}
       </div>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+      {error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          Failed to load orders. Check connection.
+        </div>
+      ) : isLoading ? (
+        <div className="grid gap-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="animate-pulse rounded-lg border bg-card p-4 space-y-3">
+              <div className="h-4 bg-muted rounded w-1/3" />
+              <div className="h-3 bg-muted rounded w-1/2" />
+              <div className="h-3 bg-muted rounded w-2/3" />
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {search ? "No orders match your search." : "No orders in this status."}
-        </p>
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <ClipboardList className="h-12 w-12 mb-3 opacity-40" />
+          <p className="text-sm font-medium">
+            {search ? "No orders match your search." : "No orders in this status."}
+          </p>
+          <p className="text-xs mt-1">Orders will appear here once placed.</p>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((order: Order) => (

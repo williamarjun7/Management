@@ -24,11 +24,13 @@ export function QueueStatusBadge() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         className={cn(
           "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium min-h-[28px]",
           failed > 0
-            ? "bg-red-100 text-red-800"
-            : "bg-yellow-100 text-yellow-800"
+            ? "bg-destructive/10 text-destructive"
+            : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
         )}
       >
         {pending > 0 ? (
@@ -42,23 +44,24 @@ export function QueueStatusBadge() {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-lg border bg-background p-3 shadow-lg">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div role="dialog" aria-label="Mutation queue status" className="absolute right-0 top-full mt-2 z-50 w-72 rounded-lg border bg-background p-3 shadow-lg">
             <p className="text-sm font-medium mb-2">Mutation Queue</p>
             {pending > 0 && (
-              <div className="flex items-center gap-2 text-sm text-yellow-700 mb-2">
+              <div className="flex items-center gap-2 text-sm text-amber-600 mb-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>{pending} mutation{pending > 1 ? "s" : ""} pending — will process when online</span>
               </div>
             )}
             {failed > 0 && (
-              <div className="flex items-center gap-2 text-sm text-red-700 mb-2">
+              <div className="flex items-center gap-2 text-sm text-destructive mb-2">
                 <AlertTriangle className="h-4 w-4" />
                 <span>{failed} mutation{failed > 1 ? "s" : ""} failed — may need manual review</span>
               </div>
             )}
             <div className="flex gap-2 mt-2">
               <button
+                type="button"
                 onClick={() => { clearCompletedMutationsSync(); setPending(getPendingCountSync()); setFailed(getFailedCountSync()); }}
                 className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-muted min-h-[32px]"
               >

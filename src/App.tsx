@@ -107,7 +107,6 @@ export default function App() {
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="/verify-email" element={<SuspenseWrapper><VerifyEmail /></SuspenseWrapper>} />
           <Route path="/staff" element={<SuspenseWrapper><StaffPage /></SuspenseWrapper>} />
-          <Route path="/pos" element={<SuspenseWrapper><PosPage /></SuspenseWrapper>} />
           <Route path="*" element={<RoleRedirect />} />
           <Route
             element={

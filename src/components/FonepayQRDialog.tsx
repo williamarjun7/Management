@@ -43,6 +43,7 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
   const wsRef = useRef<WebSocket | null>(null);
   const wsConnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wsReconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const printTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [idempotencyKey] = useState(() => `fonepay:${invoice.id}:${Date.now()}`);
   const cancelledRef = useRef(false);
   const paymentCompleteRef = useRef(false);
@@ -63,6 +64,10 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
     if (wsReconnectTimerRef.current) {
       clearTimeout(wsReconnectTimerRef.current);
       wsReconnectTimerRef.current = null;
+    }
+    if (printTimeoutRef.current) {
+      clearTimeout(printTimeoutRef.current);
+      printTimeoutRef.current = null;
     }
   }, []);
 
@@ -121,7 +126,7 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
       await markInvoicePaidAndSync(invoice.id).catch(() => {});
 
       // Only print receipt AFTER payment is committed in DB
-      setTimeout(() => {
+      printTimeoutRef.current = setTimeout(() => {
         if (typeof window !== "undefined") {
           void window.print();
         }
@@ -386,10 +391,10 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
   const timerPercent = (timeLeft / (QR_TIMEOUT_MINUTES * 60)) * 100;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="fonepay-qr-title">
       <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 id="fonepay-qr-title" className="text-lg font-semibold flex items-center gap-2">
             <QrCode className="h-5 w-5" /> FonePay QR
           </h2>
           {status !== "success" && (

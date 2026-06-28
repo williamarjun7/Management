@@ -58,7 +58,7 @@
     margin: 0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
     padding-top: env(safe-area-inset-top);
@@ -199,5 +199,14 @@
 @supports (padding: max(0px)) {
   .safe-area-bottom {
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

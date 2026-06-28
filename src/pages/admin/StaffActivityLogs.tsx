@@ -90,7 +90,7 @@ export default function StaffActivityLogs() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Staff Activity Logs</h1>
@@ -104,6 +104,7 @@ export default function StaffActivityLogs() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPagination(); }}
               className="bg-transparent outline-none w-40 text-sm"
+              aria-label="Search logs"
             />
           </div>
         </div>
@@ -116,6 +117,7 @@ export default function StaffActivityLogs() {
           className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
             actionFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
           }`}
+          aria-pressed={actionFilter === 'all'}
         >
           All
         </button>
@@ -126,6 +128,7 @@ export default function StaffActivityLogs() {
             className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
               actionFilter === action ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
             }`}
+            aria-pressed={actionFilter === action}
           >
             {action.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
           </button>

@@ -61,9 +61,9 @@ export default function RoomDialog({ open, onClose, room }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <h2 className="mb-4 text-lg font-semibold">{room ? "Edit Room" : "Add Room"}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="room-dialog-title">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border bg-card p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <h2 id="room-dialog-title" className="mb-4 text-lg font-semibold">{room ? "Edit Room" : "Add Room"}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="r-number">Room Number</Label>

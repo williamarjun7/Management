@@ -44,19 +44,19 @@ const config: Record<ConnectionState, {
   anim: string;
 }> = {
   connected: {
-    bg: "bg-green-600", text: "text-white",
+    bg: "bg-green-600 dark:bg-green-700", text: "text-white",
     icon: Wifi, label: "Connected", anim: "",
   },
   offline: {
-    bg: "bg-red-600", text: "text-white",
+    bg: "bg-red-600 dark:bg-red-700", text: "text-white",
     icon: WifiOff, label: "Offline — changes queued locally", anim: "",
   },
   reconnecting: {
-    bg: "bg-yellow-600", text: "text-white",
+    bg: "bg-yellow-600 dark:bg-yellow-700", text: "text-white",
     icon: RefreshCw, label: "Reconnecting...", anim: "animate-spin",
   },
   replaying: {
-    bg: "bg-blue-600", text: "text-white",
+    bg: "bg-blue-600 dark:bg-blue-700", text: "text-white",
     icon: Loader2, label: "Syncing missed events...", anim: "animate-spin",
   },
 };

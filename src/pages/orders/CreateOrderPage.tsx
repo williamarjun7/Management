@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -39,6 +39,9 @@ export default function CreateOrderPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
 
   const q = searchQuery.toLowerCase();
   const filteredByCategory =
@@ -116,7 +119,17 @@ export default function CreateOrderPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!tableId || cart.length === 0) return;
+    setValidationError(null);
+    if (!tableId) {
+      tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setValidationError('Please select a table');
+      return;
+    }
+    if (cart.length === 0) {
+      cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setValidationError('Please add items to the order');
+      return;
+    }
 
     await createOrder.mutateAsync({
       table_id: tableId,
@@ -235,6 +248,9 @@ export default function CreateOrderPage() {
               <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={createOrder.isPending || cart.length === 0 || !tableId}>
                 {createOrder.isPending ? "Submitting\u2026" : `Place Order (${totalCartItems})`}
               </Button>
+              {validationError && (
+                <p className="text-xs text-destructive">{validationError}</p>
+              )}
             </form>
           </div>
         )}
@@ -273,7 +289,7 @@ export default function CreateOrderPage() {
           </div>
 
           {/* Table & Customer (desktop only) */}
-          <div className="hidden lg:flex items-center gap-3 px-4 py-3 border-b border-border">
+          <div ref={tableRef} className="hidden lg:flex items-center gap-3 px-4 py-3 border-b border-border">
             <div className="flex-1">
               <Select
                 value={tableId}
@@ -396,7 +412,7 @@ export default function CreateOrderPage() {
         </section>
 
         {/* Desktop Cart Sidebar (lg+) */}
-        <aside className="hidden lg:flex w-96 bg-card border-l border-border flex-col shrink-0">
+        <aside ref={cartRef} className="hidden lg:flex w-96 bg-card border-l border-border flex-col shrink-0">
           <div className="p-5 border-b border-border">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">

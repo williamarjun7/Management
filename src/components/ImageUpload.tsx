@@ -29,8 +29,9 @@ export default function ImageUpload({ currentUrl, onUpload, onRemove, uploading 
       return;
     }
 
-    setPreview(URL.createObjectURL(file));
-    onUpload(file).catch((err) => {
+    const blobUrl = URL.createObjectURL(file);
+    setPreview(blobUrl);
+    onUpload(file).finally(() => URL.revokeObjectURL(blobUrl)).catch((err) => {
       setError(err?.message || "Upload failed");
       setPreview(null);
     });

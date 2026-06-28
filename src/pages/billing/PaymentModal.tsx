@@ -246,7 +246,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
                   onChange={(e) => setCashReceived(e.target.value)}
                 />
                 {Number(cashReceived) > remaining && (
-                  <p className="text-xs text-emerald-600 font-medium">
+                  <p className="text-xs text-primary font-medium">
                     Change due: {formatCurrency(change)}
                   </p>
                 )}

@@ -40,7 +40,7 @@ export function PrintInvoice({ invoice, onClose }: PrintInvoiceProps) {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div ref={printRef} className="invoice-print p-8 print:p-0">
+        <div ref={printRef} className="invoice-print p-4 md:p-8 print:p-0">
           <style>{`
             @media print {
               @page { margin: 8mm 6mm; }

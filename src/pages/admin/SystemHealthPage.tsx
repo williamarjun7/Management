@@ -34,22 +34,22 @@ interface HealthData {
 
 function circuitColor(state: CircuitState): string {
   switch (state) {
-    case 'CLOSED': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'HALF_OPEN': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-    case 'OPEN': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+    case 'CLOSED': return 'bg-primary text-primary-foreground';
+    case 'HALF_OPEN': return 'bg-secondary text-secondary-foreground';
+    case 'OPEN': return 'bg-destructive text-destructive-foreground';
   }
 }
 
 function leaderColor(state: LeaderState): string {
   switch (state) {
-    case 'leading': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'following': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'contesting': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+    case 'leading': return 'bg-primary text-primary-foreground';
+    case 'following': return 'bg-secondary text-secondary-foreground';
+    case 'contesting': return 'bg-accent text-accent-foreground';
   }
 }
 
 function statusIcon(ok: boolean) {
-  return ok ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />;
+  return ok ? <CheckCircle className="h-4 w-4 text-primary" /> : <XCircle className="h-4 w-4 text-destructive" />;
 }
 
 function formatMs(ms: number | null): string {
@@ -157,7 +157,7 @@ export default function SystemHealthPage() {
   const { recentReconnects, recentReplayBatches, recentAuthFailures, recentAuthLogins, recentSlowRpcs, recentCircuitEvents } = data;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">System Health Dashboard</h1>
@@ -173,7 +173,7 @@ export default function SystemHealthPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
@@ -183,14 +183,14 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Activity className="h-5 w-5 text-blue-600" />
+              <Activity className="h-5 w-5 text-primary" />
               Queue
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {data.queue ? (
               <>
-                <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Total</p>
                     <p className="font-semibold text-lg">{data.queue.queueSize}</p>
@@ -205,11 +205,11 @@ export default function SystemHealthPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Completed</p>
-                    <p className="font-semibold text-lg text-green-600">{data.queue.completedCount}</p>
+                    <p className="font-semibold text-lg text-primary">{data.queue.completedCount}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Failed</p>
-                    <p className="font-semibold text-lg text-red-600">{data.queue.failedCount}</p>
+                    <p className="font-semibold text-lg text-destructive">{data.queue.failedCount}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Dead Letters</p>
@@ -259,7 +259,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Shield className="h-5 w-5 text-purple-600" />
+              <Shield className="h-5 w-5 text-primary" />
               Circuit Breaker
             </CardTitle>
           </CardHeader>
@@ -269,12 +269,12 @@ export default function SystemHealthPage() {
                 {data.circuit.state}
               </Badge>
               {data.circuit.probeInFlight && (
-                <Badge variant="outline" className="text-yellow-600 border-yellow-400">
+                <Badge variant="outline" className="text-amber-500 border-amber-500">
                   Probe In Flight
                 </Badge>
               )}
               {recentCircuitEvents > 0 && (
-                <Badge variant="outline" className="text-orange-600 border-orange-400">
+                <Badge variant="outline" className="text-amber-500 border-amber-500">
                   {recentCircuitEvents} changes (5m)
                 </Badge>
               )}
@@ -299,7 +299,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Radio className="h-5 w-5 text-cyan-600" />
+              <Radio className="h-5 w-5 text-primary" />
               Multi-Tab Leadership
             </CardTitle>
           </CardHeader>
@@ -323,7 +323,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Wifi className="h-5 w-5 text-green-600" />
+              <Wifi className="h-5 w-5 text-primary" />
               Realtime / Replay
             </CardTitle>
           </CardHeader>
@@ -353,7 +353,7 @@ export default function SystemHealthPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reconnects (5m)</span>
-                <span className={`font-semibold ${recentReconnects > 5 ? 'text-red-600' : ''}`}>{recentReconnects}</span>
+                <span className={`font-semibold ${recentReconnects > 5 ? 'text-destructive' : ''}`}>{recentReconnects}</span>
               </div>
             </div>
             {data.realtime.channels.length > 0 && (
@@ -375,7 +375,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Database className="h-5 w-5 text-orange-600" />
+              <Database className="h-5 w-5 text-primary" />
               Storage
             </CardTitle>
           </CardHeader>
@@ -401,7 +401,7 @@ export default function SystemHealthPage() {
                 {data.parity.mismatches.length > 0 && (
                   <div className="border-t pt-2">
                     <p className="text-xs text-muted-foreground mb-1">Mismatches:</p>
-                    <ul className="text-xs text-red-600 space-y-0.5 list-disc list-inside">
+                    <ul className="text-xs text-destructive space-y-0.5 list-disc list-inside">
                       {data.parity.mismatches.slice(0, 5).map((m, i) => (
                         <li key={i} className="truncate">{m}</li>
                       ))}
@@ -433,7 +433,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Server className="h-5 w-5 text-indigo-600" />
+              <Server className="h-5 w-5 text-primary" />
               Browser / Environment
             </CardTitle>
           </CardHeader>
@@ -457,14 +457,14 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              <BarChart3 className="h-5 w-5 text-primary" />
               Telemetry
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {tm ? (
               <>
-                <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Total events</p>
                     <p className="font-semibold text-lg">{formatNumber(tm.total)}</p>
@@ -507,7 +507,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Globe className="h-5 w-5 text-sky-600" />
+              <Globe className="h-5 w-5 text-primary" />
               Websocket
             </CardTitle>
           </CardHeader>
@@ -515,7 +515,7 @@ export default function SystemHealthPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground text-xs">Reconnects (5m)</p>
-                <p className={`font-semibold text-lg ${recentReconnects > 5 ? 'text-red-600' : ''}`}>{recentReconnects}</p>
+                <p className={`font-semibold text-lg ${recentReconnects > 5 ? 'text-destructive' : ''}`}>{recentReconnects}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Total (today)</p>
@@ -529,7 +529,7 @@ export default function SystemHealthPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Online status</span>
-                <span className={navigator.onLine ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                <span className={navigator.onLine ? 'text-primary font-medium' : 'text-destructive font-medium'}>
                   {navigator.onLine ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
@@ -541,7 +541,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Clock className="h-5 w-5 text-amber-600" />
+              <Clock className="h-5 w-5 text-primary" />
               RPC Latency
             </CardTitle>
           </CardHeader>
@@ -553,7 +553,7 @@ export default function SystemHealthPage() {
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Slow calls (5m) &gt;5s</p>
-                <p className={`font-semibold text-lg ${recentSlowRpcs > 10 ? 'text-red-600' : ''}`}>{recentSlowRpcs}</p>
+                <p className={`font-semibold text-lg ${recentSlowRpcs > 10 ? 'text-destructive' : ''}`}>{recentSlowRpcs}</p>
               </div>
             </div>
             <div className="border-t pt-3 space-y-1 text-sm">
@@ -575,7 +575,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Fingerprint className="h-5 w-5 text-rose-600" />
+              <Fingerprint className="h-5 w-5 text-primary" />
               Auth Lifecycle
             </CardTitle>
           </CardHeader>
@@ -587,7 +587,7 @@ export default function SystemHealthPage() {
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Refresh failures (5m)</p>
-                <p className={`font-semibold text-lg ${recentAuthFailures > 3 ? 'text-red-600' : ''}`}>{recentAuthFailures}</p>
+                <p className={`font-semibold text-lg ${recentAuthFailures > 3 ? 'text-destructive' : ''}`}>{recentAuthFailures}</p>
               </div>
             </div>
             <div className="border-t pt-3 space-y-1 text-sm">
@@ -607,7 +607,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <LineChart className="h-5 w-5 text-violet-600" />
+              <LineChart className="h-5 w-5 text-primary" />
               Event Throughput
             </CardTitle>
           </CardHeader>
@@ -653,7 +653,7 @@ export default function SystemHealthPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Network className="h-5 w-5 text-teal-600" />
+              <Network className="h-5 w-5 text-primary" />
               Mutation Replay
             </CardTitle>
           </CardHeader>
@@ -675,11 +675,11 @@ export default function SystemHealthPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Failed mutations (today)</span>
-                <span className={tm && tm.failedMutationCount > 0 ? 'text-red-600' : ''}>{tm?.failedMutationCount ?? '—'}</span>
+                <span className={tm && tm.failedMutationCount > 0 ? 'text-destructive' : ''}>{tm?.failedMutationCount ?? '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Dead letters</span>
-                <span className={data.queue && data.queue.deadLetterCount > 0 ? 'text-red-600 font-medium' : ''}>
+                <span className={data.queue && data.queue.deadLetterCount > 0 ? 'text-destructive font-medium' : ''}>
                   {data.queue?.deadLetterCount ?? '—'}
                 </span>
               </div>

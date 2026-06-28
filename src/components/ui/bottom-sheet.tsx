@@ -30,14 +30,17 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
       <div
         className="fixed inset-0 bg-black/50 animate-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
       <div
         ref={sheetRef}
-        className="relative w-full max-h-[85vh] bg-background rounded-t-2xl shadow-xl animate-bottom-sheet-in overflow-hidden"
+        className="relative w-full max-h-[85vh] bg-background rounded-t-2xl shadow-xl animate-bottom-sheet-in overflow-y-auto"
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-border">
           <div className="flex-1">
-            <div
+            <button
+              tabIndex={0}
+              aria-label="Close dialog"
               className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/30 mb-3 cursor-pointer"
               onClick={onClose}
             />
@@ -48,6 +51,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
           <button
             onClick={onClose}
             className="p-1.5 rounded-full hover:bg-muted transition-colors -mr-1.5 -mt-1"
+            aria-label="Close dialog"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18" /><path d="m6 6 12 12" />

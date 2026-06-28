@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Package, AlertTriangle, TrendingDown, ClipboardList, Trash2 } from "lucide-react";
+import { Plus, Package, AlertTriangle, TrendingDown, ClipboardList, Trash2, RefreshCw } from "lucide-react";
 import { useProducts, useStockMovements, useDeleteProduct } from "../../lib/hooks";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -36,13 +36,16 @@ export default function InventoryPage() {
   ) ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Inventory</h1>
           <p className="text-muted-foreground">Track stock levels and manage products.</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => window.location.reload()} className="p-2 rounded-md hover:bg-muted transition-colors" aria-label="Refresh data">
+            <RefreshCw className="h-4 w-4" />
+          </button>
           <Button variant="outline" onClick={() => setShowMovementForm(true)} className="min-h-[44px]">
             <ClipboardList className="mr-2 h-4 w-4" /> Record Movement
           </Button>
@@ -123,8 +126,15 @@ export default function InventoryPage() {
             <Card>
               <CardContent className="p-0">
                 {productsLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <div className="space-y-2 p-4">
+                    {[1,2,3,4,5].map(i => (
+                      <div key={i} className="flex gap-4 animate-pulse">
+                        <div className="h-4 bg-muted rounded w-1/4" />
+                        <div className="h-4 bg-muted rounded w-1/4" />
+                        <div className="h-4 bg-muted rounded w-1/6" />
+                        <div className="h-4 bg-muted rounded w-1/6" />
+                      </div>
+                    ))}
                   </div>
                 ) : products?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
@@ -134,7 +144,7 @@ export default function InventoryPage() {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead>
+                      <thead className="sticky top-0 z-10 bg-background">
                         <tr className="border-b">
                           <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Name</th>
                           <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">SKU</th>
@@ -200,7 +210,7 @@ export default function InventoryPage() {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead>
+                      <thead className="sticky top-0 z-10 bg-background">
                         <tr className="border-b">
                           <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
                           <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Product</th>

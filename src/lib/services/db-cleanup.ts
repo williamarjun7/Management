@@ -14,7 +14,7 @@ async function cleanupTelemetry(retentionDays = TELEMETRY_RETENTION_DAYS): Promi
   try {
     const cutoff = new Date(Date.now() - retentionDays * 86400000).toISOString();
     const count = await queueDB.telemetry
-      .where('created_at')
+      .where('timestamp')
       .below(cutoff)
       .delete();
     return count;

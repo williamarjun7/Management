@@ -58,31 +58,24 @@ export function KitchenOrderCard({
   const customerLabel = getCustomerLabel(order);
 
   const borderColorClass = isUrgent
-    ? 'border-l-[#ffb4ab]'
+    ? 'border-l-destructive'
     : isWarning
-      ? 'border-l-tertiary-fixed-dim'
-      : 'border-l-secondary';
+      ? 'border-l-amber-500'
+      : 'border-l-primary';
 
   const timerColorClass = isUrgent
-    ? 'text-[#ffb4ab]'
+    ? 'text-destructive'
     : isWarning
-      ? 'text-on-tertiary-container'
+      ? 'text-amber-600 dark:text-amber-400'
       : 'text-primary';
-
-  const urgentGlowStyle = isUrgent ? { boxShadow: '0 0 20px rgba(255, 180, 171, 0.15)' } : {};
 
   return (
     <article
       className={cn(
-        'rounded-xl border-l-4 bg-surface-container-low flex flex-col min-h-[480px]',
+        'rounded-xl border-l-4 flex flex-col min-h-[480px] bg-card shadow-sm',
         borderColorClass,
+        isUrgent && 'shadow-[0_0_20px_hsl(var(--destructive)/0.15)]',
       )}
-      style={{
-        background: 'rgba(28, 27, 27, 0.6)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        ...urgentGlowStyle,
-      }}
     >
       <div className="p-4 border-b border-outline-variant flex justify-between items-start">
         <div>

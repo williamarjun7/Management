@@ -90,7 +90,7 @@ export default function DiningRoomsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Dining Rooms & Sections</h1>
@@ -111,6 +111,7 @@ export default function DiningRoomsPage() {
           onChange={e => setSearch(e.target.value)}
           placeholder="Search rooms..."
           className="w-full rounded-lg border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          aria-label="Search rooms"
         />
       </div>
 
@@ -173,10 +174,10 @@ export default function DiningRoomsPage() {
                       <p className="text-xs text-muted-foreground">Order {room.display_order}</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => startEdit(room)} className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                      <button onClick={() => startEdit(room)} className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" aria-label="Edit room">
                         <Settings2 className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleToggleEnabled(room)} className={`p-2 rounded-lg hover:bg-accent transition-colors ${room.is_enabled ? 'text-muted-foreground hover:text-destructive' : 'text-muted-foreground hover:text-emerald-500'}`}>
+                      <button onClick={() => handleToggleEnabled(room)} className={`p-2 rounded-lg hover:bg-accent transition-colors ${room.is_enabled ? 'text-muted-foreground hover:text-destructive' : 'text-muted-foreground hover:text-emerald-500'}`} aria-label={room.is_enabled ? 'Disable room' : 'Enable room'}>
                         {room.is_enabled ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
@@ -194,7 +195,7 @@ export default function DiningRoomsPage() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)} role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold mb-4">New Dining Room</h2>
             <div className="space-y-3">

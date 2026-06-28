@@ -120,7 +120,7 @@ export default function OperationalAnalytics() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Analytics</h1>
@@ -224,7 +224,7 @@ export default function OperationalAnalytics() {
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                     <div
-                      className={`w-full max-w-[32px] rounded-t ${isHigh ? 'bg-primary' : 'bg-emerald-500/60'}`}
+                      className={`w-full max-w-[32px] rounded-t ${isHigh ? 'bg-primary' : 'bg-primary/60'}`}
                       style={{ height: `${Math.max(pct, 4)}%` }}
                     />
                   </div>
@@ -325,7 +325,7 @@ export default function OperationalAnalytics() {
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                       <div
-                        className="w-full max-w-[16px] rounded-t bg-violet-500/60"
+                        className="w-full max-w-[16px] rounded-t bg-primary/60"
                         style={{ height: `${Math.max(pct, 4)}%` }}
                       />
                     </div>
@@ -345,7 +345,7 @@ export default function OperationalAnalytics() {
         {/* System Telemetry */}
         <div className="col-span-12 lg:col-span-4 rounded-xl border bg-card p-6">
           <h3 className="text-sm font-semibold mb-4">System Telemetry</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-lg bg-muted p-3">
               <p className="text-[10px] text-muted-foreground uppercase">Queue Size</p>
               <p className="text-lg font-bold">{queueHealth?.queueSize ?? 0}</p>
@@ -428,15 +428,15 @@ export default function OperationalAnalytics() {
                   return (
                     <div key={day.day} className="flex-1 flex flex-col items-center justify-end h-full relative">
                       <div
-                        className="w-full max-w-[24px] rounded-t bg-emerald-500/30 absolute"
+                        className="w-full max-w-[24px] rounded-t bg-primary/30 absolute"
                         style={{ height: `${Math.max(pct, 4)}%`, bottom: 0 }}
                       />
                       <div
-                        className="w-full max-w-[24px] rounded-t bg-emerald-500/60"
+                        className="w-full max-w-[24px] rounded-t bg-primary/60"
                         style={{ height: `${Math.max(pct, 4)}%`, bottom: 0 }}
                       />
                       <div
-                        className="w-full max-w-[24px] rounded-t bg-emerald-500/10 absolute"
+                        className="w-full max-w-[24px] rounded-t bg-primary/10 absolute"
                         style={{ height: `${Math.max(lowerPct, 2)}%`, bottom: 0 }}
                       />
                     </div>
@@ -483,7 +483,7 @@ export default function OperationalAnalytics() {
                   return (
                     <div key={day.date} className="flex-1 flex flex-col items-center justify-end h-full">
                       <div
-                        className="w-full max-w-[28px] rounded-t bg-cyan-500/60"
+                        className="w-full max-w-[28px] rounded-t bg-primary/60"
                         style={{ height: `${Math.max(pct, 4)}%` }}
                       />
                     </div>
@@ -528,7 +528,7 @@ export default function OperationalAnalytics() {
                   return (
                     <div key={date} className="flex-1 flex flex-col items-center justify-end h-full">
                       <div
-                        className="w-full max-w-[16px] rounded-t bg-orange-500/60"
+                        className="w-full max-w-[16px] rounded-t bg-primary/60"
                         style={{ height: `${Math.max(pct, 4)}%` }}
                       />
                     </div>

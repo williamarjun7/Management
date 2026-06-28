@@ -43,6 +43,7 @@ export default function MotelPage() {
     return unsubscribe;
   }, []);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingRoomId, setBookingRoomId] = useState<string | undefined>(undefined);
   const [showRoomDialog, setShowRoomDialog] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -126,12 +127,13 @@ export default function MotelPage() {
     }
   }, [confirmAction, user, checkOut, syncStatusToWebsite]);
 
-  const handleBookingClick = () => {
+  const handleBookingClick = (room?: Room) => {
+    setBookingRoomId(room?.id);
     setShowBookingForm(true);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Room Management</h1>
@@ -141,7 +143,7 @@ export default function MotelPage() {
           <Button onClick={() => setShowRoomDialog(true)} variant="outline" className="min-h-[44px] hidden sm:inline-flex">
             <Plus className="mr-2 h-4 w-4" /> Add Room
           </Button>
-          <Button onClick={() => setShowBookingForm(true)} className="min-h-[44px]">
+          <Button onClick={() => { setBookingRoomId(undefined); setShowBookingForm(true); }} className="min-h-[44px]">
             <Plus className="mr-2 h-4 w-4" /> New Booking
           </Button>
           <Button onClick={() => setShowSyncPanel(!showSyncPanel)} variant="ghost" className="min-h-[44px] hidden sm:inline-flex">
@@ -270,7 +272,7 @@ export default function MotelPage() {
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search rooms..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border bg-background pl-9 pr-4 py-2 text-sm outline-none focus:border-primary" />
+          <input type="text" placeholder="Search rooms..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border bg-background pl-9 pr-4 py-2 text-sm outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-ring" />
         </div>
         <Tabs value={filterType} onValueChange={setFilterType} className="flex-1">
           <TabsList className="flex-wrap">
@@ -319,16 +321,16 @@ export default function MotelPage() {
                 </div>
                 <div className="flex border-t border-inherit divide-x divide-inherit">
                   {room.status === "available" && (
-                    <button type="button" onClick={handleBookingClick} className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors">
+                    <button type="button" onClick={() => handleBookingClick(room)} className="flex-1 py-3 text-[11px] font-medium text-center hover:bg-black/5 transition-colors min-h-[44px]">
                       Book Now
                     </button>
                   )}
                   {room.status === "occupied" && (
-                    <button type="button" className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors text-muted-foreground">
+                    <button type="button" disabled className="flex-1 py-3 text-[11px] font-medium text-center text-muted-foreground min-h-[44px]">
                       Occupied
                     </button>
                   )}
-                  <button type="button" onClick={() => setEditingRoom(room)} className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors">
+                  <button type="button" onClick={() => setEditingRoom(room)} className="flex-1 py-3 text-[11px] font-medium text-center hover:bg-black/5 transition-colors min-h-[44px]">
                     Edit
                   </button>
                   <button type="button" onClick={() => {
@@ -337,7 +339,7 @@ export default function MotelPage() {
                       : room.status === "cleaning" ? "available"
                       : "available";
                     setConfirmStatusTarget({ room, status: nextStatus });
-                  }} className="flex-1 py-1.5 text-[11px] font-medium text-center hover:bg-black/5 transition-colors">
+                  }} className="flex-1 py-3 text-[11px] font-medium text-center hover:bg-black/5 transition-colors min-h-[44px]">
                     {room.status === "available" ? "Maint." :
                      room.status === "occupied" ? "Cleaning" :
                      room.status === "cleaning" ? "Ready" : "Status"}
@@ -354,7 +356,7 @@ export default function MotelPage() {
       )}
 
       {showBookingForm && (
-        <BookingForm onClose={() => setShowBookingForm(false)} />
+        <BookingForm preselectedRoomId={bookingRoomId} onClose={() => { setBookingRoomId(undefined); setShowBookingForm(false); }} />
       )}
 
       <ConfirmDialog

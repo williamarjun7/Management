@@ -357,7 +357,7 @@ export default function PosPage() {
             <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center ${selectedCat === 'all' ? 'bg-primary text-background' : 'bg-muted text-foreground'}`}>
               <Grid3X3 className="h-5 w-5 lg:h-6 lg:w-6" />
             </div>
-            <span className="text-[10px] font-medium text-center leading-tight">All</span>
+            <span className="text-[11px] font-medium text-center leading-tight">All</span>
           </button>
           {(categories ?? []).map((cat) => {
             const Icon = getIconForCategory(cat.name);
@@ -371,12 +371,12 @@ export default function PosPage() {
                 <div className={`relative w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center ${selectedCat === cat.id ? 'bg-primary text-background' : 'bg-muted text-foreground'}`}>
                   <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
                   {catCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-[10px] font-bold text-background shadow-sm">
+                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-[11px] font-bold text-background shadow-sm">
                       {catCount}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-medium text-center leading-tight">{cat.name}</span>
+                <span className="text-[11px] font-medium text-center leading-tight">{cat.name}</span>
               </button>
             );
           })}
@@ -392,6 +392,7 @@ export default function PosPage() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search items..."
+                aria-label="Search menu items"
                 className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -434,6 +435,9 @@ export default function PosPage() {
               <div
                 key={item.id}
                 onClick={() => { if (!inCart) addToCart(item); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!inCart) addToCart(item); } }}
+                role="button"
+                tabIndex={0}
                 className={`group relative rounded-xl border overflow-hidden text-left cursor-pointer transition-all active:scale-[0.98] ${inCart ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/60 bg-card'}`}
               >
                 <div className={`h-20 lg:h-24 flex items-center justify-center bg-gradient-to-br ${inCart ? 'from-primary/10 to-primary/5' : 'from-muted to-muted/50'}`}>
@@ -461,16 +465,18 @@ export default function PosPage() {
                     <div className="flex items-center gap-1 mt-2" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => updateQty(item.id, -1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card hover:bg-muted transition-colors"
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border bg-card hover:bg-muted transition-colors"
+                        aria-label={`Decrease quantity of ${item.name}`}
                       >
-                        <Minus className="h-3.5 w-3.5" />
+                        <Minus className="h-4 w-4" />
                       </button>
-                      <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
+                      <span className="w-10 text-center text-sm font-bold tabular-nums">{qty}</span>
                       <button
                         onClick={() => addToCart(item)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-background hover:bg-primary/90 transition-colors"
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-primary text-background hover:bg-primary/90 transition-colors"
+                        aria-label={`Increase quantity of ${item.name}`}
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
                   )}
@@ -542,22 +548,24 @@ export default function PosPage() {
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <button
                       onClick={() => updateQty(line.menu_item_id, -1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                      className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                      aria-label={`Decrease quantity of ${line.name}`}
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="h-4 w-4" />
                     </button>
-                    <span className="text-sm font-bold w-7 text-center tabular-nums">{line.quantity}</span>
+                    <span className="text-sm font-bold w-10 text-center tabular-nums">{line.quantity}</span>
                     <button
                       onClick={() => updateQty(line.menu_item_id, 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                      className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                      aria-label={`Increase quantity of ${line.name}`}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-4 w-4" />
                     </button>
                     <input
                       placeholder="Notes"
                       value={line.notes}
                       onChange={(e) => updateNotes(line.menu_item_id, e.target.value)}
-                      className="ml-auto h-7 w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
+                      className="ml-auto min-h-[44px] w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -721,22 +729,24 @@ export default function PosPage() {
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <button
                           onClick={() => updateQty(line.menu_item_id, -1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                          aria-label={`Decrease quantity of ${line.name}`}
                         >
-                          <Minus className="h-3.5 w-3.5" />
+                          <Minus className="h-4 w-4" />
                         </button>
-                        <span className="text-sm font-bold w-7 text-center tabular-nums">{line.quantity}</span>
+                        <span className="text-sm font-bold w-10 text-center tabular-nums">{line.quantity}</span>
                         <button
                           onClick={() => updateQty(line.menu_item_id, 1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border hover:bg-muted transition-colors"
+                          aria-label={`Increase quantity of ${line.name}`}
                         >
-                          <Plus className="h-3.5 w-3.5" />
+                          <Plus className="h-4 w-4" />
                         </button>
                         <input
                           placeholder="Notes"
                           value={line.notes}
                           onChange={(e) => updateNotes(line.menu_item_id, e.target.value)}
-                          className="ml-auto h-7 w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
+                          className="ml-auto min-h-[44px] w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                     </div>
@@ -835,7 +845,8 @@ export default function PosPage() {
       {/* Mobile cart FAB */}
       <button
         onClick={() => setMobileCartOpen(true)}
-        className="fixed bottom-4 right-4 z-40 lg:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary text-background shadow-lg active:scale-95 transition-transform"
+        className="fixed bottom-20 right-4 z-40 lg:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary text-background shadow-lg active:scale-95 transition-transform"
+        aria-label={`Open cart with ${totalCartItems} items`}
       >
         <ShoppingCart className="h-6 w-6" />
         {totalCartItems > 0 && (

@@ -316,7 +316,7 @@ export default function SettingsPage() {
               <h3 className="text-sm font-semibold">Billing Settings</h3>
             </div>
             <Separator />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Invoice Prefix</Label>
                 <Input value={billing.invoice_prefix} onChange={(e) => setBilling({ ...billing, invoice_prefix: e.target.value })} className="max-w-[140px]" />
@@ -344,7 +344,7 @@ export default function SettingsPage() {
               <h3 className="text-sm font-semibold">Motel Settings</h3>
             </div>
             <Separator />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label><span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Check-in Time</span></Label>
                 <Input type="time" value={motel.check_in_time} onChange={(e) => setMotel({ ...motel, check_in_time: e.target.value })} className="max-w-[140px]" />
@@ -375,7 +375,7 @@ export default function SettingsPage() {
               <h3 className="text-sm font-semibold">Kitchen Settings</h3>
             </div>
             <Separator />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label><span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Default Prep Time (min)</span></Label>
                 <Input type="number" value={kitchen.default_prep_time_minutes} onChange={(e) => setKitchen({ ...kitchen, default_prep_time_minutes: Number(e.target.value) })} className="max-w-[120px]" />
@@ -432,7 +432,7 @@ export default function SettingsPage() {
               <h3 className="text-sm font-semibold">Security Settings</h3>
             </div>
             <Separator />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label><span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Session Timeout (min)</span></Label>
                 <Input type="number" value={security.session_timeout_minutes} onChange={(e) => setSecurity({ ...security, session_timeout_minutes: Number(e.target.value) })} className="max-w-[140px]" />
