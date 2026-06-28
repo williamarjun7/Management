@@ -1,15 +1,17 @@
 name: Build Android APK
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
-        description: 'App version (e.g., 1.5.0)'
-        required: true
+        description: 'App version (e.g., 1.5.0) — defaults to package.json version on push'
+        required: false
         type: string
       version_code:
-        description: 'Version code (incrementing integer)'
-        required: true
+        description: 'Version code (incrementing integer) — defaults to run_number on push'
+        required: false
         type: number
       force_update:
         description: 'Force update (mandatory)'
@@ -22,14 +24,33 @@ on:
         default: 'Bug fixes and improvements'
         type: string
 
-env:
-  APK_FILENAME: highlands-pos-${{ inputs.version }}.apk
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve version info
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION=$(jq -r '.version' package.json)
+            # Use run_number as version_code so it increments on every push
+            VERSION_CODE=${{ github.run_number }}
+            FORCE_UPDATE=false
+            NOTES="$(git log -1 --pretty=%s)"
+          else
+            VERSION="${{ inputs.version }}"
+            VERSION_CODE=${{ inputs.version_code }}
+            FORCE_UPDATE=${{ inputs.force_update == true && 'true' || 'false' }}
+            NOTES="${{ inputs.release_notes }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "force_update=$FORCE_UPDATE" >> $GITHUB_OUTPUT
+          echo "release_notes=$NOTES" >> $GITHUB_OUTPUT
+          echo "apk_filename=highlands-pos-$VERSION.apk" >> $GITHUB_OUTPUT
+          echo "APK will be: highlands-pos-$VERSION.apk"
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
@@ -52,8 +73,8 @@ jobs:
       - name: Build web app
         run: npm run build
         env:
-          VITE_APP_VERSION: ${{ inputs.version }}
-          VITE_APP_VERSION_CODE: ${{ inputs.version_code }}
+          VITE_APP_VERSION: ${{ steps.version.outputs.version }}
+          VITE_APP_VERSION_CODE: ${{ steps.version.outputs.version_code }}
 
       - name: Sync Capacitor Android
         run: npx cap sync android
@@ -72,7 +93,7 @@ jobs:
 
       - name: Rename APK
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk ${{ env.APK_FILENAME }}
+          cp android/app/build/outputs/apk/release/app-release.apk ${{ steps.version.outputs.apk_filename }}
 
       - name: Upload APK to server
         uses: appleboy/scp-action@v0.1.7
@@ -80,7 +101,7 @@ jobs:
           host: 103.233.58.46
           username: highlandscafe
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ${{ env.APK_FILENAME }}
+          source: ${{ steps.version.outputs.apk_filename }}
           target: /tmp/pos-apk
 
       - name: Move APK to downloads directory & publish version
@@ -91,7 +112,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             mkdir -p /var/www/highlands-motel/current/downloads
-            mv /tmp/pos-apk/${{ env.APK_FILENAME }} /var/www/highlands-motel/current/downloads/${{ env.APK_FILENAME }}
+            mv /tmp/pos-apk/${{ steps.version.outputs.apk_filename }} /var/www/highlands-motel/current/downloads/${{ steps.version.outputs.apk_filename }}
             rm -rf /tmp/pos-apk
 
       - name: Publish version metadata
@@ -101,20 +122,6 @@ jobs:
           username: highlandscafe
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Parse release notes from input (line breaks)
-            IFS=';' read -ra NOTES <<< "${{ inputs.release_notes }}"
-            NOTES_JSON="["
-            FIRST=true
-            for note in "${NOTES[@]}"; do
-              if [ "$FIRST" = true ]; then
-                FIRST=false
-              else
-                NOTES_JSON+=","
-              fi
-              NOTES_JSON+="\"$(echo "$note" | xargs)\""
-            done
-            NOTES_JSON+="]"
-            
             curl -X POST "https://8cvkfu8m.us-east.insforge.app/api/query" \
               -H "Content-Type: application/json" \
               -H "apikey: ${{ secrets.INSFORGE_SERVICE_KEY }}" \
@@ -125,7 +132,7 @@ jobs:
               -H "Content-Type: application/json" \
               -H "apikey: ${{ secrets.INSFORGE_SERVICE_KEY }}" \
               -H "Authorization: Bearer ${{ secrets.INSFORGE_SERVICE_KEY }}" \
-              -d "INSERT INTO app_versions (version, version_code, min_version, min_version_code, force_update, apk_url, release_notes, is_current) VALUES ('${{ inputs.version }}', ${{ inputs.version_code }}, '1.0.0', 1, ${{ inputs.force_update == true && 'true' || 'false' }}, 'https://pos.highlandscafemotelinn.com/downloads/${{ env.APK_FILENAME }}', '${{ inputs.release_notes }}', true);"
+              -d "INSERT INTO app_versions (version, version_code, min_version, min_version_code, force_update, apk_url, release_notes, is_current) VALUES ('${{ steps.version.outputs.version }}', ${{ steps.version.outputs.version_code }}, '1.0.0', 1, ${{ steps.version.outputs.force_update }}, 'https://pos.highlandscafemotelinn.com/downloads/${{ steps.version.outputs.apk_filename }}', '${{ steps.version.outputs.release_notes }}', true);"
 
       - name: Send Telegram notification
         if: always()
@@ -136,7 +143,7 @@ jobs:
           message: |
             ${{ job.status == 'success' && '✅' || '❌' }} Highlands POS APK Build ${{ job.status }}
             
-            Version: ${{ inputs.version }} (code ${{ inputs.version_code }})
-            Force Update: ${{ inputs.force_update }}
+            Version: ${{ steps.version.outputs.version }} (code ${{ steps.version.outputs.version_code }})
+            Force Update: ${{ steps.version.outputs.force_update }}
             
-            ${{ job.status == 'success' && format('Download: https://pos.highlandscafemotelinn.com/downloads/{0}', env.APK_FILENAME) || 'Build failed - check Actions logs' }}
+            ${{ job.status == 'success' && format('Download: https://pos.highlandscafemotelinn.com/downloads/{0}', steps.version.outputs.apk_filename) || 'Build failed - check Actions logs' }}
