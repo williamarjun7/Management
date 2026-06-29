@@ -41,7 +41,9 @@ jobs:
             NOTES="$(git log -1 --pretty=%s)"
           else
             VERSION="${{ inputs.version }}"
+            [ -z "$VERSION" ] && VERSION=$(jq -r '.version' package.json)
             VERSION_CODE=${{ inputs.version_code }}
+            [ -z "$VERSION_CODE" ] && VERSION_CODE=${{ github.run_number }}
             FORCE_UPDATE=${{ inputs.force_update == true && 'true' || 'false' }}
             NOTES="${{ inputs.release_notes }}"
           fi
@@ -83,7 +85,12 @@ jobs:
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/highlands-release.keystore
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/highlands-release.keystore
+            echo "Keystore decoded from secret"
+          else
+            echo "ANDROID_KEYSTORE_BASE64 secret is empty, using committed keystore"
+          fi
 
       - name: Build release APK
         run: |
@@ -126,15 +133,28 @@ jobs:
           username: highlandscafe
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            if [ -z "${{ secrets.INSFORGE_SERVICE_KEY }}" ]; then
+              echo "INSFORGE_SERVICE_KEY is empty, skipping publish"
+              exit 0
+            fi
+
             curl -X POST "https://8cvkfu8m.us-east.insforge.app/api/query" \
               -H "Content-Type: application/json" \
               -H "apikey: ${{ secrets.INSFORGE_SERVICE_KEY }}" \
               -H "Authorization: Bearer ${{ secrets.INSFORGE_SERVICE_KEY }}" \
-              -d "UPDATE app_versions SET is_current = false WHERE is_current = true;"
-            
+              -d '{"query": "UPDATE app_versions SET is_current = false WHERE is_current = true;"}'
+
             curl -X POST "https://8cvkfu8m.us-east.insforge.app/api/query" \
               -H "Content-Type: application/json" \
               -H "apikey: ${{ secrets.INSFORGE_SERVICE_KEY }}" \
               -H "Authorization: Bearer ${{ secrets.INSFORGE_SERVICE_KEY }}" \
-              -d "INSERT INTO app_versions (version, version_code, min_version, min_version_code, force_update, apk_url, release_notes, is_current) VALUES ('${{ steps.version.outputs.version }}', ${{ steps.version.outputs.version_code }}, '1.0.0', 1, ${{ steps.version.outputs.force_update }}, 'https://pos.highlandscafemotelinn.com/downloads/${{ steps.version.outputs.apk_filename }}', '${{ steps.version.outputs.release_notes }}', true);"
+              -d "$(jq -nc \
+                --arg version '${{ steps.version.outputs.version }}' \
+                --argjson version_code ${{ steps.version.outputs.version_code }} \
+                --arg min_version '1.0.0' \
+                --argjson min_version_code 1 \
+                --argjson force ${{ steps.version.outputs.force_update }} \
+                --arg url 'https://pos.highlandscafemotelinn.com/downloads/${{ steps.version.outputs.apk_filename }}' \
+                --arg notes '${{ steps.version.outputs.release_notes }}' \
+                '{query: "INSERT INTO app_versions (version, version_code, min_version, min_version_code, force_update, apk_url, release_notes, is_current) VALUES (\($version | @sh), \($version_code), \($min_version | @sh), \($min_version_code), \($force), \($url | @sh), \($notes | @sh), true)"}')"
 
