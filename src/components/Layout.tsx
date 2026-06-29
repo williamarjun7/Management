@@ -36,6 +36,8 @@ import { useKeyboardAware } from '../lib/hooks/useKeyboardAware';
 import { syncAllTables } from '../lib/services/table-occupancy';
 import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
+import { refetchAllQueries } from '../lib/core/query-client';
+import { toast } from './ui/toast';
 
 interface NavItem {
   label: string;
@@ -198,6 +200,18 @@ export default function Layout() {
           <QueueStatusBadge />
 
           <div className="flex-1" />
+
+          <button
+            onClick={() => {
+              refetchAllQueries();
+              toast('Refreshing all data...', 'info');
+            }}
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90"
+            title="Refresh all data"
+            aria-label="Refresh all data"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
 
           <button
             onClick={toggleTheme}
