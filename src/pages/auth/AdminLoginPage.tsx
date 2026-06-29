@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../lib/core/auth-context';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
 import logoSrc from '../../assets/logo.png';
@@ -152,12 +152,7 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Need admin access?{' '}
-            <Link to="/admin/signup" className="text-primary font-medium hover:underline">
-              Create account
-            </Link>
-          </p>
+          
         </div>
       </div>
     </div>

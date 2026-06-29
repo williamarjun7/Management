@@ -10,10 +10,7 @@ import Layout from './components/Layout';
 import type { Role } from './types';
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
-const SignUpPage = lazy(() => import('./pages/auth/SignUpPage'));
-const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
 const AdminLoginPage = lazy(() => import('./pages/auth/AdminLoginPage'));
-const AdminSignUpPage = lazy(() => import('./pages/auth/AdminSignUpPage'));
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const PosPage = lazy(() => import('./pages/pos/PosPage'));
 const OrdersPage = lazy(() => import('./pages/orders/OrdersPage'));
@@ -37,6 +34,8 @@ const FeatureFlagsPage = lazy(() => import('./pages/admin/FeatureFlagsPage'));
 const QueueInspectorPage = lazy(() => import('./pages/admin/QueueInspectorPage'));
 const DiningRoomsPage = lazy(() => import('./pages/admin/DiningRoomsPage'));
 const AppUpdatesPage = lazy(() => import('./pages/admin/AppUpdatesPage'));
+const CustomersPage = lazy(() => import('./pages/customers/CustomersPage'));
+const CustomerDetailPage = lazy(() => import('./pages/customers/CustomerDetailPage'));
 
 function RoleRedirect() {
   return <Navigate to="/pos" replace />;
@@ -68,7 +67,7 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/orders/new', element: <SuspenseWrapper><CreateOrderPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/kitchen', element: <SuspenseWrapper><KitchenPage /></SuspenseWrapper>, roles: ['admin', 'kitchen'] },
   { path: '/menu', element: <SuspenseWrapper><MenuPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
-  { path: '/inventory', element: <SuspenseWrapper><InventoryPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
+  { path: '/inventory', element: <SuspenseWrapper><InventoryPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff', 'owner'] },
   { path: '/billing', element: <SuspenseWrapper><BillingPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/billing/new', element: <Navigate to="/pos" replace /> },
   { path: '/billing/:id', element: <SuspenseWrapper><InvoiceDetailPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
@@ -85,6 +84,8 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/admin/queue', element: <SuspenseWrapper><QueueInspectorPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/admin/rooms', element: <SuspenseWrapper><DiningRoomsPage /></SuspenseWrapper>, roles: ['admin', 'manager'] },
   { path: '/admin/updates', element: <SuspenseWrapper><AppUpdatesPage /></SuspenseWrapper>, roles: ['admin'] },
+  { path: '/customers', element: <SuspenseWrapper><CustomersPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff', 'owner'] },
+  { path: '/customers/:id', element: <SuspenseWrapper><CustomerDetailPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff', 'owner'] },
 ];
 
 export default function App() {
@@ -101,11 +102,8 @@ export default function App() {
           <UpdateOverlay />
           <Routes>
           <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
-          <Route path="/signup" element={<SuspenseWrapper><SignUpPage /></SuspenseWrapper>} />
           <Route path="/admin/login" element={<SuspenseWrapper><AdminLoginPage /></SuspenseWrapper>} />
-          <Route path="/admin/signup" element={<SuspenseWrapper><AdminSignUpPage /></SuspenseWrapper>} />
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/verify-email" element={<SuspenseWrapper><VerifyEmail /></SuspenseWrapper>} />
           <Route path="/staff" element={<SuspenseWrapper><StaffPage /></SuspenseWrapper>} />
           <Route path="*" element={<RoleRedirect />} />
           <Route

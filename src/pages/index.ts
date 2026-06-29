@@ -1,8 +1,5 @@
 export { default as LoginPage } from './auth/LoginPage';
-export { default as SignUpPage } from './auth/SignUpPage';
-export { default as VerifyEmail } from './auth/VerifyEmail';
 export { default as AdminLoginPage } from './auth/AdminLoginPage';
-export { default as AdminSignUpPage } from './auth/AdminSignUpPage';
 export { default as DashboardPage } from './dashboard/DashboardPage';
 export { default as PosPage } from './pos/PosPage';
 export { default as OrdersPage } from './orders/OrdersPage';

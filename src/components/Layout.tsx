@@ -26,6 +26,10 @@ import {
   Moon,
   ChevronRight,
   RefreshCw,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../lib/core/theme-context';
@@ -36,8 +40,8 @@ import { useKeyboardAware } from '../lib/hooks/useKeyboardAware';
 import { syncAllTables } from '../lib/services/table-occupancy';
 import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
-import { refetchAllQueries } from '../lib/core/query-client';
 import { toast } from './ui/toast';
+import { performFullSync, onSyncStateChange, type SyncStatus } from '../lib/services/sync-service';
 
 interface NavItem {
   label: string;
@@ -53,8 +57,9 @@ const navItems: NavItem[] = [
   { label: 'Orders', href: '/orders', icon: ClipboardList, roles: ['admin', 'manager', 'staff'] },
   { label: 'Kitchen', href: '/kitchen', icon: CookingPot, roles: ['admin', 'kitchen'] },
   { label: 'Menu', href: '/menu', icon: UtensilsCrossed, roles: ['admin', 'manager', 'staff'] },
-  { label: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'staff'] },
+  { label: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'staff', 'owner'] },
   { label: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'manager', 'staff'] },
+  { label: 'Customers', href: '/customers', icon: Users, roles: ['admin', 'manager', 'staff', 'owner'] },
   { label: 'Motel', href: '/motel', icon: Hotel, roles: ['admin', 'reception', 'staff'] },
   { label: 'Reports', href: '/reports', icon: BarChart3, roles: ['admin', 'owner', 'reception'] },
   { label: 'Analytics', href: '/analytics', icon: Activity, roles: ['admin', 'owner'] },
@@ -103,6 +108,35 @@ export default function Layout() {
   const isMoreActive = !bottomNavItems.some(
     (item) => item.href === location.pathname || location.pathname.startsWith(item.href + '/')
   ) && location.pathname !== '/';
+
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [syncTooltip, setSyncTooltip] = useState('Sync');
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return onSyncStateChange((state) => {
+      setSyncStatus(state.status);
+      if (state.status === 'success') {
+        setSyncTooltip(`Synced\nLast Sync: ${state.lastSynced?.toLocaleTimeString() || ''}`);
+        if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = setTimeout(() => {
+          setSyncStatus('idle');
+          setSyncTooltip('Sync');
+        }, 5000);
+      } else if (state.status === 'error') {
+        setSyncTooltip(`Sync Failed\n${state.error || 'Tap to Retry'}`);
+      } else if (state.status === 'syncing') {
+        setSyncTooltip('Syncing...');
+      }
+    });
+  }, []);
+
+  const handleSync = async () => {
+    setSyncStatus('syncing');
+    setSyncTooltip('Syncing...');
+    toast('Starting sync...', 'info');
+    await performFullSync();
+  };
 
   const scrollPositions = useRef<Record<string, number>>({});
   const syncedRef = useRef(false);
@@ -202,15 +236,26 @@ export default function Layout() {
           <div className="flex-1" />
 
           <button
-            onClick={() => {
-              refetchAllQueries();
-              toast('Refreshing all data...', 'info');
-            }}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90"
-            title="Refresh all data"
-            aria-label="Refresh all data"
+            onClick={handleSync}
+            disabled={syncStatus === 'syncing'}
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90 relative group"
+            title={syncTooltip}
+            aria-label="Sync data"
           >
-            <RefreshCw className="h-4 w-4" />
+            <div className="relative">
+              {syncStatus === 'syncing' ? (
+                <Clock className="h-4 w-4 animate-spin" />
+              ) : syncStatus === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              ) : syncStatus === 'error' ? (
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </div>
+            <span className="sr-only">
+              {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'success' ? 'Synced' : syncStatus === 'error' ? 'Sync Failed' : 'Sync'}
+            </span>
           </button>
 
           <button

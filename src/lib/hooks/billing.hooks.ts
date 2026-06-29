@@ -54,6 +54,7 @@ export function useProcessPayment() {
       p_reference?: string;
       p_notes?: string;
       p_transaction_id?: string;
+      p_customer_id?: string;
     }) => {
       const { data, error } = await insforge.database.rpc('process_payment', params);
       if (error) {

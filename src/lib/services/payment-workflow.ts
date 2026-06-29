@@ -113,18 +113,25 @@ export async function markInvoicePaidAndSync(
   tableId?: string,
   sessionId?: string,
 ): Promise<void> {
-  // Update table status via workflow
   if (tableId) {
+    // Step 1: Complete the order via RPC
     await executeWorkflowStep('billing', 'close_session', {
       invoice_id: invoiceId,
       table_id: tableId,
       table_session_id: sessionId,
     }).catch(() => {});
 
+    // Step 2: Release the table - the process_cash_payment RPC now handles
+    // order completion + table release atomically. This is a fallback
+    // for any cases where the RPC was not the one used.
+    await executeWorkflowStep('billing', 'reset_table', {
+      table_id: tableId,
+    }).catch(() => {});
+
+    // Step 3: Refresh table status
     await refreshTableStatus(tableId);
   }
 
-  // Notify system via event
   try {
     await insforge.database.rpc('create_system_event', {
       p_event_type: 'PAYMENT_PROCESSED',

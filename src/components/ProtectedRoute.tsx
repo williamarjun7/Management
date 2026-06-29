@@ -2,6 +2,30 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/core/auth-context';
 import type { Role } from '../types';
 
+// Define permission sets per role for future permission-based access control
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: ['*'], // Full access
+  owner: ['*'], // Full access
+  manager: [
+    'dashboard:read', 'tables:read', 'tables:write', 'pos:read', 'pos:write',
+    'orders:read', 'orders:write', 'kitchen:read', 'menu:read', 'menu:write',
+    'inventory:read', 'inventory:write', 'billing:read', 'billing:write',
+    'motel:read', 'motel:write', 'reports:read', 'customers:read', 'customers:write',
+  ],
+  staff: [
+    'dashboard:read', 'tables:read', 'tables:write', 'pos:read', 'pos:write',
+    'orders:read', 'orders:write', 'menu:read', 'inventory:read',
+    'billing:read', 'billing:write', 'motel:read', 'customers:read',
+  ],
+  kitchen: [
+    'dashboard:read', 'kitchen:read', 'orders:read',
+  ],
+  reception: [
+    'dashboard:read', 'motel:read', 'motel:write', 'customers:read',
+    'billing:read', 'orders:read', 'reports:read',
+  ],
+};
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: Role[];
