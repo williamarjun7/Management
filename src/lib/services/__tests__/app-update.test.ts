@@ -62,10 +62,10 @@ describe('app-update', () => {
 
   describe('checkForUpdate', () => {
     it('should return version check result', async () => {
-      mockRpc.mockResolvedValue({ data: { version: '2.0.0', force_update: false }, error: null });
+      mockRpc.mockResolvedValue({ data: { latestVersion: '2.0.0', latestVersionCode: 2, minimumSupportedVersion: '1.0.0', minimumSupportedVersionCode: 1, forceUpdate: false, apkUrl: '', releaseNotes: [], publishedAt: '' }, error: null });
       const { checkForUpdate } = await importModule();
       const result = await checkForUpdate();
-      expect(result?.version).toBe('2.0.0');
+      expect(result?.latestVersion).toBe('2.0.0');
     });
 
     it('should return null on error', async () => {

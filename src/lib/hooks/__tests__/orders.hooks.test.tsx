@@ -106,7 +106,7 @@ describe('orders.hooks', () => {
   describe('useKitchenOrders', () => {
     it('should fetch kitchen orders with correct query params', async () => {
       const mockOrders: Order[] = [
-        { id: '1', status: 'active', created_at: '2024-01-01T00:00:00Z', table_id: 't1', subtotal: 100, discount: 0, total: 100, order_number: 'ORD-1', order_items: [] } as Order,
+        { id: '1', status: 'active', created_at: '2024-01-01T00:00:00Z', table_id: 't1', subtotal: 100, discount: 0, total: 100, order_number: 'ORD-1', order_items: [] } as unknown as Order,
       ];
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
@@ -176,7 +176,7 @@ describe('orders.hooks', () => {
     });
 
     it('should fetch active order for a table', async () => {
-      const mockOrder: Order = { id: '1', status: 'active', table_id: 't1' } as Order;
+      const mockOrder: Order = { id: '1', status: 'active', table_id: 't1' } as unknown as Order;
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),

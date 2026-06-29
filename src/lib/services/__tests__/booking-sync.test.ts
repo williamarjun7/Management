@@ -146,7 +146,7 @@ function makeChain(resolvedValue: unknown, asItem = false) {
       mockFrom.mockReturnValue(chain);
 
       const { getSyncLogs } = await importModule();
-      const result = await getSyncLogs(100, 'failed');
+      await getSyncLogs(100, 'failed');
       expect(chain.eq).toHaveBeenCalledWith('status', 'failed');
     });
   });

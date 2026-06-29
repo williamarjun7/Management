@@ -67,10 +67,6 @@ describe('realtime', () => {
     return await import('../realtime');
   }
 
-  async function importModuleDirect() {
-    return await import('../realtime');
-  }
-
   describe('event dedup', () => {
     it('should mark and check seen events', async () => {
       const { markEventSeen, isEventSeen } = await importModule();
