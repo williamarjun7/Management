@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getAllAppVersions, createAppVersion, updateAppVersion, getCurrentAppVersion } from '../../lib/services/app-update';
+import { getAllAppVersions, createAppVersion, updateAppVersion, getCurrentAppVersion, isUpdateAvailable, triggerSystemDownload } from '../../lib/services/app-update';
 import { showSuccess, showError } from '../../components/ui/toast';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Plus, History, Smartphone, Download, ArrowLeft, Loader2, Check, RefreshCw } from 'lucide-react';
@@ -243,6 +243,18 @@ export default function AppUpdatesPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {isUpdateAvailable(currentVersion, currentRelease.version) && (
+              <div className="mt-4">
+                <button
+                  onClick={() => triggerSystemDownload(currentRelease.apk_url)}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  Update Now (v{currentRelease.version})
+                </button>
               </div>
             )}
           </div>
