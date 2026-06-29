@@ -7,8 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
-import { showSuccess, showError } from '../../components/ui/toast';
-import { ArrowLeft, CreditCard, DollarSign, TrendingUp, Calendar, FileText, Phone, MapPin, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, DollarSign, TrendingUp, Calendar, FileText, Phone, MapPin, Shield, AlertCircle } from 'lucide-react';
 
 const ENTRY_TYPE_COLORS: Record<string, string> = {
   credit: 'text-destructive',

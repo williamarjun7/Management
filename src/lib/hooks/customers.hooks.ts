@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
-import { logger } from '../services/logger';
 
 export interface Customer {
   id: string;

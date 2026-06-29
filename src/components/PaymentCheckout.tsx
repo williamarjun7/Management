@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft, Loader2, AlertCircle, Search, Plus, Users } from "lucide-react";
+import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft, Loader2, AlertCircle, Search, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { useProcessPayment, useProcessCashPayment } from "../lib/hooks";
 import { useAuth } from "../lib/core/auth-context";
