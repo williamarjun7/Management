@@ -104,8 +104,10 @@ jobs:
           VERSION_NAME=${{ steps.version.outputs.version }}
           sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" $BUILD_FILE
           sed -i 's/versionName "[^"]*"/versionName "'"$VERSION_NAME"'"/' $BUILD_FILE
-          sed -i '/^    buildTypes {/i\    signingConfigs {\n        release {\n            storeFile file('"'"'highlands-release.keystore'"'"')\n            storePassword System.getenv("KEYSTORE_PASSWORD")\n            keyAlias '"'"'highlands'"'"'\n            keyPassword System.getenv("KEY_PASSWORD")\n        }\n    }' $BUILD_FILE
+          # Add signingConfig reference FIRST (only matches buildTypes.release, not yet inserted signingConfigs)
           sed -i 's/^        release {/        release {\n            signingConfig signingConfigs.release/' $BUILD_FILE
+          # Insert signingConfigs block AFTER (so its release { content stays clean)
+          sed -i '/^    buildTypes {/i\    signingConfigs {\n        release {\n            storeFile file('"'"'highlands-release.keystore'"'"')\n            storePassword System.getenv("KEYSTORE_PASSWORD")\n            keyAlias '"'"'highlands'"'"'\n            keyPassword System.getenv("KEY_PASSWORD")\n        }\n    }' $BUILD_FILE
           echo "build.gradle patched successfully"
 
       - name: Build release APK
