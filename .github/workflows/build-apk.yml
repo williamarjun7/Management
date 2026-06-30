@@ -77,6 +77,8 @@ jobs:
         env:
           VITE_APP_VERSION: ${{ steps.version.outputs.version }}
           VITE_APP_VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VITE_INSFORGE_URL: ${{ secrets.VITE_INSFORGE_URL }}
+          VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
 
       - name: Add Capacitor Android project
         run: |
