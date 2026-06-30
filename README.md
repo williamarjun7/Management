@@ -82,3 +82,4 @@ npm run dev
 ## Database
 
 19 migrations covering 30+ tables — restaurant orders, motel bookings, split billing, inventory with purchase orders, housekeeping, maintenance, workflows, audit logging. Full RLS on every table. Idempotency enforced at the database level with unique partial indexes.
+
