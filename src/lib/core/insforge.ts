@@ -9,7 +9,8 @@ function getEnv(name: string): string {
   return val;
 }
 
-const baseUrl = getEnv('VITE_INSFORGE_URL');
+const rawUrl = getEnv('VITE_INSFORGE_URL');
+const baseUrl = rawUrl.replace(/\/+$/, '');
 const anonKey = getEnv('VITE_INSFORGE_ANON_KEY');
 
 function makeStub(): ReturnType<typeof createClient> {
@@ -30,6 +31,9 @@ function makeStub(): ReturnType<typeof createClient> {
 
 function buildClient() {
   if (!baseUrl || !anonKey) return makeStub();
+  if (rawUrl !== baseUrl) {
+    console.warn(`[insforge] Stripped trailing slash(es) from VITE_INSFORGE_URL: "${rawUrl}" → "${baseUrl}"`);
+  }
   try {
     return createClient({ baseUrl, anonKey });
   } catch (err) {
