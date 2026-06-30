@@ -1,7 +1,7 @@
 import { insforge } from '../../lib/core/insforge';
 import { setTableStatus } from '../../lib/services/table-state';
 import type { RestaurantTable, TableStatus } from '../../types';
-import { TABLE_STATUS_LABELS } from '../../types';
+
 
 const TABLE = 'restaurant_tables' as const;
 

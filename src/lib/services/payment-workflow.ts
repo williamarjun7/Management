@@ -113,30 +113,35 @@ export async function markInvoicePaidAndSync(
   tableId?: string,
   sessionId?: string,
 ): Promise<void> {
-  const promises: Promise<unknown>[] = [];
+  const tasks: Array<Promise<unknown>> = [];
 
   if (tableId) {
-    promises.push(completeActiveOrders(tableId, invoiceId));
-    promises.push(refreshFromOrders(tableId));
+    tasks.push(completeActiveOrders(tableId, invoiceId));
+    tasks.push(refreshFromOrders(tableId));
 
     if (sessionId) {
-      promises.push(
-        insforge.database
-          .from('table_sessions')
-          .update({ status: 'closed', closed_at: new Date().toISOString() })
-          .eq('id', sessionId)
+      tasks.push(
+        Promise.resolve(
+          insforge.database
+            .from('table_sessions')
+            .update({ status: 'closed', closed_at: new Date().toISOString() })
+            .eq('id', sessionId)
+        )
       );
     }
   }
 
-  promises.push(
-    insforge.database.rpc('create_system_event', {
-      p_event_type: 'PAYMENT_PROCESSED',
-      p_entity_type: 'invoice',
-      p_entity_id: invoiceId,
-      p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
-    })
+  tasks.push(
+    Promise.resolve(
+      insforge.database
+        .rpc('create_system_event', {
+          p_event_type: 'PAYMENT_PROCESSED',
+          p_entity_type: 'invoice',
+          p_entity_id: invoiceId,
+          p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
+        })
+    )
   );
 
-  await Promise.allSettled(promises);
+  await Promise.allSettled(tasks);
 }

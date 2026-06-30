@@ -194,6 +194,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const profileCache = useRef(new Map<string, UserProfile>());
+
+  const ensureProfile = useCallback(async (userId: string, email: string, name?: string) => {
+    const cached = profileCache.current.get(userId);
+    if (cached) return cached;
+
+    let profile = await fetchUserProfile(userId);
+    if (!profile) {
+      const { error } = await insforge.database.from('user_profiles').insert([{
+        id: userId,
+        name: name || null,
+        email,
+        role: 'staff',
+        is_active: true,
+      }]).maybeSingle();
+      if (!error) {
+        profile = { id: userId, name: name || null, email, role: 'staff', is_active: true, phone: null, avatar_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      } else {
+        profile = await fetchUserProfile(userId);
+      }
+    }
+    if (profile) profileCache.current.set(userId, profile);
+    return profile;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     insforge.auth.getCurrentUser().then(async ({ data, error }) => {
@@ -268,31 +293,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [user, isStaff, expireStaffSession, checkSessionExpiry, refreshSession, recoverSession, loading]);
-
-  const profileCache = useRef(new Map<string, UserProfile>());
-
-  const ensureProfile = useCallback(async (userId: string, email: string, name?: string) => {
-    const cached = profileCache.current.get(userId);
-    if (cached) return cached;
-
-    let profile = await fetchUserProfile(userId);
-    if (!profile) {
-      const { error } = await insforge.database.from('user_profiles').insert([{
-        id: userId,
-        name: name || null,
-        email,
-        role: 'staff',
-        is_active: true,
-      }]).maybeSingle();
-      if (!error) {
-        profile = { id: userId, name: name || null, email, role: 'staff', is_active: true, phone: null, avatar_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-      } else {
-        profile = await fetchUserProfile(userId);
-      }
-    }
-    if (profile) profileCache.current.set(userId, profile);
-    return profile;
-  }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await insforge.auth.signInWithPassword({ email, password });

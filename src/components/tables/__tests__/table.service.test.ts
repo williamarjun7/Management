@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { clearAllMocks, setRpcHandler } from '../../../lib/core/__tests__/setup';
+import { clearAllMocks } from '../../../lib/core/__tests__/setup';
 
 vi.mock('../../../lib/core/insforge', () => ({
   insforge: {
