@@ -86,9 +86,11 @@ jobs:
       - name: Generate Android launcher icons
         run: |
           mkdir -p assets
-          convert src/assets/logo.png -resize 1024x1024^ -gravity center -extent 1024x1024 assets/icon.png
-          convert src/assets/logo.png -resize 1920x1920^ -gravity center -extent 1920x1920 assets/splash.png
-          npx @capacitor/assets generate --android --iconBackgroundColor '#1a1a1a' --splashBackgroundColor '#ffffff'
+          node -e "
+          const s = require('sharp');
+          s('src/assets/logo.png').resize(1024,1024,{fit:'cover',position:'center'}).toFile('assets/icon.png').catch(e=>{process.exit(1)});
+          s('src/assets/logo.png').resize(1920,1920,{fit:'cover',position:'center'}).toFile('assets/splash.png').catch(e=>{process.exit(1)});
+          " && npx @capacitor/assets generate --android --iconBackgroundColor '#1a1a1a' --splashBackgroundColor '#ffffff'
 
       - name: Sync Capacitor Android
         run: npx cap sync android
