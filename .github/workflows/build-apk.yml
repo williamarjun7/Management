@@ -99,43 +99,14 @@ jobs:
 
       - name: Inject signing config and versioning into build.gradle
         run: |
+          BUILD_FILE="android/app/build.gradle"
           VERSION_CODE=${{ steps.version.outputs.version_code }}
           VERSION_NAME=${{ steps.version.outputs.version }}
-          BUILD_FILE="android/app/build.gradle"
-
-          python3 -c "
-import re
-
-with open('$BUILD_FILE', 'r') as f:
-    content = f.read()
-
-# 1. Update versionCode and versionName
-content = re.sub(r'versionCode \d+', f'versionCode $VERSION_CODE', content)
-content = re.sub(r'versionName \"[^\"]+\"', f'versionName \"$VERSION_NAME\"', content)
-
-# 2. Add signingConfigs block before buildTypes
-signing_block = '''    signingConfigs {
-        release {
-            storeFile file('highlands-release.keystore')
-            storePassword System.getenv(\"KEYSTORE_PASSWORD\")
-            keyAlias 'highlands'
-            keyPassword System.getenv(\"KEY_PASSWORD\")
-        }
-    }
-'''
-content = content.replace('    buildTypes {', signing_block + '    buildTypes {')
-
-# 3. Wire signingConfig into release build type
-content = content.replace(
-    '        release {',
-    '        release {\n            signingConfig signingConfigs.release'
-)
-
-with open('$BUILD_FILE', 'w') as f:
-    f.write(content)
-
-print('build.gradle patched successfully')
-"
+          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" $BUILD_FILE
+          sed -i 's/versionName "[^"]*"/versionName "'"$VERSION_NAME"'"/' $BUILD_FILE
+          sed -i '/^    buildTypes {/i\    signingConfigs {\n        release {\n            storeFile file('"'"'highlands-release.keystore'"'"')\n            storePassword System.getenv("KEYSTORE_PASSWORD")\n            keyAlias '"'"'highlands'"'"'\n            keyPassword System.getenv("KEY_PASSWORD")\n        }\n    }' $BUILD_FILE
+          sed -i 's/^        release {/        release {\n            signingConfig signingConfigs.release/' $BUILD_FILE
+          echo "build.gradle patched successfully"
 
       - name: Build release APK
         run: |
