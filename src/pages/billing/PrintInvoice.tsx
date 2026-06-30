@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { formatCurrency } from "../../lib/core/format-currency";
 import type { Invoice, InvoiceItem, PaymentLog } from "../../types";
 import logoSrc from "../../assets/logo.png";
 import reviewQrSrc from "../../assets/review.png";
@@ -8,6 +7,10 @@ import reviewQrSrc from "../../assets/review.png";
 interface PrintInvoiceProps {
   invoice: Invoice;
   onClose: () => void;
+}
+
+function fmt(n: number): string {
+  return n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
 }
 
 export function PrintInvoice({ invoice, onClose }: PrintInvoiceProps) {
@@ -43,163 +46,144 @@ export function PrintInvoice({ invoice, onClose }: PrintInvoiceProps) {
         <div ref={printRef} className="invoice-print p-4 md:p-8 print:p-0">
           <style>{`
             @media print {
-              @page { margin: 8mm 6mm; }
-              body { font-family: 'Courier New', monospace; font-size: 10px; color: #000; line-height: 1.3; }
+              @page { margin: 6mm 4mm; }
+              body { font-family: 'Courier New', 'Courier', monospace; font-size: 10px; line-height: 1.35; }
               .invoice-print { max-width: 80mm; margin: 0 auto; }
               .no-print { display: none !important; }
-              .divider { border: none; border-top: 1px dashed #999; margin: 6px 0; }
-              .divider-thick { border: none; border-top: 2px solid #333; margin: 8px 0; }
-              .text-center { text-align: center; }
-              .text-right { text-align: right; }
-              .font-bold { font-weight: bold; }
-              .text-xs { font-size: 8px; }
-              .text-sm { font-size: 9px; }
-              .text-base { font-size: 10px; }
-              .text-lg { font-size: 12px; }
-              .text-xl { font-size: 14px; }
-              .mt-1 { margin-top: 3px; }
-              .mt-2 { margin-top: 6px; }
-              .mt-3 { margin-top: 9px; }
-              .mb-1 { margin-bottom: 3px; }
-              .mb-2 { margin-bottom: 6px; }
-              .mb-3 { margin-bottom: 9px; }
-              .px-1 { padding-left: 2px; padding-right: 2px; }
-              .py-1 { padding-top: 2px; padding-bottom: 2px; }
-            }
-            @media print and (max-width: 72mm) {
-              .invoice-print { max-width: 58mm; }
+              .dashed { border: none; border-top: 1px dashed #888; margin: 6px 0; }
+              .solid { border: none; border-top: 1px solid #333; margin: 4px 0; }
+              .txt-c { text-align: center; }
+              .txt-r { text-align: right; }
+              .b { font-weight: bold; }
+              .xs { font-size: 8px; }
+              .sm { font-size: 9px; }
+              .base { font-size: 10px; }
+              .lg { font-size: 12px; }
+              .xl { font-size: 14px; }
+              .mt1 { margin-top: 3px; }
+              .mt2 { margin-top: 6px; }
+              .mb1 { margin-bottom: 3px; }
+              .mb2 { margin-bottom: 6px; }
+              .row { display: flex; justify-content: space-between; }
             }
           `}</style>
 
-          {/* Header */}
-          <div className="text-center mb-2">
-            <img src={logoSrc} alt="" className="h-10 w-10 rounded-full object-cover mx-auto mb-1" />
-            <div className="text-lg font-bold">Highlands Cafe & Motel Inn</div>
-            <div className="text-sm">Birendranagar-8, Khajura</div>
-            <div className="text-sm">Surkhet, Nepal</div>
-            <div className="text-sm">+977 9763215874</div>
+          <div className="txt-c mb2">
+            <img src={logoSrc} alt="" className="h-10 w-10 object-contain mx-auto mb1" />
+            <div className="lg b">Highlands Cafe & Motel Inn</div>
+            <div className="sm">Birendranagar-8, Khajura</div>
+            <div className="sm">Surkhet, Nepal</div>
+            <div className="sm">+977 9763215874</div>
           </div>
 
-          <hr className="divider" />
+          <hr className="dashed" />
 
-          {/* Invoice Info */}
-          <div className="mb-2 text-sm">
-            <div className="flex justify-between">
+          <div className="mb2 sm">
+            <div className="row">
               <span>Invoice No</span>
-              <span className="font-bold">{invoice.invoice_number}</span>
+              <span className="b">{invoice.invoice_number}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="row">
               <span>Date</span>
               <span>{dateStr}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="row">
               <span>Time</span>
               <span>{timeStr}</span>
             </div>
             {invoice.customer_name && (
-              <div className="flex justify-between">
+              <div className="row">
                 <span>Customer</span>
                 <span>{invoice.customer_name}</span>
               </div>
             )}
           </div>
 
-          <hr className="divider" />
+          <hr className="dashed" />
 
-          {/* Items */}
-          <div className="mb-2">
-            <div className="flex justify-between text-sm font-bold mb-1">
+          <div className="mb2">
+            <div className="row sm b mb1">
               <span>Item</span>
               <span>Amount</span>
             </div>
             {invoice.invoice_items?.map((item: InvoiceItem) => (
-              <div key={item.id} className="mb-1">
-                <div className="text-sm">{item.description}</div>
-                <div className="flex justify-between text-sm pl-1">
-                  <span>{item.quantity} x {formatCurrency(Number(item.unit_price))}</span>
-                  <span>{formatCurrency(Number(item.total))}</span>
+              <div key={item.id} className="mb1">
+                <div className="sm">{item.description}</div>
+                <div className="row sm" style={{ paddingLeft: "4px" }}>
+                  <span>{item.quantity} x {fmt(Number(item.unit_price))}</span>
+                  <span>{fmt(Number(item.total))}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          <hr className="divider" />
+          <hr className="dashed" />
 
-          {/* Totals */}
-          <div className="mb-2 text-sm">
-            <div className="flex justify-between">
+          <div className="mb2 sm">
+            <div className="row">
               <span>Subtotal</span>
-              <span>{formatCurrency(Number(invoice.subtotal))}</span>
+              <span>{fmt(Number(invoice.subtotal))}</span>
             </div>
             {Number(invoice.discount) > 0 && (
-              <div className="flex justify-between">
+              <div className="row">
                 <span>Discount</span>
-                <span>-{formatCurrency(Number(invoice.discount))}</span>
+                <span>-{fmt(Number(invoice.discount))}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-base border-t pt-1 mt-1">
+            <hr className="solid" />
+            <div className="row b lg">
               <span>TOTAL</span>
-              <span>{formatCurrency(Number(invoice.total))}</span>
+              <span>{fmt(Number(invoice.total))}</span>
             </div>
             {paidAmount > 0 && (
-              <div className="flex justify-between text-sm">
+              <div className="row sm">
                 <span>Paid</span>
-                <span>{formatCurrency(paidAmount)}</span>
+                <span>{fmt(paidAmount)}</span>
               </div>
             )}
             {remaining > 0 && (
-              <div className="flex justify-between text-sm">
+              <div className="row sm">
                 <span>Balance Due</span>
-                <span>{formatCurrency(remaining)}</span>
+                <span>{fmt(remaining)}</span>
               </div>
             )}
           </div>
 
-          {/* Payments */}
           {invoice.payment_logs && invoice.payment_logs.length > 0 && (
             <>
-              <hr className="divider" />
-              <div className="mb-2 text-sm">
-                <div className="font-bold mb-1">Payment Method</div>
+              <hr className="dashed" />
+              <div className="mb2 sm">
+                <div className="b mb1">Payment Method</div>
                 {invoice.payment_logs.map((log: PaymentLog) => (
-                  <div key={log.id}>
-                    <div className="flex justify-between">
-                      <span>{methodLabel[log.method] || log.method}</span>
-                      <span>{formatCurrency(Number(log.amount))}</span>
-                    </div>
-                    {log.reference && (
-                      <div className="flex justify-between text-xs ml-1">
-                        <span>Ref: {log.reference}</span>
-                      </div>
-                    )}
+                  <div key={log.id} className="row">
+                    <span>{methodLabel[log.method] || log.method}</span>
+                    <span>{fmt(Number(log.amount))}</span>
                   </div>
                 ))}
               </div>
             </>
           )}
 
-          <hr className="divider" />
+          <hr className="dashed" />
 
-          {/* Footer */}
-          <div className="text-center text-sm mb-2">
-            <div className="font-bold">Thank you for visiting!</div>
-            <div className="text-xs">We hope to see you again.</div>
+          <div className="txt-c sm mb2">
+            <div className="b">Thank you for visiting!</div>
+            <div className="xs">We hope to see you again.</div>
           </div>
 
-          {/* Review QR */}
-          <div className="text-center mb-2">
-            <img src={reviewQrSrc} alt="Google Review QR" className="h-20 w-20 object-contain mx-auto mb-1" />
-            <div className="text-sm mb-1">★★★★★</div>
-            <div className="text-xs font-bold">Loved your experience?</div>
-            <div className="text-xs">Please scan the QR code</div>
-            <div className="text-xs">and leave us a Google Review.</div>
-            <div className="text-xs mt-1">Your feedback helps us improve</div>
-            <div className="text-xs">and supports our local business.</div>
+          <div className="txt-c mb2">
+            <img src={reviewQrSrc} alt="Google Review QR" className="h-20 w-20 object-contain mx-auto mb1" />
+            <div className="sm mb1" style={{ letterSpacing: "2px" }}>★★★★★</div>
+            <div className="xs b">Loved your experience?</div>
+            <div className="xs">Please scan the QR code</div>
+            <div className="xs">and leave us a Google Review.</div>
+            <div className="xs mt1">Your feedback helps us improve</div>
+            <div className="xs">and supports our local business.</div>
           </div>
 
-          <hr className="divider" />
+          <hr className="dashed" />
 
-          <div className="text-center text-xs">Highlands Cafe & Motel Inn</div>
+          <div className="txt-c xs">Highlands Cafe & Motel Inn</div>
         </div>
       </div>
     </>
