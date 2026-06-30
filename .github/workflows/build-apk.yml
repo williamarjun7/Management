@@ -83,10 +83,18 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Use committed keystore
+      - name: Decode keystore
         run: |
-          echo "Using committed highlands-release.keystore from android/app/"
-          ls -la android/app/highlands-release.keystore
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Decoding keystore from secret"
+            mkdir -p android/app
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/highlands-release.keystore
+            echo "Keystore decoded successfully"
+            ls -la android/app/highlands-release.keystore
+          else
+            echo "ANDROID_KEYSTORE_BASE64 secret is empty - keystore will be missing!"
+            exit 1
+          fi
 
       - name: Build release APK
         run: |
