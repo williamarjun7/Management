@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/core/auth-context';
 import { UpdateProvider } from './lib/core/update-context';
 import { UpdateOverlay } from './components/UpdateOverlay';
+import { SplashScreen } from './components/SplashScreen';
 import { initSentry, Sentry } from './lib/services/sentry';
 import { initRealtime, shutdownRealtime } from './lib/services/realtime';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -99,6 +100,7 @@ export default function App() {
     <AuthProvider>
       <Sentry.ErrorBoundary fallback={<ErrorFallback />}>
         <UpdateProvider>
+          <SplashScreen />
           <UpdateOverlay />
           <Routes>
           <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />

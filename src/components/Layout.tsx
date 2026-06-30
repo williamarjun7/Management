@@ -111,31 +111,29 @@ export default function Layout() {
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncTooltip, setSyncTooltip] = useState('Sync');
-  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return onSyncStateChange((state) => {
       setSyncStatus(state.status);
       if (state.status === 'success') {
-        setSyncTooltip(`Synced\nLast Sync: ${state.lastSynced?.toLocaleTimeString() || ''}`);
-        if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-        syncTimeoutRef.current = setTimeout(() => {
-          setSyncStatus('idle');
-          setSyncTooltip('Sync');
-        }, 5000);
+        setSyncTooltip(`Sync completed\nLast sync: ${state.lastSynced?.toLocaleTimeString() || ''}`);
       } else if (state.status === 'error') {
-        setSyncTooltip(`Sync Failed\n${state.error || 'Tap to Retry'}`);
+        setSyncTooltip(`Sync failed\n${state.error || 'Tap to retry'}`);
       } else if (state.status === 'syncing') {
-        setSyncTooltip('Syncing...');
+        setSyncTooltip(state.progress || 'Syncing...');
       }
     });
   }, []);
 
   const handleSync = async () => {
-    setSyncStatus('syncing');
-    setSyncTooltip('Syncing...');
+    if (syncStatus === 'syncing') return;
     toast('Starting sync...', 'info');
-    await performFullSync();
+    const result = await performFullSync();
+    if (result.status === 'success') {
+      toast('Sync completed successfully', 'success');
+    } else if (result.status === 'error' && result.error) {
+      toast(`Sync failed: ${result.error}`, 'error');
+    }
   };
 
   const scrollPositions = useRef<Record<string, number>>({});

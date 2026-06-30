@@ -8,13 +8,36 @@ export interface SyncState {
   status: SyncStatus;
   lastSynced: Date | null;
   error: string | null;
+  progress: string | null;
 }
 
-let syncState: SyncState = { status: 'idle', lastSynced: null, error: null };
+let syncState: SyncState = { status: 'idle', lastSynced: null, error: null, progress: null };
 let listeners: Array<(state: SyncState) => void> = [];
+let autoResetTimer: ReturnType<typeof setTimeout> | null = null;
 
 function notifyListeners() {
   for (const fn of listeners) fn(syncState);
+}
+
+function setState(partial: Partial<SyncState>) {
+  syncState = { ...syncState, ...partial };
+  notifyListeners();
+}
+
+function scheduleAutoReset() {
+  if (autoResetTimer) clearTimeout(autoResetTimer);
+  autoResetTimer = setTimeout(() => {
+    if (syncState.status === 'success' || syncState.status === 'error') {
+      setState({ status: 'idle', progress: null });
+    }
+  }, 6000);
+}
+
+export function cancelAutoReset() {
+  if (autoResetTimer) {
+    clearTimeout(autoResetTimer);
+    autoResetTimer = null;
+  }
 }
 
 export function onSyncStateChange(fn: (state: SyncState) => void) {
@@ -24,6 +47,15 @@ export function onSyncStateChange(fn: (state: SyncState) => void) {
 
 export function getSyncState(): SyncState {
   return { ...syncState };
+}
+
+async function fetchWithTimeout<T>(promise: PromiseLike<T>, ms = 15000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
+    ),
+  ]);
 }
 
 async function checkConnectivity(): Promise<boolean> {
@@ -41,25 +73,27 @@ async function checkConnectivity(): Promise<boolean> {
 export async function performFullSync(): Promise<SyncState> {
   if (syncState.status === 'syncing') return syncState;
 
-  syncState = { ...syncState, status: 'syncing', error: null };
-  notifyListeners();
+  cancelAutoReset();
+  setState({ status: 'syncing', error: null, progress: 'Starting sync...' });
 
   try {
     const online = await checkConnectivity();
     if (!online) {
-      syncState = { status: 'error', lastSynced: syncState.lastSynced, error: 'No internet connection' };
-      notifyListeners();
+      setState({ status: 'error', error: 'No internet connection', progress: null });
+      scheduleAutoReset();
       return syncState;
     }
 
-    const { data: session } = await insforge.auth.getCurrentUser();
+    setState({ progress: 'Verifying session...' });
+    const { data: session } = await fetchWithTimeout(insforge.auth.getCurrentUser(), 10000);
     if (!session?.user) {
-      syncState = { status: 'error', lastSynced: syncState.lastSynced, error: 'Session expired. Please login again.' };
-      notifyListeners();
+      setState({ status: 'error', error: 'Session expired. Please login again.', progress: null });
+      scheduleAutoReset();
       return syncState;
     }
 
-    // Fetch latest data from server
+    setState({ progress: 'Downloading updates...' });
+
     const [
       tablesRes,
       categoriesRes,
@@ -70,18 +104,19 @@ export async function performFullSync(): Promise<SyncState> {
       paymentLogsRes,
       settingsRes,
     ] = await Promise.allSettled([
-      insforge.database.from('restaurant_tables').select('*').order('table_number'),
-      insforge.database.from('menu_categories').select('*').order('sort_order'),
-      insforge.database.from('menu_items').select('*').order('name'),
-      insforge.database.from('products').select('*').order('name'),
-      insforge.database.from('customers').select('*').order('name'),
-      insforge.database.from('invoices').select('*, invoice_items(*), payment_logs(*)').order('created_at', { ascending: false }).limit(200),
-      insforge.database.from('payment_logs').select('*').order('created_at', { ascending: false }).limit(200),
-      insforge.database.from('settings').select('*'),
+      fetchWithTimeout(insforge.database.from('restaurant_tables').select('*').order('table_number'), 15000),
+      fetchWithTimeout(insforge.database.from('menu_categories').select('*').order('sort_order'), 15000),
+      fetchWithTimeout(insforge.database.from('menu_items').select('*').order('name'), 15000),
+      fetchWithTimeout(insforge.database.from('products').select('*').order('name'), 15000),
+      fetchWithTimeout(insforge.database.from('customers').select('*').order('name'), 15000),
+      fetchWithTimeout(insforge.database.from('invoices').select('*, invoice_items(*), payment_logs(*)').order('created_at', { ascending: false }).limit(200), 30000),
+      fetchWithTimeout(insforge.database.from('payment_logs').select('*').order('created_at', { ascending: false }).limit(200), 20000),
+      fetchWithTimeout(insforge.database.from('settings').select('*'), 10000),
     ]);
 
-    const errors: string[] = [];
+    setState({ progress: 'Processing data...' });
 
+    const errors: string[] = [];
     if (tablesRes.status === 'rejected') errors.push(`Tables: ${tablesRes.reason?.message || 'failed'}`);
     if (categoriesRes.status === 'rejected') errors.push(`Categories: ${categoriesRes.reason?.message || 'failed'}`);
     if (menuItemsRes.status === 'rejected') errors.push(`Menu Items: ${menuItemsRes.reason?.message || 'failed'}`);
@@ -91,40 +126,47 @@ export async function performFullSync(): Promise<SyncState> {
     if (paymentLogsRes.status === 'rejected') errors.push(`Payments: ${paymentLogsRes.reason?.message || 'failed'}`);
     if (settingsRes.status === 'rejected') errors.push(`Settings: ${settingsRes.reason?.message || 'failed'}`);
 
-    // Refresh all React Query caches
+    setState({ progress: 'Saving to local database...' });
     refetchAllQueries();
 
     const now = new Date();
-    syncState = {
-      status: errors.length > 0 ? 'error' : 'success',
-      lastSynced: now,
-      error: errors.length > 0 ? errors.join('; ') : null,
-    };
+    if (errors.length > 0) {
+      setState({
+        status: 'error',
+        lastSynced: now,
+        error: errors.join('; '),
+        progress: null,
+      });
+    } else {
+      setState({
+        status: 'success',
+        lastSynced: now,
+        error: null,
+        progress: null,
+      });
+    }
 
     logger.info('sync_completed', 'sync-service', {
       metadata: { success: errors.length === 0, errors: errors.length },
     });
 
-    notifyListeners();
-
-    // Auto-reset success to idle after 5s
-    if (errors.length === 0) {
-      setTimeout(() => {
-        if (syncState.status === 'success') {
-          syncState = { ...syncState, status: 'idle' };
-          notifyListeners();
-        }
-      }, 5000);
-    }
-
+    scheduleAutoReset();
     return syncState;
   } catch (err) {
-    syncState = {
+    setState({
       status: 'error',
       lastSynced: syncState.lastSynced,
       error: (err as Error)?.message || 'Sync failed unexpectedly',
-    };
-    notifyListeners();
+      progress: null,
+    });
+    scheduleAutoReset();
     return syncState;
+  }
+}
+
+export function dismissError() {
+  if (syncState.status === 'error' || syncState.status === 'success') {
+    cancelAutoReset();
+    setState({ status: 'idle', progress: null });
   }
 }
