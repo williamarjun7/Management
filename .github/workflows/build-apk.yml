@@ -88,8 +88,10 @@ jobs:
           mkdir -p assets
           node -e "
           const s = require('sharp');
-          s('src/assets/logo.png').resize(1024,1024,{fit:'cover',position:'center'}).toFile('assets/icon.png').catch(e=>{process.exit(1)});
-          s('src/assets/logo.png').resize(1920,1920,{fit:'cover',position:'center'}).toFile('assets/splash.png').catch(e=>{process.exit(1)});
+          Promise.all([
+            s('src/assets/logo.png').resize(1024,1024,{fit:'cover',position:'center'}).toFile('assets/icon.png'),
+            s('src/assets/logo.png').resize(1920,1920,{fit:'cover',position:'center'}).toFile('assets/splash.png')
+          ]).then(()=>{console.log('done');process.exit(0)}).catch(e=>{console.error(e);process.exit(1)});
           " && npx @capacitor/assets generate --android --iconBackgroundColor '#1a1a1a' --splashBackgroundColor '#ffffff'
 
       - name: Sync Capacitor Android
