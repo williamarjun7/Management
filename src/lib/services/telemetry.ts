@@ -52,7 +52,8 @@ export type TelemetryEventType =
   | 'circuit_state_change'
   | 'websocket_silent_disconnect'
   | 'suspicious_activity'
-  | 'rate_limit_exceeded';
+  | 'rate_limit_exceeded'
+  | 'role_fallback_staff';
 
 export interface TelemetryEvent {
   ts: number;
