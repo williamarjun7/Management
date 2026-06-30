@@ -23,6 +23,8 @@ jobs:
         run: npm run build
         env:
           VITE_APP_VERSION: ${{ github.ref_name == 'main' && '1.5.0' || '0.0.0' }}
+          VITE_INSFORGE_URL: ${{ secrets.VITE_INSFORGE_URL }}
+          VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
 
       - name: Deploy via rsync over SSH
         uses: appleboy/ssh-action@v1.2.2
