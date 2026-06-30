@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/core/auth-context';
 import { useTheme } from '../lib/core/theme-context';
+import { Capacitor } from '@capacitor/core';
+import { SplashScreen as CapacitorSplash } from '@capacitor/splash-screen';
 import logoSrc from '../assets/logo.png';
 
 export function SplashScreen() {
@@ -50,6 +52,12 @@ export function SplashScreen() {
     if (phase === 'exiting') {
       const timer = setTimeout(() => setPhase('hidden'), 600);
       return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'hidden' && Capacitor.isNativePlatform()) {
+      CapacitorSplash.hide();
     }
   }, [phase]);
 
