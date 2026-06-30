@@ -38,8 +38,21 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
     .eq('id', userId)
     .single();
   if (error || !data) {
-    logger.warn('profile_fetch_failed', 'auth-context', {
-      metadata: { userId, error: (error as Error)?.message },
+    const statusCode = (error as { statusCode?: number })?.statusCode;
+    const errorDetail = (error as { error?: string })?.error;
+    logger.error('profile_fetch_failed', 'auth-context', {
+      metadata: {
+        userId,
+        statusCode,
+        error: (error as Error)?.message,
+        errorDetail,
+        hasData: !!data,
+      },
+    });
+    captureError(new Error(`Profile fetch failed for user ${userId}`), {
+      statusCode,
+      errorDetail,
+      message: (error as Error)?.message,
     });
     return null;
   }
@@ -50,6 +63,16 @@ function buildAuthUser(
   authUser: { id: string; email?: string; emailVerified?: boolean },
   profile: UserProfile | null,
 ): AuthUser {
+  if (!profile) {
+    logger.error('role_fallback_to_staff', 'auth-context', {
+      metadata: {
+        userId: authUser.id,
+        reason: 'profile is null — fetch failed or profile does not exist',
+      },
+    });
+    captureError(new Error(`Role fallback to staff for user ${authUser.id}: profile missing`));
+    recordTelemetry('role_fallback_staff', authUser.id, { reason: 'profile_missing' });
+  }
   return {
     id: authUser.id,
     email: authUser.email ?? '',
@@ -202,17 +225,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let profile = await fetchUserProfile(userId);
     if (!profile) {
-      const { error } = await insforge.database.from('user_profiles').insert([{
+      const { error: insertError } = await insforge.database.from('user_profiles').insert([{
         id: userId,
         name: name || null,
         email,
         role: 'staff',
         is_active: true,
       }]).maybeSingle();
-      if (!error) {
+      if (!insertError) {
         profile = { id: userId, name: name || null, email, role: 'staff', is_active: true, phone: null, avatar_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
       } else {
+        logger.error('profile_insert_failed', 'auth-context', {
+          metadata: { userId, email, error: (insertError as Error)?.message },
+        });
+        captureError(new Error(`Profile insert failed for user ${userId}`), {
+          message: (insertError as Error)?.message,
+        });
         profile = await fetchUserProfile(userId);
+        if (!profile) {
+          logger.error('profile_create_fallback_failed', 'auth-context', {
+            metadata: { userId, email, reason: 'both fetch and insert failed' },
+          });
+        }
       }
     }
     if (profile) profileCache.current.set(userId, profile);
