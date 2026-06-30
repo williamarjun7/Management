@@ -53,6 +53,14 @@ export default function InvoiceDetailPage() {
 
   const paidAmount = invoice.payment_logs?.reduce((s: number, p: PaymentLog) => s + Number(p.amount), 0) ?? 0;
   const remaining = Number(invoice.total) - paidAmount;
+  const subtotal = Number(invoice.subtotal);
+  const discount = Number(invoice.discount);
+  const tax = Number(invoice.tax);
+  const serviceCharge = Number(invoice.service_charge);
+  const total = Number(invoice.total);
+  const hasItemDiscounts = invoice.invoice_items?.some(i => Number(i.discount) > 0) ?? false;
+  const totalItemDiscounts = invoice.invoice_items?.reduce((s, i) => s + Number(i.discount), 0) ?? 0;
+  const totalDiscount = discount + totalItemDiscounts;
 
   return (
     <>
@@ -99,45 +107,71 @@ export default function InvoiceDetailPage() {
           </CardHeader>
           <CardContent>
             <Separator className="mb-4" />
-            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
                   <th className="pb-2 text-sm font-medium text-muted-foreground">Item</th>
                   <th className="pb-2 text-right text-sm font-medium text-muted-foreground">Qty</th>
                   <th className="pb-2 text-right text-sm font-medium text-muted-foreground">Price</th>
+                  <th className="pb-2 text-right text-sm font-medium text-muted-foreground">Disc</th>
                   <th className="pb-2 text-right text-sm font-medium text-muted-foreground">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {invoice.invoice_items?.map((item: InvoiceItemType) => (
-                  <tr key={item.id} className="border-b last:border-0">
-                    <td className="py-2 text-sm">{item.description}</td>
-                    <td className="py-2 text-right text-sm">{item.quantity}</td>
-                    <td className="py-2 text-right text-sm">{formatCurrency(Number(item.unit_price))}</td>
-                    <td className="py-2 text-right text-sm font-medium">{formatCurrency(Number(item.total))}</td>
-                  </tr>
-                ))}
+                {invoice.invoice_items?.map((item: InvoiceItemType) => {
+                  const itemDiscount = Number(item.discount);
+                  return (
+                    <tr key={item.id} className="border-b last:border-0">
+                      <td className="py-2 text-sm">{item.description}</td>
+                      <td className="py-2 text-right text-sm">{item.quantity}</td>
+                      <td className="py-2 text-right text-sm">{formatCurrency(Number(item.unit_price))}</td>
+                      <td className="py-2 text-right text-sm">{itemDiscount > 0 ? `-${formatCurrency(itemDiscount)}` : '-'}</td>
+                      <td className="py-2 text-right text-sm font-medium">{formatCurrency(Number(item.total))}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-            </div>
 
             <div className="mt-4 space-y-1 border-t pt-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatCurrency(Number(invoice.subtotal))}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
-
-              {Number(invoice.discount) > 0 && (
+              {hasItemDiscounts && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Discount</span>
-                  <span>-{formatCurrency(Number(invoice.discount))}</span>
+                  <span className="text-muted-foreground">Item Discounts</span>
+                  <span className="text-destructive">-{formatCurrency(totalItemDiscounts)}</span>
+                </div>
+              )}
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Order Discount</span>
+                  <span className="text-destructive">-{formatCurrency(discount)}</span>
+                </div>
+              )}
+              {totalDiscount > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Total Discount</span>
+                  <span className="text-destructive">-{formatCurrency(totalDiscount)}</span>
+                </div>
+              )}
+              {tax > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tax{invoice.tax_rate > 0 ? ` (${invoice.tax_rate}%)` : ''}</span>
+                  <span>{formatCurrency(tax)}</span>
+                </div>
+              )}
+              {serviceCharge > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Service Charge{invoice.service_charge_rate > 0 ? ` (${invoice.service_charge_rate}%)` : ''}</span>
+                  <span>{formatCurrency(serviceCharge)}</span>
                 </div>
               )}
               <Separator className="my-2" />
               <div className="flex justify-between text-base font-bold">
-                <span>Total</span>
-                <span>{formatCurrency(Number(invoice.total))}</span>
+                <span>Grand Total</span>
+                <span>{formatCurrency(total)}</span>
               </div>
               {paidAmount > 0 && (
                 <div className="flex justify-between text-sm text-primary">

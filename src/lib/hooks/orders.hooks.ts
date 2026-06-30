@@ -86,6 +86,8 @@ export function useAddOrderItems() {
       order_id: string;
       items: { menu_item_id: string; item_name: string; quantity: number; unit_price: number; notes?: string }[];
       discount?: number;
+      discount_type?: 'percentage' | 'fixed';
+      discount_value?: number;
     }) => {
       const { order_id, items } = values;
 
@@ -114,7 +116,13 @@ export function useAddOrderItems() {
 
       const { error: ue } = await insforge.database
         .from(T.orders)
-        .update({ subtotal: newSubtotal, discount, total: newTotal })
+        .update({
+          subtotal: newSubtotal,
+          discount,
+          discount_type: values.discount_type ?? order.discount_type ?? null,
+          discount_value: values.discount_value ?? order.discount_value ?? 0,
+          total: newTotal,
+        })
         .eq('id', order_id);
       if (ue) throw ue;
 
@@ -137,6 +145,7 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: async (values: {
       table_id: string; customer_name?: string; notes?: string; discount?: number;
+      discount_type?: 'percentage' | 'fixed'; discount_value?: number;
       items: { menu_item_id: string; item_name: string; quantity: number; unit_price: number; notes?: string }[];
     }) => {
       requireOnline();
@@ -151,7 +160,10 @@ export function useCreateOrder() {
           order_number: orderNumber,
           table_id: rest.table_id, customer_name: rest.customer_name || null,
           notes: rest.notes || null,
-          subtotal, discount, total,
+          subtotal, discount, discount_type: rest.discount_type ?? null,
+          discount_value: rest.discount_value ?? 0,
+          tax: 0, tax_rate: 0, service_charge: 0, service_charge_rate: 0,
+          total,
           status: 'active',
         }])
         .select()

@@ -27,6 +27,7 @@ describe('table-occupancy', () => {
     it('should set table to occupied when active orders exist', async () => {
       let calledStatus: string | null = null;
 
+      const sessionChain = { select: vi.fn(() => sessionChain), eq: vi.fn(() => sessionChain), limit: vi.fn(() => Promise.resolve({ data: [{ id: 'session-1' }], error: null })) };
       mockFrom.mockImplementation((table: string) => {
         if (table === 'orders') {
           return {
@@ -36,6 +37,7 @@ describe('table-occupancy', () => {
             })),
           };
         }
+        if (table === 'table_sessions') return sessionChain;
         if (table === 'restaurant_tables') {
           return {
             update: vi.fn((data: { status: string }) => {
@@ -55,6 +57,7 @@ describe('table-occupancy', () => {
     it('should set table to available when no active orders', async () => {
       let calledStatus: string | null = null;
 
+      const sessionChain = { select: vi.fn(() => sessionChain), eq: vi.fn(() => sessionChain), limit: vi.fn(() => Promise.resolve({ data: [], error: null })) };
       mockFrom.mockImplementation((table: string) => {
         if (table === 'orders') {
           return {
@@ -64,6 +67,7 @@ describe('table-occupancy', () => {
             })),
           };
         }
+        if (table === 'table_sessions') return sessionChain;
         if (table === 'restaurant_tables') {
           return {
             update: vi.fn((data: { status: string }) => {
@@ -87,6 +91,7 @@ describe('table-occupancy', () => {
     });
 
     it('should not throw when create_system_event fails (non-blocking)', async () => {
+      const sessionChain = { select: vi.fn(() => sessionChain), eq: vi.fn(() => sessionChain), limit: vi.fn(() => Promise.resolve({ data: [{ id: 's-1' }], error: null })) };
       mockFrom.mockImplementation((table: string) => {
         if (table === 'orders') {
           return {
@@ -96,6 +101,7 @@ describe('table-occupancy', () => {
             })),
           };
         }
+        if (table === 'table_sessions') return sessionChain;
         if (table === 'restaurant_tables') {
           return {
             update: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ error: null })) })),

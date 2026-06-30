@@ -197,7 +197,9 @@ export interface StockMovement {
 export interface OrderItem {
   id: string; order_id: string; menu_item_id: string;
   recipe_version_id: string | null; item_name: string; quantity: number;
-  unit_price: number; modifiers: Array<{ name: string; option: string; price: number }>;
+  unit_price: number; original_price: number | null;
+  discount: number; discount_type: 'percentage' | 'fixed' | null; discount_value: number;
+  modifiers: Array<{ name: string; option: string; price: number }>;
   notes: string | null; status: OrderStatus; created_at: string; updated_at: string;
 }
 
@@ -206,6 +208,9 @@ export interface Order {
   customer_name: string | null;
   customer_phone: string | null; status: OrderStatus;
   subtotal: number; discount: number;
+  discount_type: 'percentage' | 'fixed' | null; discount_value: number;
+  tax: number; tax_rate: number;
+  service_charge: number; service_charge_rate: number;
   total: number; notes: string | null; created_by: string | null;
   assigned_to: string | null; idempotency_key: string | null;
   created_at: string; updated_at: string;
@@ -221,7 +226,8 @@ export interface OrderStatusHistory {
 
 export interface InvoiceItem {
   id: string; invoice_id: string; description: string; quantity: number;
-  unit_price: number; total: number; reference_type: string | null;
+  unit_price: number; discount: number; discount_type: 'percentage' | 'fixed' | null;
+  discount_value: number; total: number; reference_type: string | null;
   reference_id: string | null; created_at: string;
 }
 
@@ -229,12 +235,17 @@ export interface PaymentLog {
   id: string; invoice_id: string; amount: number; method: PaymentMethod;
   reference: string | null; status: PaymentStatus; notes: string | null;
   processed_by: string | null; idempotency_key: string | null; created_at: string;
+  cash_received: number | null; change_due: number | null;
 }
 
 export interface Invoice {
   id: string; invoice_number: string; order_id: string | null;
   booking_id: string | null; customer_name: string | null;
-  customer_phone: string | null; subtotal: number; discount: number; total: number;
+  customer_phone: string | null; subtotal: number; discount: number;
+  discount_type: 'percentage' | 'fixed' | null; discount_value: number;
+  tax: number; tax_rate: number;
+  service_charge: number; service_charge_rate: number;
+  total: number;
   status: InvoiceStatus; notes: string | null; created_by: string | null;
   idempotency_key: string | null; created_at: string; updated_at: string;
   locked_for_payment: boolean | null; locked_until: string | null;

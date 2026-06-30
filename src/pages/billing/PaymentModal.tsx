@@ -11,6 +11,7 @@ import { FonepayQRDialog } from "../../components/FonepayQRDialog";
 import { CASH_QUICK_AMOUNTS, PAYMENT_METHOD_LABELS, type Invoice } from "../../types";
 import { formatCurrency } from "../../lib/core/format-currency";
 import { markInvoicePaidAndSync } from "../../lib/services/payment-workflow";
+import { calculateChange, calculateRemainingDue, isPaymentSufficient } from "../../lib/core/financial-calculations";
 
 const paymentMethods = [
   { value: "cash", label: "Cash" },
@@ -40,9 +41,20 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
   const [showFonepayQR, setShowFonepayQR] = useState(false);
   const [quickCash, setQuickCash] = useState(false);
 
-  const change = Math.max(0, Number(cashReceived) - remaining);
+  const cashReceivedNum = Number(cashReceived) || 0;
+  const change = calculateChange(cashReceivedNum, remaining);
+  const remainingDue = calculateRemainingDue(cashReceivedNum, remaining);
+  const sufficient = isPaymentSufficient(cashReceivedNum, remaining);
 
   const payAmount = Math.min(Number(amount), remaining);
+  const subtotal = Number(invoice.subtotal);
+  const discount = Number(invoice.discount);
+  const tax = Number(invoice.tax);
+  const serviceCharge = Number(invoice.service_charge);
+  const total = Number(invoice.total);
+  const hasItemDiscounts = invoice.invoice_items?.some(i => Number(i.discount) > 0) ?? false;
+  const totalItemDiscounts = invoice.invoice_items?.reduce((s, i) => s + Number(i.discount), 0) ?? 0;
+  const totalDiscount = discount + totalItemDiscounts;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +161,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
+      <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-lg overflow-y-auto max-h-[90vh]">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Add Payment</h2>
           <button type="button" onClick={onClose} className="min-h-[44px] min-w-[44px] rounded-sm opacity-70 hover:opacity-100">
@@ -157,18 +169,53 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg border bg-muted p-3 text-sm">
+        <div className="mb-4 rounded-lg border bg-muted p-3 text-sm space-y-1">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Invoice</span>
             <span className="font-medium">{invoice.invoice_number}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Total</span>
-            <span className="font-medium">{formatCurrency(Number(invoice.total))}</span>
+            <span className="text-muted-foreground">Subtotal</span>
+            <span>{formatCurrency(subtotal)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Remaining</span>
-            <span className="font-bold text-primary">{formatCurrency(remaining)}</span>
+          {hasItemDiscounts && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Item Discounts</span>
+              <span className="text-destructive">-{formatCurrency(totalItemDiscounts)}</span>
+            </div>
+          )}
+          {discount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Order Discount</span>
+              <span className="text-destructive">-{formatCurrency(discount)}</span>
+            </div>
+          )}
+          {totalDiscount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Discount</span>
+              <span className="text-destructive">-{formatCurrency(totalDiscount)}</span>
+            </div>
+          )}
+          {tax > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Tax{invoice.tax_rate > 0 ? ` (${invoice.tax_rate}%)` : ''}</span>
+              <span>{formatCurrency(tax)}</span>
+            </div>
+          )}
+          {serviceCharge > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Service Charge{invoice.service_charge_rate > 0 ? ` (${invoice.service_charge_rate}%)` : ''}</span>
+              <span>{formatCurrency(serviceCharge)}</span>
+            </div>
+          )}
+          <hr className="border-border my-1" />
+          <div className="flex justify-between font-bold">
+            <span>Grand Total</span>
+            <span>{formatCurrency(total)}</span>
+          </div>
+          <div className="flex justify-between font-bold text-primary">
+            <span>Remaining</span>
+            <span>{formatCurrency(remaining)}</span>
           </div>
         </div>
 
@@ -232,7 +279,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
 
             {isCash && (
               <div className="space-y-2">
-                <Label htmlFor="cashReceived">Amount Received</Label>
+                <Label htmlFor="cashReceived">Cash Received</Label>
                 <Input
                   id="cashReceived"
                   type="number"
@@ -241,9 +288,14 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
                   value={cashReceived}
                   onChange={(e) => setCashReceived(e.target.value)}
                 />
-                {Number(cashReceived) > remaining && (
-                  <p className="text-xs text-primary font-medium">
+                {sufficient && change > 0 && (
+                  <p className="text-xs text-emerald-600 font-medium">
                     Change due: {formatCurrency(change)}
+                  </p>
+                )}
+                {!sufficient && cashReceivedNum > 0 && (
+                  <p className="text-xs text-amber-600 font-medium">
+                    Still due: {formatCurrency(remainingDue)}
                   </p>
                 )}
               </div>
@@ -287,7 +339,7 @@ export function PaymentModal({ invoice, remaining, onClose }: PaymentModalProps)
               <Button type="button" variant="outline" onClick={onClose} className="min-h-[44px]">
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitted || processPayment.isPending || processCashPayment.isPending} className="min-h-[44px]">
+              <Button type="submit" disabled={submitted || processPayment.isPending || processCashPayment.isPending || (isCash && !sufficient && cashReceivedNum > 0)} className="min-h-[44px]">
                 {processPayment.isPending || processCashPayment.isPending ? "Processing..." : "Process Payment"}
               </Button>
             </div>

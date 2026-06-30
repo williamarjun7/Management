@@ -45,12 +45,14 @@ export async function processCashPayment(
   amount: number,
   userId: string,
   idempotencyKey: string,
+  notes?: string,
 ): Promise<PaymentResult> {
   const { data, error } = await insforge.database.rpc('process_cash_payment', {
     p_invoice_id: invoiceId,
     p_amount: amount,
-    p_user_id: userId,
+    p_processed_by: userId,
     p_idempotency_key: idempotencyKey,
+    p_notes: notes ?? null,
   });
 
   if (error) throw error;
@@ -70,7 +72,7 @@ export async function processFonepayPayment(
   const { data, error } = await insforge.database.rpc('process_payment', {
     p_invoice_id: invoiceId,
     p_amount: amount,
-    p_user_id: userId,
+    p_processed_by: userId,
     p_idempotency_key: idempotencyKey,
     p_method: 'fonepay',
     p_transaction_id: transactionId,
@@ -94,7 +96,7 @@ export async function processCreditPayment(
   const { data, error } = await insforge.database.rpc('process_payment', {
     p_invoice_id: invoiceId,
     p_amount: amount,
-    p_user_id: userId,
+    p_processed_by: userId,
     p_idempotency_key: idempotencyKey,
     p_method: 'credit_account',
     p_customer_name: customerName,
@@ -112,42 +114,38 @@ export async function markInvoicePaidAndSync(
   tableId?: string,
   sessionId?: string,
 ): Promise<void> {
-  const tasks: Array<Promise<unknown>> = [];
-
   if (tableId) {
-    // IMPORTANT: completeActiveOrders must finish BEFORE refreshFromOrders
-    // to avoid a race where refreshFromOrders sees the order as 'active'
-    // and sets the table back to 'occupied'.
+    // 1. Mark all active orders as completed — ensures any later order query
+    //    for this table returns no active orders.
     await completeActiveOrders(tableId, invoiceId);
-    tasks.push(refreshFromOrders(tableId));
 
-    // Auto-detect active session if not provided
+    // 2. Close the active table session — must happen BEFORE refreshFromOrders
+    //    so the session check sees no active session.
     const activeSessionId = sessionId || await resolveActiveSession(tableId);
     if (activeSessionId) {
-      tasks.push(
-        Promise.resolve(
-          insforge.database
-            .from('table_sessions')
-            .update({ status: 'closed', closed_at: new Date().toISOString() })
-            .eq('id', activeSessionId)
-        )
-      );
+      await insforge.database
+        .from('table_sessions')
+        .update({ status: 'closed', closed_at: new Date().toISOString() })
+        .eq('id', activeSessionId);
     }
+
+    // 3. Re-evaluate table status based on current orders & sessions.
+    //    Both orders and sessions are clean at this point, so the table
+    //    will transition to 'available'.
+    await refreshFromOrders(tableId);
   }
 
-  tasks.push(
-    Promise.resolve(
-      insforge.database
-        .rpc('create_system_event', {
-          p_event_type: 'PAYMENT_PROCESSED',
-          p_entity_type: 'invoice',
-          p_entity_id: invoiceId,
-          p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
-        })
-    )
-  );
-
-  await Promise.allSettled(tasks);
+  // 4. Fire-and-forget system event for audit trail
+  try {
+    await insforge.database.rpc('create_system_event', {
+      p_event_type: 'PAYMENT_PROCESSED',
+      p_entity_type: 'invoice',
+      p_entity_id: invoiceId,
+      p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
+    });
+  } catch {
+    // system event is non-critical
+  }
 }
 
 async function resolveActiveSession(tableId: string): Promise<string | null> {

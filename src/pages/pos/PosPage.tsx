@@ -1,30 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMenuCategories, useMenuItems, useTables, useCreateOrder, useActiveOrderByTable, useAddOrderItems } from '../../lib/hooks';
 import { showSuccess, showError } from '../../components/ui/toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
+import { Button } from '../../components/ui/button';
 import { formatCurrency } from '../../lib/core/format-currency';
 import { insforge } from '../../lib/core/insforge';
 import { markInvoicePaidAndSync } from '../../lib/services/payment-workflow';
+import { queryKeys } from '../../lib/core/query-keys';
 import type { MenuItem, RestaurantTable, Invoice, Order } from '../../types';
 import { PrintInvoice } from '../billing/PrintInvoice';
-
-async function generateInvoiceNumber(): Promise<string> {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const d = String(today.getDate()).padStart(2, '0');
-  const prefix = `HCM-${y}${m}${d}-`;
-  const { data } = await insforge.database
-    .from('invoices')
-    .select('invoice_number')
-    .like('invoice_number', `${prefix}%`)
-    .order('invoice_number', { ascending: false })
-    .limit(1);
-  const lastSeq = (data as { invoice_number: string }[] | null)?.[0]?.invoice_number;
-  const next = lastSeq ? parseInt(lastSeq.slice(-3), 10) + 1 : 1;
-  return `${prefix}${String(next).padStart(3, '0')}`;
-}
-import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3, ArrowLeft } from 'lucide-react';
+import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, Printer, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3, ArrowLeft } from 'lucide-react';
 import { PaymentCheckout } from '../../components/PaymentCheckout';
 
 interface CartItem {
@@ -61,24 +48,22 @@ export default function PosPage() {
   const [selectedTableId, setSelectedTableId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
-  const [discountValue, setDiscountValue] = useState(0);
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
-  const [paymentRemaining, setPaymentRemaining] = useState(0);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutOrder, setCheckoutOrder] = useState<Order | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
-  const [showDiscount, setShowDiscount] = useState(false);
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
   const [originalItemIds, setOriginalItemIds] = useState<Set<string>>(new Set());
   const [showPrint, setShowPrint] = useState(false);
+  const [showPrintConfirm, setShowPrintConfirm] = useState(false);
   const [printInvoiceData, setPrintInvoiceData] = useState<Invoice | null>(null);
 
   const addOrderItems = useAddOrderItems();
+  const queryClient = useQueryClient();
   const { data: activeOrder } = useActiveOrderByTable(selectedTableId);
 
   // Clear cart when table selection changes
@@ -87,8 +72,6 @@ export default function PosPage() {
     setOriginalItemIds(new Set());
     setCart([]);
     setCustomerName('');
-    setDiscountValue(0);
-    setShowDiscount(false);
   }, [selectedTableId]);
 
   // Populate cart from existing order when query resolves
@@ -111,6 +94,7 @@ export default function PosPage() {
     } else if (activeOrder === null) {
       setExistingOrderId(null);
       setOriginalItemIds(new Set());
+      setCart([]);
     }
   }, [activeOrder, selectedTableId]);
 
@@ -189,10 +173,6 @@ export default function PosPage() {
   }
 
   const subtotal = cart.reduce((s, l) => s + l.unit_price * l.quantity, 0);
-  const discountAmount = discountType === 'percentage'
-    ? Math.min(subtotal * (Math.min(discountValue, 100) / 100), subtotal)
-    : Math.min(discountValue, subtotal);
-  const total = subtotal - discountAmount;
 
   async function handlePay() {
     if (!selectedTableId) {
@@ -218,57 +198,10 @@ export default function PosPage() {
         return;
       }
 
-      const { data: invoices, error: invErr } = await insforge.database
-        .from('invoices')
-        .select('*, invoice_items(*), payment_logs(*)')
-        .eq('order_id', latestOrder.id)
-        .limit(1);
-
-      if (invErr) throw invErr;
-      let invoice = (invoices as Invoice[])?.[0];
-
-      if (!invoice) {
-        const invoiceNumber = await generateInvoiceNumber();
-        const { data: newInvoice, error: createErr } = await insforge.database
-          .from('invoices')
-          .insert([{
-            invoice_number: invoiceNumber,
-            order_id: latestOrder.id,
-            customer_name: latestOrder.customer_name,
-            customer_phone: latestOrder.customer_phone,
-            subtotal: latestOrder.subtotal,
-            discount: latestOrder.discount,
-            total: latestOrder.total,
-            status: 'unpaid',
-          }])
-          .select('*, invoice_items(*), payment_logs(*)')
-          .single();
-
-        if (createErr) throw createErr;
-        invoice = newInvoice as Invoice;
-
-        if (latestOrder.order_items && latestOrder.order_items.length > 0) {
-          const invItems = latestOrder.order_items.map(item => ({
-            invoice_id: invoice.id,
-            description: item.item_name,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total: item.unit_price * item.quantity,
-            reference_type: 'order_item',
-            reference_id: item.id,
-          }));
-          await insforge.database.from('invoice_items').insert(invItems);
-        }
-      }
-
-      const paidAmount = (invoice.payment_logs ?? []).reduce((s, p) => s + Number(p.amount), 0);
-      const remaining = Number(invoice.total) - paidAmount;
-
-      setPaymentInvoice(invoice);
-      setPaymentRemaining(remaining);
-      setShowPayment(true);
+      setCheckoutOrder(latestOrder);
+      setShowCheckout(true);
     } catch (err) {
-      showError((err as Error)?.message || 'Failed to prepare payment');
+      showError((err as Error)?.message || 'Failed to prepare checkout');
     } finally {
       setPayLoading(false);
     }
@@ -287,7 +220,6 @@ export default function PosPage() {
         }
         await addOrderItems.mutateAsync({
           order_id: existingOrderId,
-          discount: discountAmount,
           items: newItems.map(l => ({
             menu_item_id: l.menu_item_id,
             item_name: l.name,
@@ -301,7 +233,6 @@ export default function PosPage() {
         await createOrder.mutateAsync({
           table_id: selectedTableId,
           customer_name: customerName.trim() || undefined,
-          discount: discountAmount,
           items: cart.map((l) => ({
             menu_item_id: l.menu_item_id,
             item_name: l.name,
@@ -316,7 +247,6 @@ export default function PosPage() {
 
       setCart([]);
       setCustomerName('');
-      setDiscountValue(0);
       setExistingOrderId(null);
       setOriginalItemIds(new Set());
     } catch (err) {
@@ -573,57 +503,9 @@ export default function PosPage() {
         </div>
 
         <div className="p-5 bg-card border-t border-border space-y-3">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Subtotal</span>
-              <span className="text-sm tabular-nums">{npr(subtotal)}</span>
-            </div>
-            {cart.length > 0 && (
-              <div className="rounded-lg border border-border overflow-hidden">
-                <button
-                  onClick={() => setShowDiscount(!showDiscount)}
-                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-medium hover:bg-muted/50 transition-colors"
-                >
-                  <span>Discount</span>
-                  <div className="flex items-center gap-1.5">
-                    {discountAmount > 0 && <span className="text-destructive">-{npr(discountAmount)}</span>}
-                    <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showDiscount ? 'rotate-90' : ''}`} />
-                  </div>
-                </button>
-                {showDiscount && (
-                  <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
-                    <div className="flex items-center gap-1 rounded-md bg-muted p-0.5 w-fit">
-                      <button
-                        onClick={() => { setDiscountType('percentage'); setDiscountValue(0); }}
-                        className={`px-2.5 py-1 text-xs rounded ${discountType === 'percentage' ? 'bg-background font-medium shadow-sm' : 'text-muted-foreground'}`}
-                      >%</button>
-                      <button
-                        onClick={() => { setDiscountType('fixed'); setDiscountValue(0); }}
-                        className={`px-2.5 py-1 text-xs rounded ${discountType === 'fixed' ? 'bg-background font-medium shadow-sm' : 'text-muted-foreground'}`}
-                      >Rs.</button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="0"
-                        max={discountType === 'percentage' ? 100 : subtotal}
-                        value={discountValue || ''}
-                        onChange={(e) => setDiscountValue(Math.max(0, Number(e.target.value)))}
-                        placeholder={discountType === 'percentage' ? '0%' : '0'}
-                        className="flex-1 h-8 rounded-md border border-border bg-transparent px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                      />
-                      {discountAmount > 0 && (
-                        <button onClick={() => setDiscountValue(0)} className="text-xs text-destructive hover:underline shrink-0">Clear</button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
-              <span>Total</span>
-              <span className="tabular-nums">{npr(total)}</span>
-            </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Subtotal</span>
+            <span className="text-sm tabular-nums">{npr(subtotal)}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -752,56 +634,10 @@ export default function PosPage() {
                 ))
               )}
             </div>
-            <div className="p-4 bg-card border-t border-border space-y-3 shrink-0">
+            <div className="p-4 bg-card border-t border-border shrink-0">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Subtotal</span>
                 <span className="text-sm tabular-nums">{npr(subtotal)}</span>
-              </div>
-              {cart.length > 0 && (
-                <div className="rounded-lg border border-border overflow-hidden">
-                  <button
-                    onClick={() => setShowDiscount(!showDiscount)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-medium hover:bg-muted/50 transition-colors"
-                  >
-                    <span>Discount</span>
-                    <div className="flex items-center gap-1.5">
-                      {discountAmount > 0 && <span className="text-destructive">-{npr(discountAmount)}</span>}
-                      <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showDiscount ? 'rotate-90' : ''}`} />
-                    </div>
-                  </button>
-                  {showDiscount && (
-                    <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
-                      <div className="flex items-center gap-1 rounded-md bg-muted p-0.5 w-fit">
-                        <button
-                          onClick={() => { setDiscountType('percentage'); setDiscountValue(0); }}
-                          className={`px-2.5 py-1 text-xs rounded ${discountType === 'percentage' ? 'bg-background font-medium shadow-sm' : 'text-muted-foreground'}`}
-                        >%</button>
-                        <button
-                          onClick={() => { setDiscountType('fixed'); setDiscountValue(0); }}
-                          className={`px-2.5 py-1 text-xs rounded ${discountType === 'fixed' ? 'bg-background font-medium shadow-sm' : 'text-muted-foreground'}`}
-                        >Rs.</button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min="0"
-                          max={discountType === 'percentage' ? 100 : subtotal}
-                          value={discountValue || ''}
-                          onChange={(e) => setDiscountValue(Math.max(0, Number(e.target.value)))}
-                          placeholder={discountType === 'percentage' ? '0%' : '0'}
-                          className="flex-1 h-8 rounded-md border border-border bg-transparent px-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                        />
-                        {discountAmount > 0 && (
-                          <button onClick={() => setDiscountValue(0)} className="text-xs text-destructive hover:underline shrink-0">Clear</button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
-                <span>Total</span>
-                <span className="tabular-nums">{npr(total)}</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -857,22 +693,75 @@ export default function PosPage() {
       {showPrint && printInvoiceData && (
         <PrintInvoice
           invoice={printInvoiceData}
-          onClose={() => { setShowPrint(false); setPrintInvoiceData(null); }}
+          onClose={() => { setShowPrint(false); setPrintInvoiceData(null); navigate('/dashboard'); }}
         />
       )}
-      {showPayment && paymentInvoice && (
+      {showPrintConfirm && printInvoiceData && (
+        <Dialog open={showPrintConfirm} onOpenChange={setShowPrintConfirm}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 p-2">
+                  <Printer className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <DialogTitle>Payment Successful</DialogTitle>
+                  <DialogDescription className="mt-1">
+                    The payment has been completed successfully. Invoice #{printInvoiceData.invoice_number} is saved.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm">
+              Would you like to print the invoice now?
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => { setShowPrintConfirm(false); setPrintInvoiceData(null); navigate('/dashboard'); }}
+                className="min-h-[44px] flex-1"
+              >
+                Skip for Now
+              </Button>
+              <Button
+                onClick={() => { setShowPrintConfirm(false); setShowPrint(true); }}
+                className="min-h-[44px] flex-1"
+              >
+                <Printer className="h-4 w-4 mr-1" />
+                Print Invoice
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+      {showCheckout && checkoutOrder && (
         <PaymentCheckout
-          invoice={paymentInvoice}
-          remaining={paymentRemaining}
-          onClose={() => { setShowPayment(false); setPaymentInvoice(null); }}
-          onComplete={async () => {
+          order={checkoutOrder}
+          tableId={selectedTableId || ''}
+          customerName={customerName}
+          onClose={() => { setShowCheckout(false); setCheckoutOrder(null); }}
+          onComplete={async (invoice) => {
+            setShowCheckout(false);
+            if (selectedTableId) {
+              queryClient.setQueryData(queryKeys.activeOrderByTable(selectedTableId), null);
+            }
+            setCart([]);
+            setCustomerName('');
+            setExistingOrderId(null);
+            setOriginalItemIds(new Set());
             await markInvoicePaidAndSync(
-              paymentInvoice.id,
+              invoice.id,
               selectedTableId || undefined,
             ).catch(() => {});
-            setShowPayment(false);
-            setPrintInvoiceData(paymentInvoice);
-            setShowPrint(true);
+            queryClient.invalidateQueries({ queryKey: queryKeys.tables });
+            queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+            queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+            queryClient.invalidateQueries({ queryKey: queryKeys.tableSessions });
+            if (selectedTableId) {
+              queryClient.invalidateQueries({ queryKey: queryKeys.activeOrderByTable(selectedTableId) });
+            }
+            setPrintInvoiceData(invoice);
+            setShowPrintConfirm(true);
             showSuccess('Payment completed');
           }}
         />

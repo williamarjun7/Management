@@ -3,15 +3,15 @@ import { logger } from './logger';
 import type { TableStatus } from '../../types';
 
 const VALID_TRANSITIONS: Record<TableStatus, TableStatus[]> = {
-  available: ['occupied', 'reserved'],
+  available: ['reserved', 'occupied', 'ordering'],
   reserved: ['occupied', 'available'],
   occupied: ['ordering', 'billing', 'available'],
-  ordering: ['billing', 'occupied'],
-  billing: ['cleaning', 'available'],
-  cleaning: ['available'],
-  preparing: ['ready', 'occupied'],
-  ready: ['dining', 'occupied'],
+  ordering: ['preparing', 'billing', 'occupied'],
+  preparing: ['ready', 'billing', 'occupied'],
+  ready: ['dining', 'billing', 'occupied'],
   dining: ['billing', 'occupied'],
+  billing: ['occupied', 'cleaning'],
+  cleaning: ['available', 'occupied'],
 };
 
 export function isValidTransition(from: TableStatus, to: TableStatus): boolean {
@@ -49,11 +49,17 @@ async function emitEvent(tableId: string, status: TableStatus): Promise<void> {
 }
 
 export async function setTableStatus(tableId: string, status: TableStatus): Promise<void> {
-  const { data: table } = await insforge.database
+  const { data: table, error } = await insforge.database
     .from('restaurant_tables')
     .select('status')
     .eq('id', tableId)
     .single();
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new Error(`Table ${tableId} not found`);
+    }
+    throw error;
+  }
   if (table) {
     assertValidTransition(table.status as TableStatus, status);
   }
@@ -70,38 +76,57 @@ export async function releaseTable(tableId: string): Promise<void> {
   await setTableStatus(tableId, 'available');
 }
 
-export async function refreshFromOrders(tableId: string): Promise<TableStatus | void> {
-  if (!tableId) return;
-  const { data: activeOrders } = await insforge.database
+export async function refreshFromOrders(tableId: string): Promise<TableStatus | null> {
+  if (!tableId) return null;
+  const { data: activeOrders, error } = await insforge.database
     .from('orders')
     .select('id')
     .eq('table_id', tableId)
     .not('status', 'in', '("cancelled","refunded","completed")');
 
-  const newStatus: TableStatus = activeOrders && activeOrders.length > 0 ? 'occupied' : 'available';
+  if (error) return null;
+
+  const { data: activeSessions } = await insforge.database
+    .from('table_sessions')
+    .select('id')
+    .eq('table_id', tableId)
+    .eq('status', 'active')
+    .limit(1);
+
+  const hasActiveOrders = activeOrders && activeOrders.length > 0;
+  const hasActiveSession = activeSessions && activeSessions.length > 0;
+  const newStatus: TableStatus = hasActiveOrders || hasActiveSession ? 'occupied' : 'available';
+
   await writeStatus(tableId, newStatus);
   await emitEvent(tableId, newStatus);
   return newStatus;
 }
 
 export async function syncAllTables(): Promise<void> {
-  const [activeResult, tablesResult] = await Promise.all([
+  const [activeResult, sessionsResult, tablesResult] = await Promise.all([
     insforge.database
       .from('orders')
       .select('table_id')
       .not('status', 'in', '("cancelled","refunded","completed")'),
     insforge.database
+      .from('table_sessions')
+      .select('table_id')
+      .eq('status', 'active'),
+    insforge.database
       .from('restaurant_tables')
       .select('id, status'),
   ]);
 
-  const activeTableIds = new Set((activeResult.data ?? []).map(o => o.table_id));
+  const activeOrderTableIds = new Set((activeResult.data ?? []).map(o => o.table_id));
+  const activeSessionTableIds = new Set((sessionsResult.data ?? []).map(s => s.table_id));
+  const allActiveTableIds = new Set([...activeOrderTableIds, ...activeSessionTableIds]);
+
   const tables = tablesResult.data;
   if (!tables) return;
 
   await Promise.allSettled(
     tables.map(async (table) => {
-      const shouldBeOccupied = activeTableIds.has(table.id);
+      const shouldBeOccupied = allActiveTableIds.has(table.id);
       if (shouldBeOccupied && table.status === 'occupied') return;
       if (!shouldBeOccupied && table.status === 'available') return;
       const newStatus: TableStatus = shouldBeOccupied ? 'occupied' : 'available';
