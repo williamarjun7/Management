@@ -17,7 +17,13 @@ export default function TableManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ table_number: string; capacity: number; room_id: string; notes: string }>({ table_number: '', capacity: 4, room_id: '', notes: '' });
   const [newTable, setNewTable] = useState<{ table_number: string; capacity: number; room_id: string; notes: string }>({ table_number: '', capacity: 4, room_id: '', notes: '' });
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [disableConfirm, setDisableConfirm] = useState<{ table: RestaurantTable; hasActiveOrders: boolean } | null>(null);
+
+  const isDuplicateTableNumber = (number: string, excludeId?: string) => {
+    return (tables ?? []).some(t => t.table_number === number.trim() && t.id !== excludeId);
+  };
 
   const filtered = (tables ?? []).filter(t => {
     if (search && !t.table_number.toLowerCase().includes(search.toLowerCase())) return false;
@@ -34,6 +40,11 @@ export default function TableManagementPage() {
 
   const handleCreate = async () => {
     if (!newTable.table_number.trim() || !newTable.capacity) return;
+    setCreateError(null);
+    if (isDuplicateTableNumber(newTable.table_number)) {
+      setCreateError(`Table number "${newTable.table_number.trim()}" already exists.`);
+      return;
+    }
     try {
       await createTable({
         table_number: newTable.table_number.trim(),
@@ -44,10 +55,17 @@ export default function TableManagementPage() {
       setShowCreate(false);
       setNewTable({ table_number: '', capacity: 4, room_id: '', notes: '' });
       showSuccess('Table created');
-    } catch { showError('Failed to create table'); }
+    } catch (err) {
+      showError((err as Error)?.message || 'Failed to create table');
+    }
   };
 
   const handleUpdate = async (id: string) => {
+    setEditError(null);
+    if (isDuplicateTableNumber(editForm.table_number, id)) {
+      setEditError(`Table number "${editForm.table_number.trim()}" already exists.`);
+      return;
+    }
     try {
       await updateTable(id, {
         table_number: editForm.table_number.trim(),
@@ -57,7 +75,9 @@ export default function TableManagementPage() {
       });
       setEditingId(null);
       showSuccess('Table updated');
-    } catch { showError('Failed to update table'); }
+    } catch (err) {
+      showError((err as Error)?.message || 'Failed to update table');
+    }
   };
 
   const handleToggle = async (table: RestaurantTable) => {
@@ -160,6 +180,7 @@ export default function TableManagementPage() {
                 <tr key={table.id} className={`hover:bg-muted/30 transition-colors ${!table.is_active ? 'opacity-60' : ''}`}>
                   {editingId === table.id ? (
                     <td colSpan={6} className="p-3">
+                      {editError && <div className="mb-2 text-xs text-destructive font-medium">{editError}</div>}
                       <div className="flex flex-col sm:flex-row gap-3">
                         <div className="flex-1">
                           <label className="text-xs text-muted-foreground">Table Number</label>
@@ -247,6 +268,7 @@ export default function TableManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCreate(false)} role="dialog" aria-modal="true" aria-labelledby="create-table-title">
           <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg" onClick={e => e.stopPropagation()}>
             <h2 id="create-table-title" className="text-lg font-bold mb-4">New Table</h2>
+            {createError && <div className="mb-3 text-sm text-destructive font-medium">{createError}</div>}
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">Table Number *</label>

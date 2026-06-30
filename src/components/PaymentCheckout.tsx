@@ -6,7 +6,6 @@ import { useAuth } from "../lib/core/auth-context";
 import { showSuccess, showError } from "./ui/toast";
 import { formatCurrency } from "../lib/core/format-currency";
 import { FonepayQRDialog } from "./FonepayQRDialog";
-import { markInvoicePaidAndSync } from "../lib/services/payment-workflow";
 import { CASH_QUICK_AMOUNTS, type Invoice } from "../types";
 
 interface PaymentCheckoutProps {
@@ -69,7 +68,6 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
         p_processed_by: user.id,
         p_idempotency_key: key,
       });
-      await markInvoicePaidAndSync(invoice.id).catch(() => {});
       showSuccess(`Payment of ${formatCurrency(remaining)} received`);
       onComplete();
     } catch (err) {
@@ -92,7 +90,6 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
         p_processed_by: user.id,
         p_idempotency_key: key,
       });
-      await markInvoicePaidAndSync(invoice.id).catch(() => {});
       showSuccess(`Payment received. Change due: ${formatCurrency(change)}`);
       onComplete();
     } catch (err) {
@@ -155,7 +152,6 @@ export function PaymentCheckout({ invoice, remaining, onClose, onComplete }: Pay
         p_notes: creditPhone ? `Phone: ${creditPhone}` : undefined,
         p_customer_id: customerId,
       });
-      await markInvoicePaidAndSync(invoice.id).catch(() => {});
       showSuccess(`Credit payment recorded for ${selectedCustomer?.name || creditSearch.trim()}`);
       onComplete();
     } catch (err) {

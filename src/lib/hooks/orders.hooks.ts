@@ -2,9 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
-import { refreshTableStatus } from '../services/table-occupancy';
+import { occupyTable, refreshFromOrders } from '../services/table-state';
 import type { Order } from '../../types';
 import { queryKeys } from '../core/query-keys';
+
+function requireOnline() {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new Error('You are currently offline. Please check your connection and try again.');
+  }
+}
 
 const KITCHEN_STATUSES = ['active'];
 
@@ -115,8 +121,13 @@ export function useAddOrderItems() {
       return order;
     },
     onSuccess: (data) => {
+      const order = data as Order;
       qc.invalidateQueries({ queryKey: queryKeys.orders });
-      qc.invalidateQueries({ queryKey: queryKeys.activeOrderByTable((data as Order).table_id ?? '') });
+      qc.invalidateQueries({ queryKey: queryKeys.tables });
+      qc.invalidateQueries({ queryKey: queryKeys.kitchenOrders });
+      if (order.table_id) {
+        qc.invalidateQueries({ queryKey: queryKeys.activeOrderByTable(order.table_id) });
+      }
     },
   });
 }
@@ -128,6 +139,7 @@ export function useCreateOrder() {
       table_id: string; customer_name?: string; notes?: string; discount?: number;
       items: { menu_item_id: string; item_name: string; quantity: number; unit_price: number; notes?: string }[];
     }) => {
+      requireOnline();
       const { items, ...rest } = values;
       const subtotal = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
       const discount = Math.max(0, Math.min(rest.discount ?? 0, subtotal));
@@ -145,23 +157,37 @@ export function useCreateOrder() {
         .select()
         .single();
       if (oe) throw oe;
+      const orderId = (order as Order).id;
 
       const { error: ie } = await insforge.database
         .from(T.orderItems)
         .insert(items.map((i) => ({
-          order_id: (order as Order).id,
+          order_id: orderId,
           menu_item_id: i.menu_item_id,
           item_name: i.item_name,
           quantity: i.quantity,
           unit_price: i.unit_price,
           notes: i.notes || null,
         })));
-      if (ie) throw ie;
+      if (ie) {
+        await insforge.database
+          .from(T.orders)
+          .update({ status: 'cancelled', notes: 'Order creation failed - items could not be added' })
+          .eq('id', orderId);
+        throw ie;
+      }
       return order;
     },
-    onSuccess: (data) => {
-      writeAuditLog(createAuditEntry(AuditActions.ORDER_CREATED, AuditEntityTypes.ORDER, (data as Order).id, { new_state: { table_id: (data as Order).table_id, total: (data as Order).total }, event_type: AuditEventTypes.ORDER_CREATED }));
+    onSuccess: async (data) => {
+      const order = data as Order;
+      writeAuditLog(createAuditEntry(AuditActions.ORDER_CREATED, AuditEntityTypes.ORDER, order.id, { new_state: { table_id: order.table_id, total: order.total }, event_type: AuditEventTypes.ORDER_CREATED }));
       qc.invalidateQueries({ queryKey: queryKeys.orders });
+      qc.invalidateQueries({ queryKey: queryKeys.tables });
+      qc.invalidateQueries({ queryKey: queryKeys.kitchenOrders });
+      if (order.table_id) {
+        qc.invalidateQueries({ queryKey: queryKeys.activeOrderByTable(order.table_id) });
+        await occupyTable(order.table_id);
+      }
     },
   });
 }
@@ -242,6 +268,7 @@ export function useTransitionOrderStatus() {
       writeAuditLog(createAuditEntry(AuditActions.ORDER_STATUS_CHANGE, AuditEntityTypes.ORDER, vars.p_order_id, { new_state: { status: vars.p_new_status }, event_type: AuditEventTypes.ORDER_STATUS_CHANGE }));
       queryClient.invalidateQueries({ queryKey: queryKeys.kitchenOrders });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tables });
 
       try {
         const { data: order } = await insforge.database
@@ -250,8 +277,7 @@ export function useTransitionOrderStatus() {
           .eq('id', vars.p_order_id)
           .single();
         if (order?.table_id) {
-          await refreshTableStatus(order.table_id);
-          queryClient.invalidateQueries({ queryKey: queryKeys.tables });
+          await refreshFromOrders(order.table_id);
         }
       } catch {
         // non-blocking - table status refresh is best-effort

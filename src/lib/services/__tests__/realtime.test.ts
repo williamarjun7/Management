@@ -150,18 +150,6 @@ describe('realtime', () => {
     });
   });
 
-  describe('subscribeTableUpdates', () => {
-    it('should subscribe to table channel', async () => {
-      const { subscribeTableUpdates } = await importModule();
-      const unsubscribe = subscribeTableUpdates('t1');
-      expect(mockSubscribe).toHaveBeenCalledWith('table:t1');
-      const handler = mockOn.mock.calls.find((c: string[]) => c[0] === 'table:t1')?.[1];
-      handler?.({});
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['tables'] });
-      unsubscribe();
-    });
-  });
-
   describe('subscribeFonepayPayment', () => {
     it('should call onPaid when payment_confirmed', async () => {
       const onPaid = vi.fn();

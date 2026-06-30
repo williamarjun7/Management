@@ -78,6 +78,7 @@ export async function recordTransition(
   if (error) throw error;
 }
 
+/** @deprecated Use the TableStatus type from types/index.ts instead. */
 export const TABLE_STATES = [
   'available',
   'reserved',
@@ -89,21 +90,3 @@ export const TABLE_STATES = [
   'billing',
   'cleaning',
 ] as const;
-
-export const VALID_TABLE_TRANSITIONS: Record<string, string[]> = {
-  available: ['reserved', 'occupied', 'ordering'],
-  reserved: ['available', 'occupied'],
-  occupied: ['ordering', 'billing', 'available'],
-  ordering: ['occupied', 'preparing', 'billing'],
-  preparing: ['ready', 'occupied'],
-  ready: ['dining', 'served'],
-  dining: ['billing', 'ordering'],
-  billing: ['cleaning', 'occupied'],
-  cleaning: ['available'],
-};
-
-export function isValidTableTransition(from: string, to: string): boolean {
-  const allowed = VALID_TABLE_TRANSITIONS[from];
-  if (!allowed) return false;
-  return allowed.includes(to);
-}

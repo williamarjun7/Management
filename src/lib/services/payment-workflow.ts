@@ -1,6 +1,5 @@
 import { insforge } from '../core/insforge';
-import { executeWorkflowStep } from '../../workbench/workflows';
-import { refreshTableStatus } from './table-occupancy';
+import { refreshFromOrders } from './table-state';
 
 export type PaymentWorkflowAction = 'cash' | 'fonepay' | 'credit';
 
@@ -11,37 +10,60 @@ interface PaymentResult {
   error?: string;
 }
 
+/**
+ * Transition all active (non-cancelled, non-refunded) orders for a table
+ * to 'completed' status after payment.
+ *
+ * Payment RPCs mark the invoice as paid but leave the order status as 'active',
+ * which causes refreshFromOrders to immediately set the table back to 'occupied'.
+ */
+async function completeActiveOrders(tableId: string, invoiceId: string): Promise<void> {
+  const { data: orders } = await insforge.database
+    .from('orders')
+    .select('id')
+    .eq('table_id', tableId)
+    .not('status', 'in', '("cancelled","refunded")');
+
+  if (!orders || orders.length === 0) return;
+
+  const { data: session } = await insforge.auth.getCurrentUser();
+  const userId = session?.user?.id;
+  if (!userId) return;
+
+  await Promise.allSettled(
+    orders.map((order) =>
+      insforge.database.rpc('transition_order_status', {
+        p_order_id: order.id,
+        p_new_status: 'completed',
+        p_user_id: userId,
+        p_idempotency_key: `paid:${invoiceId}:${order.id}`,
+      })
+    )
+  );
+}
 export async function processCashPayment(
   invoiceId: string,
   amount: number,
-  processedBy: string,
+  userId: string,
   idempotencyKey: string,
 ): Promise<PaymentResult> {
   const { data, error } = await insforge.database.rpc('process_cash_payment', {
     p_invoice_id: invoiceId,
     p_amount: amount,
-    p_processed_by: processedBy,
+    p_user_id: userId,
     p_idempotency_key: idempotencyKey,
   });
 
   if (error) throw error;
-
   const result = data as PaymentResult;
-  if (result.success !== false && !result.error) {
-    await executeWorkflowStep('billing', 'process_payment', {
-      invoice_id: invoiceId,
-      amount,
-      method: 'cash',
-    }).catch(() => {});
-  }
-
+  if (result.error) return { success: false, error: result.error };
   return result;
 }
 
 export async function processFonepayPayment(
   invoiceId: string,
   amount: number,
-  processedBy: string,
+  userId: string,
   idempotencyKey: string,
   transactionId: string,
   gatewayReference?: string,
@@ -49,62 +71,40 @@ export async function processFonepayPayment(
   const { data, error } = await insforge.database.rpc('process_payment', {
     p_invoice_id: invoiceId,
     p_amount: amount,
-    p_method: 'fonepay',
-    p_processed_by: processedBy,
+    p_user_id: userId,
     p_idempotency_key: idempotencyKey,
-    p_reference: gatewayReference || transactionId,
-    p_notes: gatewayReference
-      ? `FonePay payment. Gateway Ref: ${gatewayReference}`
-      : `FonePay payment. TX: ${transactionId}`,
+    p_method: 'fonepay',
     p_transaction_id: transactionId,
+    p_gateway_reference: gatewayReference ?? null,
   });
 
   if (error) throw error;
-
   const result = data as PaymentResult;
-  if (result.success !== false && !result.error) {
-    await executeWorkflowStep('billing', 'process_payment', {
-      invoice_id: invoiceId,
-      amount,
-      method: 'fonepay',
-      transaction_id: transactionId,
-      gateway_reference: gatewayReference,
-    }).catch(() => {});
-  }
-
+  if (result.error) return { success: false, error: result.error };
   return result;
 }
 
 export async function processCreditPayment(
   invoiceId: string,
   amount: number,
-  processedBy: string,
+  userId: string,
   idempotencyKey: string,
   customerName: string,
-  customerPhone?: string,
+  customerPhone: string,
 ): Promise<PaymentResult> {
   const { data, error } = await insforge.database.rpc('process_payment', {
     p_invoice_id: invoiceId,
     p_amount: amount,
-    p_method: 'credit_account',
-    p_processed_by: processedBy,
+    p_user_id: userId,
     p_idempotency_key: idempotencyKey,
-    p_reference: customerName,
-    p_notes: customerPhone ? `Phone: ${customerPhone}` : undefined,
+    p_method: 'credit_account',
+    p_customer_name: customerName,
+    p_customer_phone: customerPhone,
   });
 
   if (error) throw error;
-
   const result = data as PaymentResult;
-  if (result.success !== false && !result.error) {
-    await executeWorkflowStep('billing', 'process_payment', {
-      invoice_id: invoiceId,
-      amount,
-      method: 'credit_account',
-      customer_name: customerName,
-    }).catch(() => {});
-  }
-
+  if (result.error) return { success: false, error: result.error };
   return result;
 }
 
@@ -113,33 +113,30 @@ export async function markInvoicePaidAndSync(
   tableId?: string,
   sessionId?: string,
 ): Promise<void> {
+  const promises: Promise<unknown>[] = [];
+
   if (tableId) {
-    // Step 1: Complete the order via RPC
-    await executeWorkflowStep('billing', 'close_session', {
-      invoice_id: invoiceId,
-      table_id: tableId,
-      table_session_id: sessionId,
-    }).catch(() => {});
+    promises.push(completeActiveOrders(tableId, invoiceId));
+    promises.push(refreshFromOrders(tableId));
 
-    // Step 2: Release the table - the process_cash_payment RPC now handles
-    // order completion + table release atomically. This is a fallback
-    // for any cases where the RPC was not the one used.
-    await executeWorkflowStep('billing', 'reset_table', {
-      table_id: tableId,
-    }).catch(() => {});
-
-    // Step 3: Refresh table status
-    await refreshTableStatus(tableId);
+    if (sessionId) {
+      promises.push(
+        insforge.database
+          .from('table_sessions')
+          .update({ status: 'closed', closed_at: new Date().toISOString() })
+          .eq('id', sessionId)
+      );
+    }
   }
 
-  try {
-    await insforge.database.rpc('create_system_event', {
+  promises.push(
+    insforge.database.rpc('create_system_event', {
       p_event_type: 'PAYMENT_PROCESSED',
       p_entity_type: 'invoice',
       p_entity_id: invoiceId,
       p_payload: JSON.stringify({ invoice_id: invoiceId, table_id: tableId }),
-    });
-  } catch {
-    // non-blocking notification
-  }
+    })
+  );
+
+  await Promise.allSettled(promises);
 }

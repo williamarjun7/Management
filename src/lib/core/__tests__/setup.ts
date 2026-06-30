@@ -154,6 +154,12 @@ let rpcCallHistory: Array<{ name: string; params: Record<string, unknown> }> = [
 
 vi.mock('../insforge', () => ({
   insforge: {
+    auth: {
+      getCurrentUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'mock-user-id' } },
+        error: null,
+      }),
+    },
     database: {
       rpc: vi.fn(async (name: string, params: Record<string, unknown>) => {
         rpcCallHistory.push({ name, params });
@@ -165,6 +171,21 @@ vi.mock('../insforge', () => ({
         const handler = rpcHandlers.get(name);
         if (handler) return await handler(params);
         return { data: {}, error: null };
+      }),
+      from: vi.fn(() => {
+        function chain(resolveValue?: unknown) {
+          return {
+            eq: vi.fn(() => chain(resolveValue)),
+            not: vi.fn(() => chain(resolveValue)),
+            order: vi.fn(() => ({ limit: vi.fn(() => chain(resolveValue)) })),
+            single: vi.fn(() => chain(resolveValue)),
+            select: vi.fn(() => chain(resolveValue)),
+            update: vi.fn(() => chain(resolveValue)),
+            then: (resolve: (v: unknown) => void, reject: (e: unknown) => void) => Promise.resolve().then(() => resolve(resolveValue ?? { data: null, error: null })).catch(reject),
+            catch: vi.fn(() => chain(resolveValue)),
+          };
+        }
+        return chain();
       }),
     },
     realtime: {

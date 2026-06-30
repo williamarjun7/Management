@@ -5,7 +5,6 @@ import { useFonepayQR, useCheckFonepayStatus, useProcessPayment, useUpdateFonepa
 import { useAuth } from "../lib/core/auth-context";
 import { showSuccess, showError, showInfo } from "./ui/toast";
 import { formatCurrency } from "../lib/core/format-currency";
-import { markInvoicePaidAndSync } from "../lib/services/payment-workflow";
 import type { Invoice, QRPaymentStatus } from "../types";
 import QRCode from "qrcode";
 
@@ -121,9 +120,6 @@ export function FonepayQRDialog({ invoice, amount, onSuccess, onCancel }: Fonepa
 
       setStatus("success");
       showSuccess(`FonePay payment of ${formatCurrency(amt)} confirmed`);
-
-      // Mark paid and sync AFTER DB transaction commits
-      await markInvoicePaidAndSync(invoice.id).catch(() => {});
 
       // Only print receipt AFTER payment is committed in DB
       printTimeoutRef.current = setTimeout(() => {

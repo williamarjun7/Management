@@ -6,12 +6,8 @@ vi.mock('../logger', () => ({
   attachLogStore: vi.fn(),
 }));
 
-vi.mock('../../workbench/workflows', () => ({
-  executeWorkflowStep: vi.fn().mockResolvedValue({}),
-}));
-
-vi.mock('../table-occupancy', () => ({
-  refreshTableStatus: vi.fn().mockResolvedValue(undefined),
+vi.mock('../table-state', () => ({
+  refreshFromOrders: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('payment-workflow', () => {
@@ -110,6 +106,17 @@ describe('payment-workflow', () => {
 
       const { markInvoicePaidAndSync } = await import('../payment-workflow');
       await expect(markInvoicePaidAndSync('inv-6', 'table-1', 'session-1')).resolves.not.toThrow();
+    });
+
+    it('should close session and refresh table status when sessionId and tableId provided', async () => {
+      setRpcHandler('create_system_event', () => ({ data: {}, error: null }));
+
+      const { markInvoicePaidAndSync } = await import('../payment-workflow');
+      const { refreshFromOrders } = await import('../table-state');
+
+      await markInvoicePaidAndSync('inv-7', 'table-2', 'session-2');
+
+      expect(refreshFromOrders).toHaveBeenCalledWith('table-2');
     });
   });
 });

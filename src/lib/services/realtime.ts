@@ -102,7 +102,6 @@ const EVENT_QUERY_MAP: Record<string, string[]> = {
   TABLE_STATUS_CHANGED: ['tables'],
   TABLE_SESSION_STARTED: ['table-sessions', 'tables'],
   TABLE_SESSION_CLOSED: ['table-sessions', 'tables'],
-  WORKFLOW_STEP_CHANGED: ['workflows'],
   BILL_GENERATED: ['invoices', 'orders'],
   PAYMENT_PROCESSED: ['invoices', 'orders', 'tables'],
   FONEPAY_PAYMENT_INITIATED: ['invoices', 'orders'],
@@ -559,32 +558,6 @@ export function subscribeRooms(onEvent?: () => void): () => void {
     if (event && ['checked_in', 'checked_out', 'room_status_change', 'booking_created'].includes(event)) {
       onEvent?.();
     }
-  };
-
-  insforge.realtime.on(channelKey, handler);
-
-  const cleanup = () => {
-    insforge.realtime.off(channelKey, handler);
-    insforge.realtime.unsubscribe(channelKey);
-  };
-
-  trackChannel(channelKey, cleanup);
-
-  return () => {
-    removeChannel(channelKey);
-    cleanup();
-  };
-}
-
-export function subscribeTableUpdates(tableId: string): () => void {
-  const channelKey = `table:${tableId}`;
-
-  insforge.realtime.subscribe(channelKey);
-
-  const handler = () => {
-    recordChannelActivity(channelKey);
-    queryClient.invalidateQueries({ queryKey: ['tables'] });
-    queryClient.invalidateQueries({ queryKey: ['orders'] });
   };
 
   insforge.realtime.on(channelKey, handler);

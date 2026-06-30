@@ -3,8 +3,25 @@ import { insforge } from '../core/insforge';
 import { logger } from '../services/logger';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes, AuditEventTypes } from '../services/audit.service';
 import { generateFonepayQR, checkFonepayStatus, logFonepayTransaction, updateFonepayTransaction } from '../services/fonepay';
+import { refreshFromOrders } from '../services/table-state';
 import type { Invoice, CreditCustomer } from '../../types';
 import { queryKeys } from '../core/query-keys';
+
+function requireOnline() {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new Error('You are currently offline. Please check your connection and try again.');
+  }
+}
+
+function invalidateAfterPayment(queryClient: ReturnType<typeof useQueryClient>, tableId?: string) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.tables });
+  queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+  queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+  queryClient.invalidateQueries({ queryKey: queryKeys.tableSessions });
+  if (tableId) {
+    queryClient.invalidateQueries({ queryKey: queryKeys.activeOrderByTable(tableId) });
+  }
+}
 // ─────────────── INVOICES ───────────────
 
 export function useInvoices(status?: string) {
@@ -56,6 +73,7 @@ export function useProcessPayment() {
       p_transaction_id?: string;
       p_customer_id?: string;
     }) => {
+      requireOnline();
       const { data, error } = await insforge.database.rpc('process_payment', params);
       if (error) {
         logger.error('process_payment_failed', 'hooks', {
@@ -66,9 +84,9 @@ export function useProcessPayment() {
       }
       return data;
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: async (_data, vars) => {
       writeAuditLog(createAuditEntry(AuditActions.PAYMENT, AuditEntityTypes.PAYMENT, vars.p_invoice_id, { new_state: { amount: vars.p_amount, method: vars.p_method }, event_type: AuditEventTypes.PAYMENT }));
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -95,7 +113,7 @@ export function useCreatePaymentIntent() {
     },
     onSuccess: (_data, vars) => {
       writeAuditLog(createAuditEntry(AuditActions.CREATE, AuditEntityTypes.PAYMENT, vars.p_invoice_id, { new_state: { amount: vars.p_amount, method: vars.p_method } }));
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -119,7 +137,7 @@ export function useConfirmPayment() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -144,7 +162,7 @@ export function useReversePayment() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -159,6 +177,7 @@ export function useProcessCashPayment() {
       p_idempotency_key: string;
       p_notes?: string;
     }) => {
+      requireOnline();
       const { data, error } = await insforge.database.rpc('process_cash_payment', params);
       if (error) {
         logger.error('process_cash_payment_failed', 'hooks', {
@@ -169,9 +188,9 @@ export function useProcessCashPayment() {
       }
       return data;
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: async (_data, vars) => {
       writeAuditLog(createAuditEntry(AuditActions.PAYMENT, AuditEntityTypes.PAYMENT, vars.p_invoice_id, { new_state: { amount: vars.p_amount, method: 'cash' }, event_type: AuditEventTypes.PAYMENT }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -186,9 +205,26 @@ export function useDeleteInvoice() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: (_data, id) => {
+    onSuccess: async (_data, id) => {
       writeAuditLog(createAuditEntry(AuditActions.DELETE, AuditEntityTypes.INVOICE, id, { reason: 'Invoice voided/deleted' }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+      invalidateAfterPayment(queryClient);
+      try {
+        const { data: invoice } = await insforge.database
+          .from('invoices')
+          .select('order_id')
+          .eq('id', id)
+          .single();
+        if ((invoice as { order_id: string | null })?.order_id) {
+          const { data: order } = await insforge.database
+            .from('orders')
+            .select('table_id')
+            .eq('id', (invoice as { order_id: string }).order_id)
+            .single();
+          if ((order as { table_id: string | null })?.table_id) {
+            await refreshFromOrders((order as { table_id: string }).table_id);
+          }
+        }
+      } catch { /* non-blocking */ }
     },
   });
 }
@@ -221,7 +257,7 @@ export function usePartialPayment() {
         new_state: { amount: vars.p_amount, method: vars.p_method },
         event_type: AuditEventTypes.SPLIT_BILL,
       }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -254,7 +290,7 @@ export function useProcessRefund() {
         new_state: { status: 'refunded', amount: vars.p_amount },
         reason: vars.p_reason,
       }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+      invalidateAfterPayment(queryClient);
     },
   });
 }
@@ -285,7 +321,7 @@ export function useApplyDiscount() {
       writeAuditLog(createAuditEntry(AuditActions.DISCOUNT_APPLIED, AuditEntityTypes.INVOICE, vars.p_invoice_id, {
         metadata: { discount: vars.p_discount, reason: vars.p_reason },
       }));
-      queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
+      invalidateAfterPayment(queryClient);
     },
   });
 }

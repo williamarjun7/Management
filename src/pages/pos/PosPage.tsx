@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMenuCategories, useMenuItems, useTables, useCreateOrder, useActiveOrderByTable, useAddOrderItems } from '../../lib/hooks';
 import { showSuccess, showError } from '../../components/ui/toast';
 import { formatCurrency } from '../../lib/core/format-currency';
-import { refreshTableStatus } from '../../lib/services/table-occupancy';
 import { insforge } from '../../lib/core/insforge';
 import { markInvoicePaidAndSync } from '../../lib/services/payment-workflow';
 import type { MenuItem, RestaurantTable, Invoice, Order } from '../../types';
@@ -312,7 +311,6 @@ export default function PosPage() {
           })),
         });
 
-        await refreshTableStatus(selectedTableId);
         showSuccess('Order placed successfully');
       }
 

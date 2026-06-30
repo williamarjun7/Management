@@ -1,7 +1,21 @@
 import { insforge } from '../../lib/core/insforge';
-import type { RestaurantTable } from '../../types';
+import { setTableStatus } from '../../lib/services/table-state';
+import type { RestaurantTable, TableStatus } from '../../types';
+import { TABLE_STATUS_LABELS } from '../../types';
 
 const TABLE = 'restaurant_tables' as const;
+
+const VALID_TABLE_STATUSES: readonly TableStatus[] = ['available', 'reserved', 'occupied', 'ordering', 'preparing', 'ready', 'dining', 'billing', 'cleaning'];
+
+export function validateTableStatus(status: string): asserts status is TableStatus {
+  if (!VALID_TABLE_STATUSES.includes(status as TableStatus)) {
+    throw new Error(`Invalid table status "${status}". Must be one of: ${VALID_TABLE_STATUSES.join(', ')}`);
+  }
+}
+
+export function isValidTableStatus(status: string): status is TableStatus {
+  return VALID_TABLE_STATUSES.includes(status as TableStatus);
+}
 
 export async function fetchTables(options?: { all?: boolean }): Promise<RestaurantTable[]> {
   const query = insforge.database
@@ -27,19 +41,28 @@ export async function fetchTable(id: string): Promise<RestaurantTable> {
 }
 
 export async function updateTableStatus(id: string, status: string): Promise<void> {
-  const { error } = await insforge.database
-    .from(TABLE)
-    .update({ status })
-    .eq('id', id);
-  if (error) throw error;
+  validateTableStatus(status);
+  await setTableStatus(id, status as TableStatus);
 }
 
 export async function updateTable(id: string, updates: Partial<RestaurantTable>): Promise<void> {
-  const { error } = await insforge.database
-    .from(TABLE)
-    .update(updates)
-    .eq('id', id);
-  if (error) throw error;
+  const { status, ...otherFields } = updates;
+
+  if (status) {
+    validateTableStatus(status);
+    await setTableStatus(id, status as TableStatus);
+  }
+
+  if (Object.keys(otherFields).length > 0) {
+    const { error } = await insforge.database
+      .from(TABLE)
+      .update(otherFields)
+      .eq('id', id);
+    if (error && error.code === '23505') {
+      throw new Error(`Table number "${updates.table_number}" already exists. Please use a different number.`);
+    }
+    if (error) throw error;
+  }
 }
 
 export async function createTable(data: { table_number: string; capacity: number; room_id?: string; section?: string; notes?: string }): Promise<RestaurantTable> {
@@ -48,6 +71,9 @@ export async function createTable(data: { table_number: string; capacity: number
     .insert([{ ...data, status: 'available', is_active: true, display_order: 0 }])
     .select()
     .single();
+  if (error && error.code === '23505') {
+    throw new Error(`Table number "${data.table_number}" already exists. Please use a different number.`);
+  }
   if (error) throw error;
   return result as unknown as RestaurantTable;
 }

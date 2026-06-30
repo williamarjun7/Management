@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     insforge.auth.getCurrentUser().then(async ({ data, error }) => {
       if (cancelled) return;
       if (data?.user && !error) {
-        const profile = await fetchUserProfile(data.user.id);
+        const profile = await ensureProfile(data.user.id, data.user.email ?? '');
         const built = buildAuthUser(data.user, profile);
         if (!cancelled) {
           if (isStaff(built.role) && checkSessionExpiry()) {
@@ -226,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
     return () => { cancelled = true; };
-  }, [checkSessionExpiry, isStaff]);
+  }, [checkSessionExpiry, isStaff, ensureProfile]);
 
   // Cross-tab auth state sync via storage events
   useEffect(() => {
@@ -269,18 +269,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('focus', handleFocus);
   }, [user, isStaff, expireStaffSession, checkSessionExpiry, refreshSession, recoverSession, loading]);
 
+  const profileCache = useRef(new Map<string, UserProfile>());
+
   const ensureProfile = useCallback(async (userId: string, email: string, name?: string) => {
+    const cached = profileCache.current.get(userId);
+    if (cached) return cached;
+
     let profile = await fetchUserProfile(userId);
     if (!profile) {
-      await insforge.database.from('user_profiles').insert([{
+      const { error } = await insforge.database.from('user_profiles').insert([{
         id: userId,
         name: name || null,
         email,
         role: 'staff',
         is_active: true,
       }]).maybeSingle();
-      profile = await fetchUserProfile(userId);
+      if (!error) {
+        profile = { id: userId, name: name || null, email, role: 'staff', is_active: true, phone: null, avatar_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      } else {
+        profile = await fetchUserProfile(userId);
+      }
     }
+    if (profile) profileCache.current.set(userId, profile);
     return profile;
   }, []);
 

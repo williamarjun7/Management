@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { insforge } from '../core/insforge';
 import { writeAuditLog, createAuditEntry, AuditActions, AuditEntityTypes } from '../services/audit.service';
+import { refreshFromOrders } from '../services/table-state';
 import type { RestaurantTable, TableSession, WorkflowState } from '../../types';
 import { queryKeys } from '../core/query-keys';
 
@@ -84,9 +85,13 @@ export function useCloseTableSession() {
       return data;
     },
     onSuccess: (data) => {
-      writeAuditLog(createAuditEntry(AuditActions.UPDATE, AuditEntityTypes.TABLE_SESSION, data.id, { new_state: { status: 'closed' }, event_type: 'TABLE_SESSION_CLOSED' }));
+      const session = data as TableSession;
+      writeAuditLog(createAuditEntry(AuditActions.UPDATE, AuditEntityTypes.TABLE_SESSION, session.id, { new_state: { status: 'closed' }, event_type: 'TABLE_SESSION_CLOSED' }));
       qc.invalidateQueries({ queryKey: queryKeys.tableSessions });
       qc.invalidateQueries({ queryKey: queryKeys.tables });
+      if (session.table_id) {
+        refreshFromOrders(session.table_id).catch(() => {});
+      }
     },
   });
 }
