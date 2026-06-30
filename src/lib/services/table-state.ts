@@ -76,7 +76,7 @@ export async function refreshFromOrders(tableId: string): Promise<TableStatus | 
     .from('orders')
     .select('id')
     .eq('table_id', tableId)
-    .not('status', 'in', '("cancelled","refunded")');
+    .not('status', 'in', '("cancelled","refunded","completed")');
 
   const newStatus: TableStatus = activeOrders && activeOrders.length > 0 ? 'occupied' : 'available';
   await writeStatus(tableId, newStatus);
@@ -89,7 +89,7 @@ export async function syncAllTables(): Promise<void> {
     insforge.database
       .from('orders')
       .select('table_id')
-      .not('status', 'in', '("cancelled","refunded")'),
+      .not('status', 'in', '("cancelled","refunded","completed")'),
     insforge.database
       .from('restaurant_tables')
       .select('id, status'),

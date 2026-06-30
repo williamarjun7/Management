@@ -1,6 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './lib/core/auth-context';
 import { UpdateProvider } from './lib/core/update-context';
 import { UpdateOverlay } from './components/UpdateOverlay';
 import { SplashScreen } from './components/SplashScreen';
@@ -91,50 +90,48 @@ const protectedRoutes: RouteConfig[] = [
 
 export default function App() {
   useEffect(() => {
-    initSentry();
+    setTimeout(() => { initSentry(); }, 0);
     initRealtime();
     return () => { shutdownRealtime(); };
   }, []);
 
   return (
-    <AuthProvider>
-      <Sentry.ErrorBoundary fallback={<ErrorFallback />}>
-        <UpdateProvider>
-          <SplashScreen />
-          <UpdateOverlay />
-          <Routes>
-          <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
-          <Route path="/admin/login" element={<SuspenseWrapper><AdminLoginPage /></SuspenseWrapper>} />
-          <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/staff" element={<SuspenseWrapper><StaffPage /></SuspenseWrapper>} />
-          <Route path="*" element={<RoleRedirect />} />
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            {protectedRoutes.map((r) => (
-              <Route
-                key={r.path}
-                path={r.path}
-                element={
-                  r.roles ? (
-                    <ProtectedRoute allowedRoles={r.roles}>
-                      {r.element}
-                    </ProtectedRoute>
-                  ) : (
-                    r.element
-                  )
-                }
-              />
-            ))}
-          </Route>
-        </Routes>
-        </UpdateProvider>
-      </Sentry.ErrorBoundary>
-    </AuthProvider>
+    <Sentry.ErrorBoundary fallback={<ErrorFallback />}>
+      <UpdateProvider>
+        <SplashScreen />
+        <UpdateOverlay />
+        <Routes>
+        <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
+        <Route path="/admin/login" element={<SuspenseWrapper><AdminLoginPage /></SuspenseWrapper>} />
+        <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/staff" element={<SuspenseWrapper><StaffPage /></SuspenseWrapper>} />
+        <Route path="*" element={<RoleRedirect />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {protectedRoutes.map((r) => (
+            <Route
+              key={r.path}
+              path={r.path}
+              element={
+                r.roles ? (
+                  <ProtectedRoute allowedRoles={r.roles}>
+                    {r.element}
+                  </ProtectedRoute>
+                ) : (
+                  r.element
+                )
+              }
+            />
+          ))}
+        </Route>
+      </Routes>
+      </UpdateProvider>
+    </Sentry.ErrorBoundary>
   );
 }
 

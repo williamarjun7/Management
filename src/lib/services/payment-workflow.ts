@@ -11,24 +11,21 @@ interface PaymentResult {
 }
 
 /**
- * Transition all active (non-cancelled, non-refunded) orders for a table
- * to 'completed' status after payment.
- *
- * Payment RPCs mark the invoice as paid but leave the order status as 'active',
- * which causes refreshFromOrders to immediately set the table back to 'occupied'.
+ * Transition all active orders for a table to 'completed' status after payment.
+ * Only targets orders with status 'active' to avoid touching already-completed orders.
  */
-async function completeActiveOrders(tableId: string, invoiceId: string): Promise<void> {
+async function completeActiveOrders(tableId: string, invoiceId: string): Promise<string | null> {
   const { data: orders } = await insforge.database
     .from('orders')
     .select('id')
     .eq('table_id', tableId)
-    .not('status', 'in', '("cancelled","refunded")');
+    .eq('status', 'active');
 
-  if (!orders || orders.length === 0) return;
+  if (!orders || orders.length === 0) return null;
 
   const { data: session } = await insforge.auth.getCurrentUser();
   const userId = session?.user?.id;
-  if (!userId) return;
+  if (!userId) return null;
 
   await Promise.allSettled(
     orders.map((order) =>
@@ -40,6 +37,8 @@ async function completeActiveOrders(tableId: string, invoiceId: string): Promise
       })
     )
   );
+
+  return tableId;
 }
 export async function processCashPayment(
   invoiceId: string,
@@ -116,16 +115,21 @@ export async function markInvoicePaidAndSync(
   const tasks: Array<Promise<unknown>> = [];
 
   if (tableId) {
-    tasks.push(completeActiveOrders(tableId, invoiceId));
+    // IMPORTANT: completeActiveOrders must finish BEFORE refreshFromOrders
+    // to avoid a race where refreshFromOrders sees the order as 'active'
+    // and sets the table back to 'occupied'.
+    await completeActiveOrders(tableId, invoiceId);
     tasks.push(refreshFromOrders(tableId));
 
-    if (sessionId) {
+    // Auto-detect active session if not provided
+    const activeSessionId = sessionId || await resolveActiveSession(tableId);
+    if (activeSessionId) {
       tasks.push(
         Promise.resolve(
           insforge.database
             .from('table_sessions')
             .update({ status: 'closed', closed_at: new Date().toISOString() })
-            .eq('id', sessionId)
+            .eq('id', activeSessionId)
         )
       );
     }
@@ -144,4 +148,19 @@ export async function markInvoicePaidAndSync(
   );
 
   await Promise.allSettled(tasks);
+}
+
+async function resolveActiveSession(tableId: string): Promise<string | null> {
+  try {
+    const { data, error } = await insforge.database
+      .from('table_sessions')
+      .select('id')
+      .eq('table_id', tableId)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.id;
+  } catch {
+    return null;
+  }
 }

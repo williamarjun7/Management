@@ -206,7 +206,7 @@ export default function PosPage() {
         .from('orders')
         .select('*, order_items(*)')
         .eq('table_id', selectedTableId)
-        .not('status', 'in', '("cancelled","refunded")')
+        .not('status', 'in', '("cancelled","refunded","completed")')
         .order('created_at', { ascending: false })
         .limit(1);
 

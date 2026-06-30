@@ -67,7 +67,7 @@ export function useActiveOrderByTable(tableId?: string | null) {
         .from(T.orders)
         .select('*, order_items(*)')
         .eq('table_id', tableId)
-        .not('status', 'in', '("cancelled","refunded")')
+        .in('status', ['active'])
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;

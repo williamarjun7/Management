@@ -32,8 +32,10 @@ vi.mock('../../services/audit.service', () => ({
   AuditEventTypes: { ORDER_CREATED: 'ORDER_CREATED', ORDER_STATUS_CHANGE: 'ORDER_STATUS_CHANGE' },
 }));
 
-vi.mock('../../services/table-occupancy', () => ({
-  refreshTableStatus: vi.fn().mockResolvedValue(undefined),
+vi.mock('../../services/table-state', () => ({
+  occupyTable: vi.fn().mockResolvedValue(undefined),
+  refreshFromOrders: vi.fn().mockResolvedValue(undefined),
+  syncAllTables: vi.fn().mockResolvedValue(undefined),
 }));
 
 function createWrapper() {
@@ -180,7 +182,7 @@ describe('orders.hooks', () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        not: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue({ data: [mockOrder], error: null }),
       });
@@ -196,11 +198,18 @@ describe('orders.hooks', () => {
   describe('useCreateOrder', () => {
     it('should create an order with items and calculate totals', async () => {
       const mockOrder = { id: 'order-1', table_id: 't1', total: 150, order_number: 'ORD-TEST' };
-      mockFrom.mockReturnValue({
+      const mockSingle = vi.fn().mockResolvedValue({ data: mockOrder, error: null });
+      const chain: any = {
         select: vi.fn().mockReturnThis(),
         insert: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: mockOrder, error: null }),
-      });
+        eq: vi.fn().mockReturnThis(),
+        single: mockSingle,
+        update: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+      };
+      chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ data: null, error: null }).then(resolve);
+      mockFrom.mockReturnValue(chain);
 
       const { useCreateOrder } = await import('../orders.hooks');
       const { result } = renderHook(() => useCreateOrder(), { wrapper: createWrapper() });
