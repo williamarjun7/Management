@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Printer, Plus, CreditCard } from "lucide-react";
 import { useInvoice } from "../../lib/hooks";
+import { useOrderById } from "../../lib/hooks/orders.hooks";
+import { showError } from "../../components/ui/toast";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
@@ -31,6 +33,8 @@ export default function InvoiceDetailPage() {
   const { data: invoice, isLoading } = useInvoice(id);
   const [showPayment, setShowPayment] = useState(false);
   const [showPrint, setShowPrint] = useState(false);
+  const printWindowRef = useRef<Window | null>(null);
+  const { data: orderData } = useOrderById(invoice?.order_id);
 
   if (isLoading) {
     return (
@@ -51,13 +55,14 @@ export default function InvoiceDetailPage() {
     );
   }
 
-  const paidAmount = invoice.payment_logs?.reduce((s: number, p: PaymentLog) => s + Number(p.amount), 0) ?? 0;
-  const remaining = Number(invoice.total) - paidAmount;
+  const paidAmount = invoice.payment_logs?.filter((p: PaymentLog) => p.status === "paid").reduce((s: number, p: PaymentLog) => s + Number(p.amount), 0) ?? 0;
+  const total = Number(invoice.total);
+  const change = paidAmount > total ? paidAmount - total : 0;
+  const remaining = paidAmount > total ? 0 : total - paidAmount;
   const subtotal = Number(invoice.subtotal);
   const discount = Number(invoice.discount);
   const tax = Number(invoice.tax);
   const serviceCharge = Number(invoice.service_charge);
-  const total = Number(invoice.total);
   const hasItemDiscounts = invoice.invoice_items?.some(i => Number(i.discount) > 0) ?? false;
   const totalItemDiscounts = invoice.invoice_items?.reduce((s, i) => s + Number(i.discount), 0) ?? 0;
   const totalDiscount = discount + totalItemDiscounts;
@@ -70,7 +75,7 @@ export default function InvoiceDetailPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowPrint(true)} className="min-h-[44px]">
+            <Button variant="outline" onClick={() => { const pw = window.open("", "", "width=400,height=600,scrollbars=yes"); if (!pw) { showError("Please allow popups for this site to print invoices"); return; } printWindowRef.current = pw; setShowPrint(true); }} className="min-h-[44px]">
               <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
             {invoice.status !== "paid" && invoice.status !== "refunded" && (
@@ -179,12 +184,17 @@ export default function InvoiceDetailPage() {
                   <span>{formatCurrency(paidAmount)}</span>
                 </div>
               )}
-              {remaining > 0 && (
+              {change > 0 ? (
+                <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                  <span>Change</span>
+                  <span>{formatCurrency(change)}</span>
+                </div>
+              ) : remaining > 0 ? (
                 <div className="flex justify-between text-sm text-destructive font-medium">
                   <span>Remaining</span>
                   <span>{formatCurrency(remaining)}</span>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {invoice.payment_logs && invoice.payment_logs.length > 0 && (
@@ -235,7 +245,10 @@ export default function InvoiceDetailPage() {
       {showPrint && (
         <PrintInvoice
           invoice={invoice}
-          onClose={() => setShowPrint(false)}
+          printWindow={printWindowRef.current}
+          tableNumber={orderData?.restaurant_tables?.table_number ? Number(orderData.restaurant_tables.table_number) : null}
+          orderNumber={orderData?.order_number ?? null}
+          onClose={() => { printWindowRef.current = null; setShowPrint(false); }}
         />
       )}
     </>

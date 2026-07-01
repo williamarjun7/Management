@@ -395,9 +395,25 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
               </div>
             </div>
 
+            {/* Quick actions */}
+            <div className="space-y-2 pt-2">
+              <Button
+                onClick={handleCashExact}
+                disabled={submitting}
+                className="w-full min-h-[52px] text-base font-semibold gap-2"
+              >
+                {submitting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Banknote className="h-5 w-5" />
+                )}
+                {submitting ? "Processing..." : `Pay Exact ${formatCurrency(grandTotal)}`}
+              </Button>
+            </div>
+
             {/* Payment method selection */}
             <div className="space-y-2 pt-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Other Payment Methods</p>
               <button
                 onClick={() => { setCashReceived(String(grandTotal)); setTab("cash"); }}
                 className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary hover:bg-accent/30 transition-all text-left"
@@ -406,8 +422,8 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
                   <Banknote className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold">Cash</p>
-                  <p className="text-xs text-muted-foreground">Quick cash shortcuts & change calculation</p>
+                  <p className="font-semibold">Cash with Change</p>
+                  <p className="text-xs text-muted-foreground">When customer gives more than the exact amount</p>
                 </div>
                 <span className="text-2xl text-muted-foreground/30">→</span>
               </button>

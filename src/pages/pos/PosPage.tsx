@@ -3,16 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMenuCategories, useMenuItems, useTables, useCreateOrder, useActiveOrderByTable, useAddOrderItems } from '../../lib/hooks';
 import { showSuccess, showError } from '../../components/ui/toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
 import { formatCurrency } from '../../lib/core/format-currency';
 import { insforge } from '../../lib/core/insforge';
 import { markInvoicePaidAndSync } from '../../lib/services/payment-workflow';
 import { queryKeys } from '../../lib/core/query-keys';
 import { TABLE_STATUS_LABELS } from '../../types';
-import type { MenuItem, RestaurantTable, Invoice, Order } from '../../types';
-import { PrintInvoice } from '../billing/PrintInvoice';
-import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, Printer, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3, ArrowLeft } from 'lucide-react';
+import type { MenuItem, RestaurantTable, Order } from '../../types';
+import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3, ArrowLeft } from 'lucide-react';
 import { PaymentCheckout } from '../../components/PaymentCheckout';
 
 interface CartItem {
@@ -59,9 +56,7 @@ export default function PosPage() {
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
   const [originalItemIds, setOriginalItemIds] = useState<Set<string>>(new Set());
-  const [showPrint, setShowPrint] = useState(false);
-  const [showPrintConfirm, setShowPrintConfirm] = useState(false);
-  const [printInvoiceData, setPrintInvoiceData] = useState<Invoice | null>(null);
+
 
   const addOrderItems = useAddOrderItems();
   const queryClient = useQueryClient();
@@ -691,50 +686,6 @@ export default function PosPage() {
         )}
       </button>
 
-      {showPrint && printInvoiceData && (
-        <PrintInvoice
-          invoice={printInvoiceData}
-          onClose={() => { setShowPrint(false); setPrintInvoiceData(null); navigate('/dashboard'); }}
-        />
-      )}
-      {showPrintConfirm && printInvoiceData && (
-        <Dialog open={showPrintConfirm} onOpenChange={setShowPrintConfirm}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 p-2">
-                  <Printer className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <DialogTitle>Payment Successful</DialogTitle>
-                  <DialogDescription className="mt-1">
-                    The payment has been completed successfully. Invoice #{printInvoiceData.invoice_number} is saved.
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm">
-              Would you like to print the invoice now?
-            </div>
-            <DialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                onClick={() => { setShowPrintConfirm(false); setPrintInvoiceData(null); navigate('/dashboard'); }}
-                className="min-h-[44px] flex-1"
-              >
-                Skip for Now
-              </Button>
-              <Button
-                onClick={() => { setShowPrintConfirm(false); setShowPrint(true); }}
-                className="min-h-[44px] flex-1"
-              >
-                <Printer className="h-4 w-4 mr-1" />
-                Print Invoice
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
       {showCheckout && checkoutOrder && (
         <PaymentCheckout
           order={checkoutOrder}
@@ -758,12 +709,13 @@ export default function PosPage() {
             queryClient.invalidateQueries({ queryKey: queryKeys.orders });
             queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
             queryClient.invalidateQueries({ queryKey: queryKeys.tableSessions });
+            queryClient.invalidateQueries({ queryKey: ['pending-invoices'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.kitchenOrders });
+            queryClient.invalidateQueries({ queryKey: queryKeys.products });
             if (selectedTableId) {
               queryClient.invalidateQueries({ queryKey: queryKeys.activeOrderByTable(selectedTableId) });
             }
-            setPrintInvoiceData(invoice);
-            setShowPrintConfirm(true);
-            showSuccess('Payment completed');
+            navigate('/dashboard');
           }}
         />
       )}

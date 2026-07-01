@@ -1,36 +1,24 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [animClass, setAnimClass] = useState('');
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [phase, setPhase] = useState<'enter' | 'idle'>('enter');
+  const prevPath = useRef(location.pathname);
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setAnimClass('opacity-100');
-      return;
-    }
-    setAnimClass('opacity-0');
-    const frame = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setAnimClass('animate-fade-in-up');
-      });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [location.pathname, reducedMotion]);
+    if (prevPath.current === location.pathname) return;
+    prevPath.current = location.pathname;
+    setPhase('enter');
+    const timer = setTimeout(() => setPhase('idle'), 300);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   return (
-    <div ref={containerRef} className={animClass}>
+    <div
+      className={phase === 'enter' ? 'animate-fade-in-up' : undefined}
+      key={location.key}
+    >
       {children}
     </div>
   );

@@ -8,6 +8,7 @@ import { initRealtime, shutdownRealtime } from './lib/services/realtime';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import type { Role } from './types';
+import { PageSkeleton, DashboardSkeleton } from './components/ui/skeleton';
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const AdminLoginPage = lazy(() => import('./pages/auth/AdminLoginPage'));
@@ -47,21 +48,13 @@ type RouteConfig = {
   roles?: Role[];
 };
 
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-    </div>
-  );
-}
-
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+function SuspenseWrapper({ children, skeleton }: { children: React.ReactNode; skeleton?: React.ReactNode }) {
+  return <Suspense fallback={skeleton ?? <PageSkeleton />}>{children}</Suspense>;
 }
 
 const protectedRoutes: RouteConfig[] = [
   { path: '/', element: <RoleRedirect /> },
-  { path: '/dashboard', element: <SuspenseWrapper><DashboardPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'kitchen', 'staff', 'reception'] },
+  { path: '/dashboard', element: <SuspenseWrapper skeleton={<DashboardSkeleton />}><DashboardPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'kitchen', 'staff', 'reception'] },
   { path: '/pos', element: <SuspenseWrapper><PosPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/orders', element: <SuspenseWrapper><OrdersPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },
   { path: '/orders/new', element: <SuspenseWrapper><CreateOrderPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff'] },

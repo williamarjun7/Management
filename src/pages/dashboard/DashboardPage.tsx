@@ -18,6 +18,13 @@ import type { FiltersState } from '../../components/rooms/RoomFilters';
 import { TABLE_STATUS_LABELS, TABLE_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../types';
 import { TrendingUp, Clock, User, ChevronRight, Users, CookingPot, Hotel, Building2 } from 'lucide-react';
 
+function formatDuration(totalMinutes: number): string {
+  if (totalMinutes < 60) return `${totalMinutes}m`;
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${h}h ${m}m`;
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -66,11 +73,22 @@ export default function DashboardPage() {
     status?: string;
   } | null>(null);
 
+  const { data: pendingInvoices } = useQuery({
+    queryKey: ['pending-invoices'],
+    queryFn: async () => {
+      const { data, error } = await insforge.database
+        .from('invoices')
+        .select('*, orders!inner(id, order_number, status, restaurant_tables(table_number))')
+        .in('status', ['unpaid', 'partial'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 15000,
+  });
   const activeOrders = (orders ?? []).filter(
     (o: Order) => o.status === 'active'
-  );
-  const pendingPayments = (orders ?? []).filter(
-    (o: Order) => o.status === 'completed'
   );
   const recentOrders = (orders ?? []).slice(0, 8);
   const kitchenCount = (kitchenOrders ?? []).length;
@@ -429,7 +447,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 lg:col-span-6 rounded-xl border bg-card p-6">
           <h3 className="text-base font-semibold mb-4">Pending Payments</h3>
-          {pendingPayments.length === 0 ? (
+          {!pendingInvoices || pendingInvoices.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No pending payments</p>
           ) : (
             <Table>
@@ -442,18 +460,18 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingPayments.map((order: Order) => (
-                  <TableRow key={order.id}>
+                {pendingInvoices.map((inv: any) => (
+                  <TableRow key={inv.id}>
                     <TableCell className="font-medium">
-                      {order.restaurant_tables ? `Table ${order.restaurant_tables.table_number}` : 'Takeaway'}
+                      {inv.orders?.restaurant_tables ? `Table ${inv.orders.restaurant_tables.table_number}` : 'Takeaway'}
                     </TableCell>
-                    <TableCell className="font-semibold">Rs. {order.total.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">Rs. {Number(inv.total).toFixed(2)}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}m
+                      {formatDuration(Math.floor((Date.now() - new Date(inv.created_at).getTime()) / 60000))}
                     </TableCell>
                     <TableCell className="text-right">
                       <button
-                        onClick={() => navigate(`/billing`)}
+                        onClick={() => navigate(`/billing/${inv.id}`)}
                         className="rounded-md bg-primary text-primary-foreground px-3 py-1 text-xs font-medium"
                       >
                         Process

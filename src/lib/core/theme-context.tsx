@@ -116,10 +116,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  const toggleTheme = useCallback(
-    () => setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark')),
-    []
-  )
+  const toggleTheme = useCallback(() => {
+    const html = document.documentElement;
+    html.classList.add('theme-transitioning');
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        html.classList.remove('theme-transitioning');
+      });
+    });
+  }, [])
   const setTheme = useCallback((t: Theme) => setThemeState(t), [])
   const setAccent = useCallback(
     (a: Accent) => {

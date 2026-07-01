@@ -31,7 +31,7 @@ import {
   AlertCircle,
   Clock,
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../lib/core/theme-context';
 import { OfflineBanner, useConnectionState } from './OfflineBanner';
 import { BottomSheet } from './ui/bottom-sheet';
@@ -79,6 +79,28 @@ const bottomNavItems: { label: string; href: string; icon: React.ElementType }[]
   { label: 'Billing', href: '/billing', icon: Receipt },
 ];
 
+const routePrefetch: Record<string, () => Promise<unknown>> = {
+  '/dashboard': () => import('../pages/dashboard/DashboardPage'),
+  '/tables': () => import('../pages/admin/TableManagementPage'),
+  '/pos': () => import('../pages/pos/PosPage'),
+  '/orders': () => import('../pages/orders/OrdersPage'),
+  '/kitchen': () => import('../pages/kitchen/KitchenPage'),
+  '/menu': () => import('../pages/menu/MenuPage'),
+  '/inventory': () => import('../pages/inventory/InventoryPage'),
+  '/billing': () => import('../pages/billing/BillingPage'),
+  '/customers': () => import('../pages/customers/CustomersPage'),
+  '/motel': () => import('../pages/motel/MotelPage'),
+  '/reports': () => import('../pages/reports/ReportsPage'),
+  '/analytics': () => import('../pages/admin/OperationalAnalytics'),
+  '/admin/rooms': () => import('../pages/admin/DiningRoomsPage'),
+  '/audit': () => import('../pages/admin/AuditLogPage'),
+  '/settings': () => import('../pages/settings/SettingsPage'),
+  '/system-health': () => import('../pages/admin/SystemHealthPage'),
+  '/admin/updates': () => import('../pages/admin/AppUpdatesPage'),
+  '/admin/features': () => import('../pages/admin/FeatureFlagsPage'),
+  '/admin/queue': () => import('../pages/admin/QueueInspectorPage'),
+};
+
 function isActiveRoute(pathname: string, href: string): boolean {
   if (href === '/dashboard') return pathname === '/dashboard';
   return pathname.startsWith(href) || pathname === href;
@@ -104,6 +126,11 @@ export default function Layout() {
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const prefetchRoute = useCallback((href: string) => {
+    const imp = routePrefetch[href];
+    if (imp) imp().catch(() => {});
+  }, []);
 
   const isMoreActive = !bottomNavItems.some(
     (item) => item.href === location.pathname || location.pathname.startsWith(item.href + '/')
@@ -203,6 +230,7 @@ export default function Layout() {
                 key={item.href}
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
+                onMouseEnter={() => prefetchRoute(item.href)}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150',
                   active

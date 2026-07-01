@@ -297,3 +297,20 @@ export function useTransitionOrderStatus() {
     },
   });
 }
+
+export function useOrderById(orderId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      if (!orderId) return null;
+      const { data, error } = await insforge.database
+        .from('orders')
+        .select('*, restaurant_tables(table_number), order_items(*)')
+        .eq('id', orderId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Order | null;
+    },
+    enabled: !!orderId,
+  });
+}
