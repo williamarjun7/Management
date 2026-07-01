@@ -70,7 +70,7 @@ export function KitchenOrderCard({
             {order.restaurant_tables?.table_number ? (
               <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-bold bg-primary/10 text-primary uppercase tracking-wider">
                 <Table2 className="h-3 w-3" />
-                T{order.restaurant_tables.table_number}
+                Table {order.restaurant_tables.table_number}
               </span>
             ) : (
               <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-muted text-muted-foreground uppercase tracking-wider">

@@ -12,6 +12,7 @@ import {
   Search, Plus, Minus, ShoppingCart, Table2,
   ChevronRight, UtensilsCrossed
 } from "lucide-react";
+import { TABLE_STATUS_LABELS } from "../../types";
 import type { MenuItem } from "../../types";
 
 interface LineItem {
@@ -296,7 +297,7 @@ export default function CreateOrderPage() {
                 onChange={(e) => setTableId(e.target.value)}
                 options={(tables ?? []).map((t) => ({
                   value: t.id,
-                  label: `Table ${t.table_number}${t.capacity ? ` (${t.capacity}pax)` : ""}`,
+                  label: `Table ${t.table_number} - ${TABLE_STATUS_LABELS[t.status] || t.status}`,
                 }))}
                 placeholder="Select a table"
               />
@@ -453,7 +454,7 @@ export default function CreateOrderPage() {
                   onChange={(e) => setTableId(e.target.value)}
                   options={(tables ?? []).map((t) => ({
                     value: t.id,
-                    label: `Table ${t.table_number}${t.capacity ? ` (${t.capacity}pax)` : ""}`,
+                    label: `Table ${t.table_number} - ${TABLE_STATUS_LABELS[t.status] || t.status}`,
                   }))}
                   placeholder="Select a table"
                 />
@@ -482,7 +483,7 @@ export default function CreateOrderPage() {
                 onChange={(e) => setTableId(e.target.value)}
                 options={(tables ?? []).map((t) => ({
                   value: t.id,
-                  label: `Table ${t.table_number}${t.capacity ? ` (${t.capacity}pax)` : ""}`,
+                  label: `Table ${t.table_number} - ${TABLE_STATUS_LABELS[t.status] || t.status}`,
                 }))}
                 placeholder="Select a table"
               />

@@ -9,6 +9,7 @@ import { formatCurrency } from '../../lib/core/format-currency';
 import { insforge } from '../../lib/core/insforge';
 import { markInvoicePaidAndSync } from '../../lib/services/payment-workflow';
 import { queryKeys } from '../../lib/core/query-keys';
+import { TABLE_STATUS_LABELS } from '../../types';
 import type { MenuItem, RestaurantTable, Invoice, Order } from '../../types';
 import { PrintInvoice } from '../billing/PrintInvoice';
 import { Coffee, Egg, UtensilsCrossed, Wine, Search, X, Plus, Minus, User as UserIcon, Table2, CreditCard, Printer, ChevronLeft, ChevronRight, ShoppingCart, Grid3X3, ArrowLeft } from 'lucide-react';
@@ -333,7 +334,7 @@ export default function PosPage() {
                 <option value="">Select Table</option>
                 {(tables ?? []).map((t: RestaurantTable) => (
                   <option key={t.id} value={t.id}>
-                    {t.table_number} - {t.status} {t.capacity ? `(${t.capacity})` : ''}
+                    Table {t.table_number} - {TABLE_STATUS_LABELS[t.status] || t.status}
                   </option>
                 ))}
                 <option value="takeaway">Takeaway</option>

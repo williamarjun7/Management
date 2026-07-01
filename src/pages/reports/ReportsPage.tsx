@@ -34,7 +34,7 @@ export default function ReportsPage() {
       ...completedOrders.map((o: Order) => ({
         section: 'Order',
         id: o.order_number?.slice(0, 8) || o.id.slice(0, 8),
-        detail: o.restaurant_tables?.table_number ? `T${o.restaurant_tables.table_number}` : '',
+        detail: o.restaurant_tables?.table_number ? `Table ${o.restaurant_tables.table_number}` : '',
         amount: Number(o.total).toFixed(2),
         status: o.status,
         extra: new Date(o.created_at).toLocaleDateString(),
@@ -156,7 +156,7 @@ export default function ReportsPage() {
                   completedOrders.slice(0, 20).map((o: Order) => (
                     <TableRow key={o.id}>
                       <TableCell className="font-medium">{o.order_number?.slice(0, 8) || o.id.slice(0, 8)}</TableCell>
-                      <TableCell>{o.restaurant_tables?.table_number ? `T${o.restaurant_tables.table_number}` : '—'}</TableCell>
+                      <TableCell>{o.restaurant_tables?.table_number ? `Table ${o.restaurant_tables.table_number}` : '—'}</TableCell>
                       <TableCell>Rs. {Number(o.total).toFixed(2)}</TableCell>
                       <TableCell className="capitalize">{o.status}</TableCell>
                       <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</TableCell>

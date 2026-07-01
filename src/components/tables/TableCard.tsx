@@ -31,7 +31,6 @@ export function TableCard({ table, onViewOrders, onOpenPos, onReset, onBill }: T
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="text-lg font-bold">Table {table.table_number}</h3>
-            <p className="text-xs text-muted-foreground">Capacity: {table.capacity}pax</p>
           </div>
           <div className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />

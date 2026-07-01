@@ -266,8 +266,7 @@ export default function DashboardPage() {
                       {Array.from({ length: 10 }).map((_, i) => (
                         <div key={i} className="flex flex-col items-center gap-2">
                           <div className="w-full aspect-square rounded-2xl border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center gap-0.5 bg-muted/30">
-                            <span className="text-sm font-bold text-muted-foreground/40">T{i + 1}</span>
-                            <Users className="h-3 w-3 text-muted-foreground/30" />
+                            <span className="text-sm font-bold text-muted-foreground/40">Table {i + 1}</span>
                           </div>
                           <div className="h-5 w-16 rounded-full bg-muted-foreground/10 animate-pulse" />
                         </div>
@@ -294,11 +293,7 @@ export default function DashboardPage() {
                             : 'border-muted-foreground/20 bg-card hover:border-muted-foreground/40'
                         }`}>
                           <span className={`text-lg font-extrabold leading-none ${isOccupied ? 'text-orange-700 dark:text-orange-300' : isReserved ? 'text-blue-700 dark:text-blue-300' : 'text-foreground group-hover:text-primary transition-colors'}`}>
-                            T{table.table_number}
-                          </span>
-                          <Users className={`h-3 w-3 ${isOccupied ? 'text-orange-500/60 dark:text-orange-400/60' : isReserved ? 'text-blue-500/60 dark:text-blue-400/60' : 'text-muted-foreground/40'}`} />
-                          <span className={`text-[10px] font-medium leading-none ${isOccupied ? 'text-orange-600/80 dark:text-orange-400/80' : isReserved ? 'text-blue-600/80 dark:text-blue-400/80' : 'text-muted-foreground/50'}`}>
-                            {table.capacity}pax
+                            Table {table.table_number}
                           </span>
                           {isOccupied && (
                             <span className="absolute -top-1 -right-1 flex h-4 w-4">
@@ -342,10 +337,7 @@ export default function DashboardPage() {
                           <span className="text-xs text-muted-foreground ml-2">{TABLE_STATUS_LABELS[table.status] || table.status}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{table.capacity}pax</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   ))}
                 </div>
@@ -409,7 +401,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">
-                    Order #{order.order_number?.slice(-3) || order.id.slice(0, 6)} - {order.restaurant_tables?.table_number ? `T${order.restaurant_tables.table_number}` : 'Takeaway'}
+                    Order #{order.order_number?.slice(-3) || order.id.slice(0, 6)} - {order.restaurant_tables?.table_number ? `Table ${order.restaurant_tables.table_number}` : 'Takeaway'}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
                     {(order.order_items ?? []).map((i: { item_name: string }) => i.item_name).join(', ')}
@@ -453,7 +445,7 @@ export default function DashboardPage() {
                 {pendingPayments.map((order: Order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">
-                      {order.restaurant_tables ? `T${order.restaurant_tables.table_number}` : 'Takeaway'}
+                      {order.restaurant_tables ? `Table ${order.restaurant_tables.table_number}` : 'Takeaway'}
                     </TableCell>
                     <TableCell className="font-semibold">Rs. {order.total.toFixed(2)}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -490,7 +482,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm font-medium">
                       {order.status === 'completed' ? 'Payment Completed' :
-                       `Order ${ORDER_STATUS_LABELS[order.status] || order.status}`} - {order.restaurant_tables ? `T${order.restaurant_tables.table_number}` : 'Takeaway'}
+                       `Order ${ORDER_STATUS_LABELS[order.status] || order.status}`} - {order.restaurant_tables ? `Table ${order.restaurant_tables.table_number}` : 'Takeaway'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}m ago
