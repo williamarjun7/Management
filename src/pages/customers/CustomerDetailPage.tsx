@@ -14,6 +14,7 @@ const ENTRY_TYPE_COLORS: Record<string, string> = {
   payment: 'text-emerald-600',
   adjustment: 'text-amber-600',
   refund: 'text-blue-600',
+  debit: 'text-destructive',
 };
 
 const ENTRY_TYPE_LABELS: Record<string, string> = {
@@ -21,6 +22,7 @@ const ENTRY_TYPE_LABELS: Record<string, string> = {
   payment: 'Payment Received',
   adjustment: 'Adjustment',
   refund: 'Refund',
+  debit: 'Credit Purchase',
 };
 
 export default function CustomerDetailPage() {
@@ -65,14 +67,14 @@ export default function CustomerDetailPage() {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-t-4 border-t-pink-500 pt-4">
       <div className="flex items-center gap-4">
         <Link to="/customers" className="p-2 rounded-md hover:bg-muted transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{customer.name}</h1>
+            <h1 className="text-2xl font-bold text-pink-600 dark:text-pink-400">{customer.name}</h1>
             <Badge variant={customer.status === 'active' ? 'default' : customer.status === 'blocked' ? 'destructive' : 'secondary'}>
               {customer.status}
             </Badge>

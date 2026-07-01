@@ -157,10 +157,10 @@ export default function SystemHealthPage() {
   const { recentReconnects, recentReplayBatches, recentAuthFailures, recentAuthLogins, recentSlowRpcs, recentCircuitEvents } = data;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-green-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">System Health Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400">System Health Dashboard</h1>
           <p className="text-muted-foreground">
             Real-time health metrics for the offline-sync, queue, and realtime subsystems.
           </p>

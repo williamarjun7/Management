@@ -23,7 +23,7 @@ export interface Customer {
 export interface LedgerEntry {
   id: string;
   customer_id: string;
-  entry_type: 'credit' | 'payment' | 'adjustment' | 'refund';
+  entry_type: 'credit' | 'payment' | 'adjustment' | 'refund' | 'debit';
   amount: number;
   running_balance: number;
   reference_type: string | null;
@@ -157,6 +157,54 @@ export function useCustomerCreditSummary() {
         total_paid: number;
         customer_count: number;
       };
+    },
+  });
+}
+
+export function useSettleCreditPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      p_customer_id: string;
+      p_amount: number;
+      p_processed_by: string;
+      p_idempotency_key: string;
+      p_notes?: string;
+    }) => {
+      const { data, error } = await insforge.database.rpc('settle_credit_payment', params);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['credit-customers'] });
+    },
+  });
+}
+
+export function useCreditCustomersList() {
+  return useQuery({
+    queryKey: ['credit-customers-list'],
+    queryFn: async () => {
+      const { data, error } = await insforge.database.rpc('get_credit_customers', {});
+      if (error) throw error;
+      return data as import('../../types').CreditCustomerSummary[];
+    },
+  });
+}
+
+export function useCustomerOutstandingInvoices(customerId: string | undefined) {
+  return useQuery({
+    queryKey: ['customer-outstanding-invoices', customerId],
+    enabled: !!customerId,
+    queryFn: async () => {
+      const { data, error } = await insforge.database.rpc('get_customer_outstanding_invoices', {
+        p_customer_id: customerId,
+      });
+      if (error) throw error;
+      return data as import('../../types').OutstandingInvoice[];
     },
   });
 }

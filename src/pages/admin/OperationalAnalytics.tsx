@@ -120,10 +120,10 @@ export default function OperationalAnalytics() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-cyan-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Analytics</h1>
+          <h1 className="text-xl font-bold text-cyan-600 dark:text-cyan-400">Analytics</h1>
           <p className="text-sm text-muted-foreground">Business metrics and operational telemetry</p>
         </div>
         <button

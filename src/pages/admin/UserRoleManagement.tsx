@@ -148,10 +148,10 @@ export default function UserRoleManagement() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-blue-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">User Management</h1>
+          <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">User Management</h1>
           <p className="text-sm text-muted-foreground">Manage staff accounts, roles, and credentials</p>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">

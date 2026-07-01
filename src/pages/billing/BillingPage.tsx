@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Receipt, DollarSign, TrendingUp, Clock, Trash2 } from "lucide-react";
+import { Plus, Receipt, DollarSign, TrendingUp, Clock, Trash2, CreditCard } from "lucide-react";
 import { useInvoices, useDeleteInvoice } from "../../lib/hooks";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -14,9 +14,13 @@ import type { Invoice } from "../../types";
 const statusBadgeVariant = (status: string) => {
   switch (status) {
     case "paid": return "default" as const;
-    case "unpaid": return "destructive" as const;
-    case "partial": return "secondary" as const;
-    case "refunded": return "outline" as const;
+    case "unpaid":
+    case "credit": return "destructive" as const;
+    case "partially_paid":
+    case "partial":
+    case "pending": return "secondary" as const;
+    case "refunded":
+    case "cancelled": return "outline" as const;
     default: return "default" as const;
   }
 };
@@ -30,7 +34,7 @@ export default function BillingPage() {
   const deleteInvoice = useDeleteInvoice();
   const [confirmDeleteInvoice, setConfirmDeleteInvoice] = useState<Invoice | null>(null);
 
-  const totalUnpaid = invoices?.filter((i) => i.status === "unpaid" || i.status === "partial")
+  const totalUnpaid = invoices?.filter((i) => i.status === "unpaid" || i.status === "partial" || i.status === "pending")
     .reduce((s, i) => s + Number(i.total), 0) ?? 0;
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -38,17 +42,21 @@ export default function BillingPage() {
     (i) => i.status === "paid" && i.created_at?.startsWith(todayStr)
   ).reduce((s, i) => s + Number(i.total), 0) ?? 0;
 
-  const totalOutstanding = invoices?.filter((i) => i.status !== "paid" && i.status !== "refunded")
-    .reduce((s, i) => s + Number(i.total), 0) ?? 0;
+  const totalOutstanding = invoices?.filter(
+    (i) => i.status !== "paid" && i.status !== "refunded" && i.status !== "cancelled"
+  ).reduce((s, i) => s + Number(i.total), 0) ?? 0;
 
   const totalRevenue = invoices?.filter((i) => i.status === "paid")
     .reduce((s, i) => s + Number(i.total), 0) ?? 0;
 
+  const totalCreditSales = invoices?.filter((i) => i.status === "credit" || i.status === "partially_paid")
+    .reduce((s, i) => s + Number(i.total), 0) ?? 0;
+
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-violet-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-violet-600 dark:text-violet-400">Billing</h1>
           <p className="text-muted-foreground">Manage invoices, payments, and transactions.</p>
         </div>
         <Button onClick={() => navigate("/billing/new")} className="min-h-[44px]">
@@ -56,7 +64,7 @@ export default function BillingPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Unpaid</CardTitle>
@@ -73,6 +81,15 @@ export default function BillingPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalPaidToday)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Credit Sales</CardTitle>
+            <CreditCard className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{formatCurrency(totalCreditSales)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -99,6 +116,7 @@ export default function BillingPage() {
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="unpaid">Unpaid</TabsTrigger>
+          <TabsTrigger value="credit">Credit</TabsTrigger>
           <TabsTrigger value="partial">Partial</TabsTrigger>
           <TabsTrigger value="paid">Paid</TabsTrigger>
           <TabsTrigger value="refunded">Refunded</TabsTrigger>

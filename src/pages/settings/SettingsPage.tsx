@@ -180,7 +180,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl border-t-4 border-t-gray-500 pt-4">
       <div>
         <h1 className="text-xl font-bold">Settings</h1>
         <p className="text-sm text-muted-foreground">System preferences, roles, and integrations</p>

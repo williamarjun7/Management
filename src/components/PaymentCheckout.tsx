@@ -1,5 +1,5 @@
-import { useState, useRef, useMemo } from "react";
-import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft, Loader2, AlertCircle, Search, Users, Percent, DollarSign } from "lucide-react";
+import { useState, useRef, useMemo, useEffect } from "react";
+import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft, Loader2, AlertCircle, Search, Users, Percent, DollarSign, UserPlus, Phone } from "lucide-react";
 import { Button } from "./ui/button";
 import { useProcessPayment, useProcessCashPayment } from "../lib/hooks";
 import { useAuth } from "../lib/core/auth-context";
@@ -61,8 +61,17 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
   const [noCustomerFound, setNoCustomerFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showFonepay, setShowFonepay] = useState(false);
+  const [fonepayInvoice, setFonepayInvoice] = useState<Invoice | null>(null);
   const submitLockRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Customer creation form
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    phone: '',
+  });
 
   // Discount state (only in checkout)
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
@@ -86,7 +95,6 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
   const sufficient = isPaymentSufficient(cashReceivedNum, grandTotal);
 
   async function saveDiscountAndCreateInvoice(): Promise<Invoice> {
-    // 1. Save discount to order in DB
     await insforge.database
       .from('orders')
       .update({
@@ -98,17 +106,20 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
       })
       .eq('id', order.id);
 
-    // 2. Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
 
-    // 3. Create invoice
+    const customer_id = selectedCustomer?.id || null;
+    const customer_name = selectedCustomer?.name || order.customer_name || null;
+    const customer_phone = selectedCustomer?.phone || order.customer_phone || null;
+
     const { data: newInvoice, error: createErr } = await insforge.database
       .from('invoices')
       .insert([{
         invoice_number: invoiceNumber,
         order_id: order.id,
-        customer_name: order.customer_name,
-        customer_phone: order.customer_phone,
+        customer_name,
+        customer_phone,
+        customer_id,
         subtotal,
         discount: discountAmount,
         discount_type: discountType,
@@ -118,7 +129,7 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
         service_charge: order.service_charge ?? 0,
         service_charge_rate: order.service_charge_rate ?? 0,
         total: grandTotal,
-        status: 'unpaid',
+        status: 'pending',
       }])
       .select('*, invoice_items(*), payment_logs(*)')
       .single();
@@ -126,7 +137,6 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
     if (createErr) throw createErr;
     const invoice = newInvoice as Invoice;
 
-    // 4. Create invoice items from order items
     if (orderItems.length > 0) {
       const invItems = orderItems.map(item => ({
         invoice_id: invoice.id,
@@ -226,19 +236,89 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
     }, 300);
   };
 
+  const searchByPhone = async (phone: string) => {
+    if (phone.trim().length < 6) return;
+    setSearching(true);
+    try {
+      const { data } = await import("../lib/core/insforge").then(m =>
+        m.insforge.database.rpc('search_customers', { p_query: phone })
+      );
+      const results = (data as CustomerResult[]) || [];
+      if (results.length === 1) {
+        handleSelectCustomer(results[0]);
+      } else if (results.length > 1) {
+        setSearchResults(results);
+      }
+    } catch {
+      // silent
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Auto-resolve customer by phone when credit tab opens
+  const creditTabFirstRender = useRef(true);
+  useEffect(() => {
+    if (tab === "credit" && creditTabFirstRender.current) {
+      creditTabFirstRender.current = false;
+      if (order.customer_phone && !customerName) {
+        searchByPhone(order.customer_phone);
+      }
+    }
+  }, [tab, order.customer_phone, customerName]);
+
   const handleSelectCustomer = (customer: CustomerResult) => {
     setSelectedCustomer(customer);
     setSearchResults([]);
     setNoCustomerFound(false);
+    setShowCreateForm(false);
     if (customer.credit_limit > 0 && customer.outstanding_balance + grandTotal > customer.credit_limit) {
       showError(`Customer credit limit exceeded. Outstanding: ${customer.outstanding_balance}, Limit: ${customer.credit_limit}, Would be: ${customer.outstanding_balance + grandTotal}`);
-      return;
+    }
+  };
+
+  const handleCreateCustomer = async () => {
+    const name = createForm.name.trim();
+    if (!name) return;
+    setCreatingCustomer(true);
+    try {
+      const ts = Date.now().toString(36).toUpperCase();
+      const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
+      const customId = `CUST-${ts}${rand}`;
+
+      const { data, error } = await insforge.database
+        .from('customers')
+        .insert([{
+          name,
+          customer_id: customId,
+          phone: createForm.phone.trim() || null,
+          status: 'active',
+        }])
+        .select()
+        .single();
+      if (error) throw error;
+
+      const newCustomer: CustomerResult = {
+        id: data.id,
+        customer_id: data.customer_id,
+        name: data.name,
+        phone: data.phone,
+        outstanding_balance: 0,
+        credit_limit: data.credit_limit ?? 0,
+        status: data.status || 'active',
+      };
+      handleSelectCustomer(newCustomer);
+      setCreditSearch(name);
+      showSuccess(`Customer "${name}" created and selected`);
+    } catch (err) {
+      showError((err as Error)?.message || 'Failed to create customer');
+    } finally {
+      setCreatingCustomer(false);
     }
   };
 
   const handleCreditPayment = async () => {
-    const customerId = selectedCustomer?.id;
-    if (!user || submitting || (!selectedCustomer && !creditSearch.trim()) || submitLockRef.current) return;
+    if (!user || submitting || !selectedCustomer || submitLockRef.current) return;
     submitLockRef.current = true;
     setSubmitting(true);
     try {
@@ -250,11 +330,11 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
         p_method: "credit_account",
         p_processed_by: user.id,
         p_idempotency_key: key,
-        p_reference: selectedCustomer?.name || creditSearch.trim(),
-        p_notes: creditPhone ? `Phone: ${creditPhone}` : undefined,
-        p_customer_id: customerId,
+        p_reference: selectedCustomer.name,
+        p_notes: selectedCustomer.phone ? `Phone: ${selectedCustomer.phone}` : undefined,
+        p_customer_id: selectedCustomer.id,
       });
-      showSuccess(`Credit payment recorded for ${selectedCustomer?.name || creditSearch.trim()}`);
+      showSuccess(`Credit recorded for ${selectedCustomer.name}`);
       onComplete(invoice);
     } catch (err) {
       handlePaymentError(err, "Credit payment failed");
@@ -264,36 +344,48 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
     }
   };
 
-  if (showFonepay) {
+  const isPhoneInput = (val: string) => /^[\d\s+\-()]{7,}$/.test(val.trim());
+
+  const resetCreditFlow = () => {
+    setSelectedCustomer(null);
+    setCreditSearch('');
+    setCreditPhone('');
+    setSearchResults([]);
+    setNoCustomerFound(false);
+    setShowCreateForm(false);
+    setCreateForm({ name: '', phone: '' });
+  };
+
+  if (showFonepay && fonepayInvoice) {
     return (
       <FonepayQRDialog
-        invoice={null as unknown as Invoice}
+        invoice={fonepayInvoice}
         amount={grandTotal}
         onSuccess={async () => {
           if (!user || submitLockRef.current) return;
           submitLockRef.current = true;
           setSubmitting(true);
           try {
-            const invoice = await saveDiscountAndCreateInvoice();
-            const key = `fonepay:${invoice.id}:${Date.now()}`;
+            const key = `fonepay:${fonepayInvoice.id}:${Date.now()}`;
             await processPayment.mutateAsync({
-              p_invoice_id: invoice.id,
+              p_invoice_id: fonepayInvoice.id,
               p_amount: grandTotal,
               p_method: "fonepay",
               p_processed_by: user.id,
               p_idempotency_key: key,
             });
             showSuccess(`FonePay payment of ${formatCurrency(grandTotal)} confirmed`);
-            onComplete(invoice);
+            onComplete(fonepayInvoice);
           } catch (err) {
             handlePaymentError(err, "FonePay payment failed");
           } finally {
             setSubmitting(false);
             submitLockRef.current = false;
             setShowFonepay(false);
+            setFonepayInvoice(null);
           }
         }}
-        onCancel={() => setShowFonepay(false)}
+        onCancel={() => { setShowFonepay(false); setFonepayInvoice(null); }}
       />
     );
   }
@@ -317,7 +409,6 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
 
         {tab === "review" && (
           <div className="overflow-y-auto flex-1 p-4 space-y-4">
-            {/* Order items */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Items</p>
               {orderItems.map((item) => (
@@ -333,7 +424,6 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
 
             <hr className="border-border" />
 
-            {/* Discount controls */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Discount</p>
               <div className="flex items-center gap-1 rounded-md bg-muted p-0.5 w-fit">
@@ -364,7 +454,6 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
 
             <hr className="border-border" />
 
-            {/* Financial breakdown */}
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -395,23 +484,6 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
               </div>
             </div>
 
-            {/* Quick actions */}
-            <div className="space-y-2 pt-2">
-              <Button
-                onClick={handleCashExact}
-                disabled={submitting}
-                className="w-full min-h-[52px] text-base font-semibold gap-2"
-              >
-                {submitting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Banknote className="h-5 w-5" />
-                )}
-                {submitting ? "Processing..." : `Pay Exact ${formatCurrency(grandTotal)}`}
-              </Button>
-            </div>
-
-            {/* Payment method selection */}
             <div className="space-y-2 pt-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Other Payment Methods</p>
               <button
@@ -429,7 +501,22 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
               </button>
 
               <button
-                onClick={() => setShowFonepay(true)}
+                onClick={async () => {
+                  if (submitLockRef.current) return;
+                  submitLockRef.current = true;
+                  setSubmitting(true);
+                  try {
+                    const inv = await saveDiscountAndCreateInvoice();
+                    setFonepayInvoice(inv);
+                    setShowFonepay(true);
+                  } catch (err) {
+                    handlePaymentError(err, "Failed to prepare invoice");
+                  } finally {
+                    setSubmitting(false);
+                    submitLockRef.current = false;
+                  }
+                }}
+                disabled={submitting}
                 className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary hover:bg-accent/30 transition-all text-left"
               >
                 <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -443,7 +530,7 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
               </button>
 
               <button
-                onClick={() => setTab("credit")}
+                onClick={() => { resetCreditFlow(); setTab("credit"); }}
                 className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary hover:bg-accent/30 transition-all text-left"
               >
                 <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
@@ -565,7 +652,14 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
         {/* Credit tab */}
         {tab === "credit" && (
           <div className="overflow-y-auto flex-1 p-4 space-y-4">
-            {!selectedCustomer ? (
+            <div>
+              <h3 className="text-base font-semibold flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-purple-500" /> Credit Account
+              </h3>
+              <p className="text-xs text-muted-foreground">A registered customer is required for credit billing</p>
+            </div>
+
+            {!showCreateForm && !selectedCustomer && (
               <>
                 <div className="space-y-3">
                   <div className="relative">
@@ -575,7 +669,7 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
                       value={creditSearch}
                       onChange={(e) => searchCustomers(e.target.value)}
                       placeholder="Search customer by name or phone..."
-                      className="w-full h-11 rounded-lg border border-border bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full h-11 rounded-lg border border-border bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
                     />
                   </div>
 
@@ -591,13 +685,13 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
                         <button
                           key={customer.id}
                           onClick={() => handleSelectCustomer(customer)}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-accent/30 transition-all text-left"
+                          className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/10 transition-all text-left"
                         >
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary text-sm shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center font-bold text-white text-sm shrink-0 shadow-sm">
                             {customer.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{customer.name}</p>
+                            <p className="font-semibold text-sm truncate">{customer.name}</p>
                             <p className="text-xs text-muted-foreground truncate">
                               {customer.customer_id}{customer.phone ? ` · ${customer.phone}` : ''}
                             </p>
@@ -613,74 +707,166 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
                   )}
 
                   {noCustomerFound && creditSearch.trim().length >= 2 && (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Customer not found</p>
-                      <p className="text-xs mt-1">Continue below to create a new customer or proceed without one.</p>
+                    <div className="text-center py-4 text-muted-foreground rounded-lg border-2 border-dashed border-purple-200 dark:border-purple-800">
+                      {isPhoneInput(creditSearch) ? (
+                        <>
+                          <Users className="h-8 w-8 mx-auto mb-1.5 opacity-40" />
+                          <p className="text-sm font-medium">No customer found with this phone</p>
+                          <p className="text-xs mt-1">Try searching by name or create a new customer.</p>
+                        </>
+                      ) : (
+                        <>
+                          <Users className="h-8 w-8 mx-auto mb-1.5 opacity-40" />
+                          <p className="text-sm font-medium">"{creditSearch.trim()}" not found</p>
+                          <p className="text-xs mt-0.5 mb-3">Create a new customer to bill on credit</p>
+                        </>
+                      )}
                     </div>
                   )}
 
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Phone (optional)</label>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Phone (optional, helps find existing)</label>
                     <input
                       type="text"
                       value={creditPhone}
-                      onChange={(e) => setCreditPhone(e.target.value)}
+                      onChange={(e) => {
+                        setCreditPhone(e.target.value);
+                        if (e.target.value.trim().length >= 6) {
+                          searchCustomers(e.target.value);
+                        }
+                      }}
                       placeholder="98XXXXXXXX"
-                      className="w-full h-11 rounded-lg border border-border bg-transparent px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full h-11 rounded-lg border border-border bg-transparent px-3 text-sm outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
                     />
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 p-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Amount to bill</span>
-                    <span className="font-bold text-lg">{formatCurrency(grandTotal)}</span>
+                <div className="space-y-3 pt-2">
+                  <Button
+                    onClick={() => { setShowCreateForm(true); setCreateForm({ name: creditSearch, phone: creditPhone }); }}
+                    variant="outline"
+                    className="w-full min-h-[44px] gap-2 border-dashed border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    New Customer
+                  </Button>
+
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                          Credit Account payments require a registered customer.
+                        </p>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                          Please select an existing customer or create a new one before continuing.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {showCreateForm && !selectedCustomer && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <UserPlus className="h-4 w-4 text-purple-500" />
+                  <h4 className="font-semibold text-sm">New Customer</h4>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Customer Name <span className="text-destructive">*</span></label>
+                  <div className="relative">
+                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={createForm.name}
+                      onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                      placeholder="Full name"
+                      className="w-full h-11 rounded-lg border border-border bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
+                    />
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleCreditPayment}
-                  disabled={submitting || !creditSearch.trim()}
-                  className="w-full min-h-[48px]"
-                >
-                  {submitting ? (
-                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Processing...</>
-                  ) : (
-                    <>Bill {formatCurrency(grandTotal)} to {creditSearch.trim() || "customer"}</>
-                  )}
-                </Button>
-              </>
-            ) : (
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Phone Number <span className="text-destructive">*</span></label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={createForm.phone}
+                      onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                      placeholder="98XXXXXXXX"
+                      className="w-full h-11 rounded-lg border border-border bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateForm(false)}
+                    className="flex-1 min-h-[44px]"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleCreateCustomer}
+                    disabled={creatingCustomer || !createForm.name.trim() || !createForm.phone.trim()}
+                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400"
+                  >
+                    {creatingCustomer ? (
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Creating...</>
+                    ) : (
+                      <><UserPlus className="h-4 w-4 mr-1" /> Create & Select</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {selectedCustomer && (
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20">
-                  <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center font-semibold text-purple-600">
+                <div className="flex items-center gap-3 p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background shadow-sm">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-sm shrink-0">
                     {selectedCustomer.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{selectedCustomer.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-base">{selectedCustomer.name}</p>
                     <p className="text-xs text-muted-foreground">{selectedCustomer.customer_id}{selectedCustomer.phone ? ` · ${selectedCustomer.phone}` : ''}</p>
-                    <div className="flex gap-3 mt-1 text-xs">
-                      <span>Due: <strong className="text-destructive">{formatCurrency(selectedCustomer.outstanding_balance)}</strong></span>
-                      <span>Limit: <strong>{formatCurrency(selectedCustomer.credit_limit)}</strong></span>
+                    <div className="flex gap-4 mt-1.5 text-xs">
+                      <span className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Due</span>
+                        <strong className={selectedCustomer.outstanding_balance > 0 ? 'text-destructive' : 'text-emerald-600'}>
+                          {formatCurrency(selectedCustomer.outstanding_balance)}
+                        </strong>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Limit</span>
+                        <strong>{formatCurrency(selectedCustomer.credit_limit)}</strong>
+                      </span>
                     </div>
                   </div>
                   <button
-                    onClick={() => { setSelectedCustomer(null); setCreditSearch(''); }}
-                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                    onClick={resetCreditFlow}
+                    className="text-xs text-muted-foreground hover:text-foreground underline whitespace-nowrap"
                   >Change</button>
                 </div>
 
-                <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 p-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Amount to bill</span>
-                    <span className="font-bold text-lg">{formatCurrency(grandTotal)}</span>
+                <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Amount to bill</span>
+                    <span className="font-bold text-xl text-purple-700 dark:text-purple-300">{formatCurrency(grandTotal)}</span>
                   </div>
                   {selectedCustomer.credit_limit > 0 && (
-                    <div className="flex justify-between text-xs mt-1">
-                      <span className="text-muted-foreground">New balance would be</span>
-                      <span className={selectedCustomer.outstanding_balance + grandTotal > selectedCustomer.credit_limit ? 'text-destructive font-medium' : ''}>
+                    <div className="flex justify-between text-xs mt-2 pt-2 border-t border-purple-200/50 dark:border-purple-800/50">
+                      <span className="text-muted-foreground">New balance</span>
+                      <span className={selectedCustomer.outstanding_balance + grandTotal > selectedCustomer.credit_limit ? 'text-destructive font-medium' : 'font-medium'}>
                         {formatCurrency(selectedCustomer.outstanding_balance + grandTotal)}
+                        {selectedCustomer.outstanding_balance + grandTotal > selectedCustomer.credit_limit && (
+                          <span className="text-destructive ml-1">(exceeds limit)</span>
+                        )}
                       </span>
                     </div>
                   )}
@@ -689,12 +875,12 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
                 <Button
                   onClick={handleCreditPayment}
                   disabled={submitting}
-                  className="w-full min-h-[48px]"
+                  className="w-full min-h-[48px] bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-sm gap-2"
                 >
                   {submitting ? (
                     <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Processing...</>
                   ) : (
-                    <>Bill {formatCurrency(grandTotal)} to {selectedCustomer.name}</>
+                    <><CreditCard className="h-4 w-4" /> Bill {formatCurrency(grandTotal)} to {selectedCustomer.name}</>
                   )}
                 </Button>
               </div>

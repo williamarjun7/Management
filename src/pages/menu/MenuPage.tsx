@@ -109,7 +109,7 @@ export default function MenuPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-7xl flex h-full gap-4 md:gap-6 flex-col lg:flex-row">
+    <div className="mx-auto w-full max-w-7xl flex h-full gap-4 md:gap-6 flex-col lg:flex-row border-t-4 border-t-amber-500">
       {/* Mobile category trigger */}
       <div className="flex items-center justify-between lg:hidden">
         <h1 className="text-lg font-semibold">

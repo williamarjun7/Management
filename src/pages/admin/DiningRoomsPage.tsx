@@ -90,10 +90,10 @@ export default function DiningRoomsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-violet-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Dining Rooms & Sections</h1>
+          <h1 className="text-xl font-bold text-violet-600 dark:text-violet-400">Dining Rooms & Sections</h1>
           <p className="text-sm text-muted-foreground">Manage restaurant dining areas</p>
         </div>
         <button

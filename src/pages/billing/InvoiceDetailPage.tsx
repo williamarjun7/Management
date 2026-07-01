@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Printer, Plus, CreditCard } from "lucide-react";
+import { ArrowLeft, Printer, Plus, CreditCard, AlertCircle } from "lucide-react";
 import { useInvoice } from "../../lib/hooks";
 import { useOrderById } from "../../lib/hooks/orders.hooks";
 import { showError } from "../../components/ui/toast";
@@ -16,9 +16,13 @@ import type { InvoiceItem as InvoiceItemType, PaymentLog } from "../../types";
 const statusBadgeVariant = (status: string) => {
   switch (status) {
     case "paid": return "default" as const;
-    case "unpaid": return "destructive" as const;
-    case "partial": return "secondary" as const;
-    case "refunded": return "outline" as const;
+    case "unpaid":
+    case "credit": return "destructive" as const;
+    case "partial":
+    case "partially_paid":
+    case "pending": return "secondary" as const;
+    case "refunded":
+    case "cancelled": return "outline" as const;
     default: return "default" as const;
   }
 };
@@ -69,7 +73,7 @@ export default function InvoiceDetailPage() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6 border-t-4 border-t-violet-500 pt-4">
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate("/billing")} className="min-h-[44px]">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -78,7 +82,7 @@ export default function InvoiceDetailPage() {
             <Button variant="outline" onClick={() => { const pw = window.open("", "", "width=400,height=600,scrollbars=yes"); if (!pw) { showError("Please allow popups for this site to print invoices"); return; } printWindowRef.current = pw; setShowPrint(true); }} className="min-h-[44px]">
               <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
-            {invoice.status !== "paid" && invoice.status !== "refunded" && (
+            {invoice.status !== "paid" && invoice.status !== "refunded" && invoice.status !== "cancelled" && (
               <Button onClick={() => setShowPayment(true)} className="min-h-[44px]">
                 <Plus className="mr-2 h-4 w-4" /> Add Payment
               </Button>
@@ -107,6 +111,20 @@ export default function InvoiceDetailPage() {
                 {invoice.customer_phone && (
                   <p className="text-sm"><span className="text-muted-foreground">Phone:</span> {invoice.customer_phone}</p>
                 )}
+              </div>
+            )}
+            {invoice.status === "credit" && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span className="font-medium">CREDIT SALE</span>
+                <span className="text-amber-600 dark:text-amber-400">— Payment pending from customer</span>
+              </div>
+            )}
+            {invoice.status === "partially_paid" && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/20 px-3 py-2 text-sm text-blue-800 dark:text-blue-200">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span className="font-medium">PARTIALLY PAID</span>
+                <span className="text-blue-600 dark:text-blue-400">— Remaining balance due</span>
               </div>
             )}
           </CardHeader>

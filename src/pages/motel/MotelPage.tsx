@@ -133,10 +133,10 @@ export default function MotelPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-indigo-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Room Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400">Room Management</h1>
           <p className="text-muted-foreground">Manage rooms, bookings, and operations.</p>
         </div>
         <div className="flex gap-2 flex-wrap justify-end">

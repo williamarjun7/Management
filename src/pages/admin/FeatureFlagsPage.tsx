@@ -70,10 +70,10 @@ export default function FeatureFlagsPage() {
   const flagKeys = Object.keys(FLAG_DESCRIPTIONS) as (keyof FeatureFlags)[];
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-teal-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Feature Flags</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-teal-600 dark:text-teal-400">Feature Flags</h1>
           <p className="text-sm text-muted-foreground">
             Toggle features and manage release channels
           </p>

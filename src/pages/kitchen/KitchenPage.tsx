@@ -71,10 +71,10 @@ export default function KitchenPage() {
   }).length;
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
+    <div className="flex flex-col min-h-0 flex-1 border-t-4 border-t-orange-500">
       <header className="flex items-center justify-between px-6 h-14 border-b bg-card shrink-0">
         <div className="flex items-center gap-4">
-          <h1 className="text-sm font-bold tracking-widest">KITCHEN DISPLAY</h1>
+          <h1 className="text-sm font-bold tracking-widest text-orange-600 dark:text-orange-400">KITCHEN DISPLAY</h1>
           <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted px-2 py-1 rounded-full">
             <Clock className="h-3 w-3" />
             LIVE

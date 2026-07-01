@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { useOrders, useRooms, useProducts } from '../../lib/hooks';
+import { useOrders, useRooms, useProducts, useInvoices } from '../../lib/hooks';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Card } from '../../components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { exportCsv } from '../../lib/services/csv-export';
-import type { Order, Room, Product } from '../../types';
-import { TrendingUp, Bed, Package, DollarSign, Download } from 'lucide-react';
+import type { Order, Room, Product, Invoice } from '../../types';
+import { TrendingUp, Bed, Package, DollarSign, Download, CreditCard, Receipt } from 'lucide-react';
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState('today');
   const { data: orders } = useOrders();
   const { data: rooms } = useRooms();
   const { data: products } = useProducts();
+  const { data: invoices } = useInvoices('all');
 
   const completedOrders = (orders ?? []).filter(
     (o: Order) => o.status === 'completed'
@@ -19,6 +20,11 @@ export default function ReportsPage() {
   const totalRevenue = completedOrders.reduce((s, o) => s + Number(o.total), 0);
   const totalOrders = completedOrders.length;
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  const paidInvoices = (invoices ?? []).filter((i: Invoice) => i.status === 'paid');
+  const creditInvoices = (invoices ?? []).filter((i: Invoice) => i.status === 'credit' || i.status === 'partially_paid');
+  const totalCashRevenue = paidInvoices.reduce((s: number, i: Invoice) => s + Number(i.total), 0);
+  const totalCreditSales = creditInvoices.reduce((s: number, i: Invoice) => s + Number(i.total), 0);
 
   const occupiedRooms = (rooms ?? []).filter((r) => r.status === 'occupied').length;
   const totalRooms = (rooms ?? []).length;
@@ -70,7 +76,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-slate-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Reports</h1>
@@ -124,6 +130,33 @@ export default function ReportsPage() {
           </div>
           <p className="text-2xl font-bold">{(products ?? []).length}</p>
           <p className="text-xs text-muted-foreground mt-1">{lowStockItems} low stock</p>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="p-5 border-amber-200 dark:border-amber-800">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground uppercase">Cash Revenue (Invoices)</span>
+            <Receipt className="h-4 w-4 text-emerald-400" />
+          </div>
+          <p className="text-2xl font-bold text-emerald-600">Rs. {totalCashRevenue.toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{paidInvoices.length} paid invoices</p>
+        </Card>
+        <Card className="p-5 border-amber-200 dark:border-amber-800">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground uppercase">Credit Sales (Invoices)</span>
+            <CreditCard className="h-4 w-4 text-amber-500" />
+          </div>
+          <p className="text-2xl font-bold text-amber-600">Rs. {totalCreditSales.toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{creditInvoices.length} credit invoices</p>
+        </Card>
+        <Card className="p-5 border-amber-200 dark:border-amber-800">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground uppercase">Combined Total</span>
+            <DollarSign className="h-4 w-4 text-blue-400" />
+          </div>
+          <p className="text-2xl font-bold">Rs. {(totalCashRevenue + totalCreditSales).toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground mt-1">All invoice revenue</p>
         </Card>
       </div>
 

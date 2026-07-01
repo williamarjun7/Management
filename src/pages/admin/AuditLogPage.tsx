@@ -167,10 +167,10 @@ export default function AuditLogPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-red-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-red-600 dark:text-red-400">Audit Log</h1>
           <p className="text-muted-foreground">
             System events and state changes across all modules.
           </p>

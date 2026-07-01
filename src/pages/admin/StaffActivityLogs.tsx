@@ -90,10 +90,10 @@ export default function StaffActivityLogs() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-amber-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Staff Activity Logs</h1>
+          <h1 className="text-xl font-bold text-amber-600 dark:text-amber-400">Staff Activity Logs</h1>
           <p className="text-sm text-muted-foreground">Track all staff actions across the system</p>
         </div>
         <div className="flex items-center gap-3">

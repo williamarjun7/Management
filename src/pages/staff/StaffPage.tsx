@@ -98,7 +98,7 @@ export default function StaffPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0F1115] text-on-surface font-body-md relative pb-32">
+    <div className="min-h-screen bg-[#0F1115] text-on-surface font-body-md relative pb-32 border-t-4 border-t-purple-500">
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-[44px] bg-background/80 backdrop-blur-xl border-b border-outline-variant/10">
         <div className="flex items-center gap-3">
           <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-5 w-5 rounded-full object-cover" />

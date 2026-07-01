@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  CreditCard,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../lib/core/theme-context';
@@ -59,6 +60,7 @@ const navItems: NavItem[] = [
   { label: 'Menu', href: '/menu', icon: UtensilsCrossed, roles: ['admin', 'manager', 'staff'] },
   { label: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'staff', 'owner'] },
   { label: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'manager', 'staff'] },
+  { label: 'Creditors', href: '/creditors', icon: CreditCard, roles: ['admin', 'manager', 'owner'] },
   { label: 'Customers', href: '/customers', icon: Users, roles: ['admin', 'manager', 'staff', 'owner'] },
   { label: 'Motel', href: '/motel', icon: Hotel, roles: ['admin', 'reception', 'staff'] },
   { label: 'Reports', href: '/reports', icon: BarChart3, roles: ['admin', 'owner', 'reception'] },
@@ -88,6 +90,7 @@ const routePrefetch: Record<string, () => Promise<unknown>> = {
   '/menu': () => import('../pages/menu/MenuPage'),
   '/inventory': () => import('../pages/inventory/InventoryPage'),
   '/billing': () => import('../pages/billing/BillingPage'),
+  '/creditors': () => import('../pages/creditors/CreditCollectionPage'),
   '/customers': () => import('../pages/customers/CustomersPage'),
   '/motel': () => import('../pages/motel/MotelPage'),
   '/reports': () => import('../pages/reports/ReportsPage'),
@@ -111,6 +114,7 @@ export default function Layout() {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const conn = useConnectionState();
   const { keyboardHeight, isKeyboardOpen } = useKeyboardAware();
@@ -203,25 +207,36 @@ export default function Layout() {
 
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-64 border-r bg-card transition-transform duration-200 ease-out lg:translate-x-0',
+          'fixed top-0 left-0 z-50 h-full border-r bg-card transition-all duration-200 ease-out',
+          sidebarOpen ? 'w-64' : '',
+          sidebarExpanded ? 'lg:w-64' : 'lg:w-16',
+          'lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center justify-between px-4 md:px-6 border-b">
-          <Link to="/dashboard" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-            <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover" />
-            <span className="font-bold text-lg">Highlands Cafe & Motel Inn</span>
-          </Link>
-          <button
-            className="lg:hidden p-3 rounded-md hover:bg-muted transition-colors"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <X className="h-5 w-5" />
-          </button>
+        <div className={cn('flex h-16 items-center border-b', sidebarOpen || sidebarExpanded ? 'justify-between px-4 md:px-6' : 'justify-center px-2')}>
+          {sidebarOpen || sidebarExpanded ? (
+            <>
+              <Link to="/dashboard" className="flex items-center gap-2 min-w-0" onClick={() => setSidebarOpen(false)}>
+                <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover shrink-0" />
+                <span className="font-bold text-base truncate">Highlands Cafe & Motel Inn</span>
+              </Link>
+              <button
+                className="lg:hidden p-3 rounded-md hover:bg-muted transition-colors"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close sidebar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </>
+          ) : (
+            <Link to="/dashboard" className="flex items-center justify-center w-full" onClick={() => setSidebarOpen(false)}>
+              <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover shrink-0" />
+            </Link>
+          )}
         </div>
 
-        <nav className="p-4 space-y-1 overflow-y-auto pb-20">
+        <nav className={cn('overflow-y-auto pb-20', sidebarOpen || sidebarExpanded ? 'p-4 space-y-1' : 'p-2 space-y-1')}>
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = isActiveRoute(location.pathname, item.href);
@@ -232,27 +247,50 @@ export default function Layout() {
                 onClick={() => setSidebarOpen(false)}
                 onMouseEnter={() => prefetchRoute(item.href)}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150',
+                  'flex items-center rounded-md text-sm font-medium transition-all duration-150',
+                  sidebarOpen || sidebarExpanded ? 'gap-3 px-3 py-2.5' : 'justify-center p-2.5',
                   active
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
+                title={!sidebarOpen && !sidebarExpanded ? item.label : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
-                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                {(sidebarOpen || sidebarExpanded) && <span>{item.label}</span>}
+                {active && (sidebarOpen || sidebarExpanded) && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
               </Link>
             );
           })}
         </nav>
+
+        <div className={cn('absolute bottom-0 left-0 right-0 border-t bg-card hidden lg:block', sidebarExpanded ? 'p-3' : 'p-2')}>
+          <button
+            onClick={() => setSidebarExpanded(!sidebarExpanded)}
+            className={cn(
+              'flex items-center justify-center rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground w-full',
+              sidebarExpanded ? 'gap-2 px-3 py-2.5 text-sm' : 'p-2.5'
+            )}
+            title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            <ChevronRight className={cn('h-4 w-4 transition-transform duration-200', sidebarExpanded ? 'rotate-180' : '')} />
+            {sidebarExpanded && <span>Collapse</span>}
+          </button>
+        </div>
       </aside>
 
-      <div className={cn('lg:pl-64 flex flex-col min-h-screen', isKeyboardOpen ? 'lg:pb-0' : '')}>
+      <div className={cn('flex flex-col min-h-screen', sidebarExpanded ? 'lg:pl-64' : 'lg:pl-16', isKeyboardOpen ? 'lg:pb-0' : '')}>
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur-sm px-4 md:px-6">
           <button
-            className="lg:hidden p-3 rounded-md hover:bg-muted transition-colors -ml-1.5"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open sidebar"
+            className="p-3 rounded-md hover:bg-muted transition-colors -ml-1.5"
+            onClick={() => {
+              if (window.innerWidth >= 1024) {
+                setSidebarExpanded(!sidebarExpanded);
+              } else {
+                setSidebarOpen(true);
+              }
+            }}
+            aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Open sidebar'}
           >
             <Menu className="h-5 w-5" />
           </button>

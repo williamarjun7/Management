@@ -81,9 +81,9 @@ export default function OrdersPage() {
   }, [cancelTarget, user, transitionStatus]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl flex h-full flex-col">
+    <div className="mx-auto w-full max-w-7xl flex h-full flex-col border-t-4 border-t-blue-500">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Orders</h1>
+        <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Orders</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => refetch()} className="p-2 rounded-md hover:bg-muted transition-colors" aria-label="Refresh data">
             <RefreshCw className="h-4 w-4" />

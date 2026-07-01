@@ -101,10 +101,10 @@ export default function QueueInspectorPage() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-red-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Queue Inspector</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-red-600 dark:text-red-400">Queue Inspector</h1>
           <p className="text-sm text-muted-foreground">Inspect mutation queue, dead letters, and realtime channel health</p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh} disabled={loading}>

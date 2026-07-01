@@ -149,10 +149,10 @@ export default function AppUpdatesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-blue-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">App Updates</h1>
+          <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">App Updates</h1>
           <p className="text-sm text-muted-foreground">Manage OTA application updates</p>
         </div>
         <div className="flex items-center gap-2">

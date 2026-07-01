@@ -1,6 +1,6 @@
 export type Role = 'admin' | 'manager' | 'owner' | 'staff' | 'kitchen' | 'reception';
 export type OrderStatus = 'active' | 'completed' | 'cancelled' | 'refunded';
-export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'refunded' | 'credit';
 export type PaymentMethod = 'cash' | 'credit_account' | 'fonepay';
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -47,7 +47,31 @@ export interface CreditCustomer {
   outstanding: number;
   last_payment: string | null;
 }
-export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'refunded';
+
+export interface CreditCustomerSummary {
+  id: string;
+  customer_id: string;
+  name: string;
+  phone: string | null;
+  outstanding_balance: number;
+  credit_limit: number;
+  total_credit_taken: number;
+  total_amount_paid: number;
+  unpaid_invoice_count: number;
+  oldest_invoice_date: string | null;
+  last_payment_date: string | null;
+}
+
+export interface OutstandingInvoice {
+  id: string;
+  invoice_number: string;
+  total: number;
+  status: string;
+  paid_amount: number;
+  remaining: number;
+  created_at: string;
+}
+export type InvoiceStatus = 'pending' | 'unpaid' | 'partial' | 'paid' | 'credit' | 'partially_paid' | 'cancelled' | 'refunded';
 export type RoomStatus = 'available' | 'reserved' | 'booked' | 'occupied' | 'partial_paid' | 'fully_paid' | 'cleaning' | 'maintenance';
 export type StockMovementType = 'purchase' | 'sale' | 'wastage' | 'adjustment' | 'room_usage';
 export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
@@ -235,13 +259,15 @@ export interface PaymentLog {
   id: string; invoice_id: string; amount: number; method: PaymentMethod;
   reference: string | null; status: PaymentStatus; notes: string | null;
   processed_by: string | null; idempotency_key: string | null; created_at: string;
+  remaining_balance: number | null; customer_id: string | null;
   cash_received: number | null; change_due: number | null;
 }
 
 export interface Invoice {
   id: string; invoice_number: string; order_id: string | null;
   booking_id: string | null; customer_name: string | null;
-  customer_phone: string | null; subtotal: number; discount: number;
+  customer_phone: string | null; customer_id: string | null;
+  subtotal: number; discount: number;
   discount_type: 'percentage' | 'fixed' | null; discount_value: number;
   tax: number; tax_rate: number;
   service_charge: number; service_charge_rate: number;

@@ -37,6 +37,7 @@ const DiningRoomsPage = lazy(() => import('./pages/admin/DiningRoomsPage'));
 const AppUpdatesPage = lazy(() => import('./pages/admin/AppUpdatesPage'));
 const CustomersPage = lazy(() => import('./pages/customers/CustomersPage'));
 const CustomerDetailPage = lazy(() => import('./pages/customers/CustomerDetailPage'));
+const CreditCollectionPage = lazy(() => import('./pages/creditors/CreditCollectionPage'));
 
 function RoleRedirect() {
   return <Navigate to="/pos" replace />;
@@ -79,6 +80,7 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/admin/updates', element: <SuspenseWrapper><AppUpdatesPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/customers', element: <SuspenseWrapper><CustomersPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff', 'owner'] },
   { path: '/customers/:id', element: <SuspenseWrapper><CustomerDetailPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'staff', 'owner'] },
+  { path: '/creditors', element: <SuspenseWrapper><CreditCollectionPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'owner'] },
 ];
 
 export default function App() {

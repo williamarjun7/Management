@@ -37,6 +37,7 @@ export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, order
     const totalDiscount = discount + totalItemDiscounts;
     const change = paidAmount > total ? paidAmount - total : 0;
     const remaining = paidAmount > total ? 0 : total - paidAmount;
+    const isCredit = invoice.status === "credit" || invoice.status === "partially_paid";
 
     const d = new Date(invoice.created_at);
     const dateStr = `${d.getDate().toString().padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -75,7 +76,8 @@ export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, order
       if (change > 0) {
         html += `<div class="row"><span>Change</span><span>${fmt(change)}</span></div>`;
       } else if (remaining > 0) {
-        html += `<div class="row"><span>Remaining</span><span>${fmt(remaining)}</span></div>`;
+        const label = isCredit && paidAmount === 0 ? "Due" : "Remaining";
+        html += `<div class="row"><span>${label}</span><span>${fmt(remaining)}</span></div>`;
       }
       return `<div class="mb2 totals">${html}</div>`;
     }
@@ -139,8 +141,11 @@ export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, order
     ${orderNumber ? `<div class="row"><span>Order No</span><span>${esc(orderNumber)}</span></div>` : ""}
   </div>
 
-  ${hasItems ? `<div class="b sm mb1">Item</div>` : ""}
-  ${itemRows()}
+    ${isCredit ? `<div class="c mb2" style="font-size:11px;font-weight:bold;color:#d97706">*** CREDIT SALE ***</div>` : ""}
+    ${invoice.customer_name ? `<div class="mb2 sm"><div class="row"><span>Customer</span><span>${esc(invoice.customer_name)}</span></div></div>` : ""}
+
+    ${hasItems ? `<div class="b sm mb1">Item</div>` : ""}
+    ${itemRows()}
 
   ${totalsHtml()}
 

@@ -63,9 +63,9 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-t-4 border-t-pink-500 pt-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Customers</h1>
+        <h1 className="text-2xl font-bold text-pink-600 dark:text-pink-400">Customers</h1>
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Customer

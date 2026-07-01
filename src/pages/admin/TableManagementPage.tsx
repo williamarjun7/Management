@@ -108,10 +108,10 @@ export default function TableManagementPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 border-t-4 border-t-orange-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Table Management</h1>
+          <h1 className="text-xl font-bold text-orange-600 dark:text-orange-400">Table Management</h1>
           <p className="text-sm text-muted-foreground">Add, edit, enable or disable restaurant tables</p>
         </div>
         <button

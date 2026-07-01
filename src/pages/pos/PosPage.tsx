@@ -53,6 +53,7 @@ export default function PosPage() {
   const [payLoading, setPayLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [cartPanelOpen, setCartPanelOpen] = useState(true);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
   const [originalItemIds, setOriginalItemIds] = useState<Set<string>>(new Set());
@@ -136,6 +137,7 @@ export default function PosPage() {
   const selectedTableInfo = (tables ?? []).find((t: RestaurantTable) => t.id === selectedTableId);
 
   function addToCart(item: MenuItem) {
+    setCartPanelOpen(true);
     setCart((prev) => {
       const existing = prev.find((l) => l.menu_item_id === item.id);
       if (existing) {
@@ -253,14 +255,14 @@ export default function PosPage() {
   }
 
   return (
-    <div className="flex flex-col h-dvh">
+    <div className="flex flex-col h-dvh border-t-4 border-t-emerald-500">
       {/* Mobile top bar */}
-      <div className="flex items-center gap-2 px-4 h-12 border-b border-border bg-card shrink-0 lg:hidden">
-        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
+      <div className="flex items-center gap-2 px-4 h-12 border-b border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-600 to-emerald-500 shrink-0 lg:hidden">
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1 text-sm font-medium text-emerald-50 hover:text-white">
           <ArrowLeft className="h-4 w-4" />
           <span>Home</span>
         </button>
-        <span className="text-xs text-muted-foreground ml-auto">POS</span>
+        <span className="text-xs font-semibold text-emerald-50 ml-auto tracking-widest">POS</span>
       </div>
 
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
@@ -278,8 +280,8 @@ export default function PosPage() {
             onClick={() => setSelectedCat('all')}
             className={`flex flex-col items-center gap-1 lg:w-full px-2 shrink-0 ${selectedCat === 'all' ? 'opacity-100' : 'opacity-60 hover:opacity-100'} transition-opacity relative`}
           >
-            <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center ${selectedCat === 'all' ? 'bg-primary text-background' : 'bg-muted text-foreground'}`}>
-              <Grid3X3 className="h-5 w-5 lg:h-6 lg:w-6" />
+                <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center ${selectedCat === 'all' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md' : 'bg-muted text-foreground'}`}>
+                  <Grid3X3 className="h-5 w-5 lg:h-6 lg:w-6" />
             </div>
             <span className="text-[11px] font-medium text-center leading-tight">All</span>
           </button>
@@ -292,10 +294,10 @@ export default function PosPage() {
                 onClick={() => setSelectedCat(cat.id)}
                 className={`flex flex-col items-center gap-1 lg:w-full px-2 shrink-0 ${selectedCat === cat.id ? 'opacity-100' : 'opacity-60 hover:opacity-100'} transition-opacity relative`}
               >
-                <div className={`relative w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center ${selectedCat === cat.id ? 'bg-primary text-background' : 'bg-muted text-foreground'}`}>
+                <div className={`relative w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center ${selectedCat === cat.id ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md' : 'bg-muted text-foreground'}`}>
                   <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
                   {catCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-primary text-[11px] font-bold text-background shadow-sm">
+                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-emerald-500 text-[11px] font-bold text-white shadow-sm">
                       {catCount}
                     </span>
                   )}
@@ -308,6 +310,11 @@ export default function PosPage() {
       </div>
 
       <section className="flex-1 p-4 lg:p-5 overflow-y-auto">
+        <div className="mb-4">
+          <h1 className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+            <span className="w-1.5 h-5 rounded-full bg-emerald-500 inline-block" /> Point of Sale
+          </h1>
+        </div>
         <div className="mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1">
             <div className="relative flex-1 max-w-xs">
@@ -362,9 +369,9 @@ export default function PosPage() {
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!inCart) addToCart(item); } }}
                 role="button"
                 tabIndex={0}
-                className={`group relative rounded-xl border overflow-hidden text-left cursor-pointer transition-all active:scale-[0.98] ${inCart ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/60 bg-card'}`}
+                className={`group relative rounded-xl border overflow-hidden text-left cursor-pointer transition-all active:scale-[0.98] ${inCart ? 'border-emerald-400 ring-1 ring-emerald-400/50 shadow-sm shadow-emerald-500/10' : 'border-border hover:border-emerald-300 dark:hover:border-emerald-700 bg-card'}`}
               >
-                <div className={`h-20 lg:h-24 flex items-center justify-center bg-gradient-to-br ${inCart ? 'from-primary/10 to-primary/5' : 'from-muted to-muted/50'}`}>
+                <div className={`h-20 lg:h-24 flex items-center justify-center bg-gradient-to-br ${inCart ? 'from-emerald-100 to-emerald-50 dark:from-emerald-950/40 dark:to-emerald-900/20' : 'from-muted to-muted/50'}`}>
                   {inCart ? (
                     <span className="text-3xl font-bold text-primary/30">{qty}</span>
                   ) : (
@@ -375,7 +382,7 @@ export default function PosPage() {
                   {npr(item.price)}
                 </div>
                 {inCart && (
-                  <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-primary text-background rounded-md px-1.5 py-0.5 text-xs font-bold shadow-sm">
+                  <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md px-1.5 py-0.5 text-xs font-bold shadow-sm">
                     <ShoppingCart className="h-3 w-3" />
                     {qty}
                   </div>
@@ -397,7 +404,7 @@ export default function PosPage() {
                       <span className="w-10 text-center text-sm font-bold tabular-nums">{qty}</span>
                       <button
                         onClick={() => addToCart(item)}
-                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-primary text-background hover:bg-primary/90 transition-colors"
+                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
                         aria-label={`Increase quantity of ${item.name}`}
                       >
                         <Plus className="h-4 w-4" />
@@ -411,21 +418,27 @@ export default function PosPage() {
         </div>
       </section>
 
-      {/* Desktop cart sidebar (lg+) */}
-      <aside className="hidden lg:flex w-96 bg-card border-l border-border flex-col shrink-0">
-        <div className="p-5 border-b border-border">
+      {/* Desktop cart sidebar (lg+) — collapsible */}
+      {cartPanelOpen ? (
+      <aside className="hidden lg:flex w-96 bg-card border-l border-emerald-200 dark:border-emerald-800/50 flex-col shrink-0">
+        <div className="p-5 border-b border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/50 to-transparent dark:from-emerald-950/10">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold">Current Order</h2>
+              <h2 className="text-base font-semibold text-emerald-700 dark:text-emerald-300">Current Order</h2>
               {totalCartItems > 0 && (
-                <span className="flex items-center justify-center min-w-[22px] h-5 rounded-full bg-primary text-[11px] font-bold text-background px-1.5">
+                <span className="flex items-center justify-center min-w-[22px] h-5 rounded-full bg-emerald-500 text-[11px] font-bold text-white px-1.5">
                   {totalCartItems}
                 </span>
               )}
             </div>
-            {cart.length > 0 && (
-              <button onClick={() => setCart([])} className="text-xs text-destructive hover:underline">Clear All</button>
-            )}
+            <div className="flex items-center gap-1">
+              {cart.length > 0 && (
+                <button onClick={() => setCart([])} className="text-xs text-destructive hover:underline mr-1">Clear All</button>
+              )}
+              <button onClick={() => setCartPanelOpen(false)} className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors" title="Collapse cart">
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
           </div>
           {customerName && (
             <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
@@ -461,7 +474,7 @@ export default function PosPage() {
           ) : (
             cart.map((line) => (
               <div key={line.menu_item_id} className="flex items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-950/40 dark:to-emerald-900/20 flex items-center justify-center text-sm font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                   {line.quantity}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -507,7 +520,7 @@ export default function PosPage() {
             <button
               onClick={handlePay}
               disabled={payLoading || totalCartItems === 0}
-              className="h-12 rounded-lg bg-primary text-background text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {payLoading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" /> : <CreditCard className="h-4 w-4" />}
               {payLoading ? 'Preparing...' : 'Pay'}
@@ -537,6 +550,23 @@ export default function PosPage() {
           </button>
         </div>
       </aside>
+      ) : (
+      <div className="hidden lg:flex flex-col items-center py-4 gap-3 w-12 border-l border-border bg-card shrink-0">
+        <button
+          onClick={() => setCartPanelOpen(true)}
+          className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 transition-all"
+          title="Open cart"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          {totalCartItems > 0 && (
+            <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 rounded-full bg-destructive text-[10px] font-bold text-background px-1 shadow-sm">
+              {totalCartItems}
+            </span>
+          )}
+        </button>
+        <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+      </div>
+      )}
 
       {/* Mobile cart drawer */}
       {mobileCartOpen && (
@@ -548,9 +578,9 @@ export default function PosPage() {
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-semibold">Current Order</h2>
+                <h2 className="text-base font-semibold text-emerald-700 dark:text-emerald-300">Current Order</h2>
                 {totalCartItems > 0 && (
-                  <span className="flex items-center justify-center min-w-[22px] h-5 rounded-full bg-primary text-[11px] font-bold text-background px-1.5">
+              <span className="flex items-center justify-center min-w-[22px] h-5 rounded-full bg-emerald-500 text-[11px] font-bold text-white px-1.5">
                     {totalCartItems}
                   </span>
                 )}
@@ -594,7 +624,7 @@ export default function PosPage() {
               ) : (
                 cart.map((line) => (
                   <div key={line.menu_item_id} className="flex items-start gap-3 rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-950/40 dark:to-emerald-900/20 flex items-center justify-center text-sm font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                       {line.quantity}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -639,7 +669,7 @@ export default function PosPage() {
                 <button
                   onClick={handlePay}
                   disabled={payLoading || totalCartItems === 0}
-                  className="h-12 rounded-lg bg-primary text-background text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold hover:from-emerald-400 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {payLoading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" /> : <CreditCard className="h-4 w-4" />}
                   {payLoading ? 'Preparing...' : 'Pay'}
@@ -675,7 +705,7 @@ export default function PosPage() {
       {/* Mobile cart FAB */}
       <button
         onClick={() => setMobileCartOpen(true)}
-        className="fixed bottom-20 right-4 z-40 lg:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary text-background shadow-lg active:scale-95 transition-transform"
+        className="fixed bottom-20 right-4 z-40 lg:hidden flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg active:scale-95 transition-transform"
         aria-label={`Open cart with ${totalCartItems} items`}
       >
         <ShoppingCart className="h-6 w-6" />
