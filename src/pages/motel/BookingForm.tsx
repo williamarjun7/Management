@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
-import { X } from "lucide-react";
+import { X, Clock } from "lucide-react";
 import { useRooms, useCreateBooking, useRoomMappings } from "../../lib/hooks";
 import { pushBookingToWebsite } from "../../lib/services/booking-sync";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select } from "../../components/ui/select";
+import { useSettings } from "../../lib/core/settings-context";
 
 import { bookingSchema } from "../../lib/core/validations";
 import type { Room } from "../../types";
@@ -20,6 +21,7 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
   const { data: rooms } = useRooms();
   const { data: mappings } = useRoomMappings();
   const createBooking = useCreateBooking();
+  const { settings } = useSettings();
 
   const [roomId, setRoomId] = useState(preselectedRoomId ?? "");
   const [guestName, setGuestName] = useState("");
@@ -34,7 +36,7 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
   const [errors, setErrors] = useState<z.ZodIssue[]>([]);
 
   const selectedRoom = rooms?.find((r: Room) => r.id === roomId);
-  const basePrice = selectedRoom?.room_types?.base_price ?? 0;
+  const basePrice = selectedRoom?.room_types?.base_price ?? settings.motel.default_nightly_rate;
   const [nightlyRate, setNightlyRate] = useState(String(basePrice));
 
   const nights = Math.max(
@@ -103,10 +105,16 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
     }
     setErrors([]);
     try {
+      const checkInDate = new Date(parsed.data.check_in);
+      const [ciH, ciM] = settings.motel.check_in_time.split(':').map(Number);
+      checkInDate.setHours(ciH || 14, ciM || 0, 0, 0);
+      const checkOutDate = new Date(parsed.data.check_out);
+      const [coH, coM] = settings.motel.check_out_time.split(':').map(Number);
+      checkOutDate.setHours(coH || 12, coM || 0, 0, 0);
       const result = await createBooking.mutateAsync({
         ...parsed.data,
-        check_in: new Date(parsed.data.check_in).toISOString(),
-        check_out: new Date(parsed.data.check_out).toISOString(),
+        check_in: checkInDate.toISOString(),
+        check_out: checkOutDate.toISOString(),
         total_amount: totalAmount,
       });
       syncBookingToWebsite(result as Record<string, unknown>, roomId, guestName, guestPhone, checkIn, checkOut, adults, children, nightlyRate, notes);
@@ -166,11 +174,13 @@ export function BookingForm({ preselectedRoomId, onClose }: BookingFormProps) {
             <div className="space-y-2">
               <Label htmlFor="checkIn">Check-in *</Label>
               <Input id="checkIn" type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} required />
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />Check-in from {settings.motel.check_in_time}</p>
               {getError("check_in") && <p className="text-xs text-destructive">{getError("check_in")}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="checkOut">Check-out *</Label>
               <Input id="checkOut" type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} required />
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />Check-out by {settings.motel.check_out_time}</p>
               {getError("check_out") && <p className="text-xs text-destructive">{getError("check_out")}</p>}
             </div>
           </div>

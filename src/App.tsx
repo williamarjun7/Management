@@ -24,6 +24,7 @@ const InvoiceDetailPage = lazy(() => import('./pages/billing/InvoiceDetailPage')
 const MotelPage = lazy(() => import('./pages/motel/MotelPage'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
+const StaffManagementPage = lazy(() => import('./pages/settings/staff/StaffManagementPage'));
 const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage'));
 const OperationalAnalytics = lazy(() => import('./pages/admin/OperationalAnalytics'));
 const SystemHealthPage = lazy(() => import('./pages/admin/SystemHealthPage'));
@@ -68,6 +69,7 @@ const protectedRoutes: RouteConfig[] = [
   { path: '/motel', element: <SuspenseWrapper><MotelPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'reception', 'staff'] },
   { path: '/reports', element: <SuspenseWrapper><ReportsPage /></SuspenseWrapper>, roles: ['admin', 'manager', 'owner', 'reception'] },
   { path: '/settings', element: <SuspenseWrapper><SettingsPage /></SuspenseWrapper>, roles: ['admin'] },
+  { path: '/settings/staff', element: <SuspenseWrapper><StaffManagementPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/audit', element: <SuspenseWrapper><AuditLogPage /></SuspenseWrapper>, roles: ['admin'] },
   { path: '/analytics', element: <SuspenseWrapper><OperationalAnalytics /></SuspenseWrapper>, roles: ['admin', 'owner'] },
   { path: '/system-health', element: <SuspenseWrapper><SystemHealthPage /></SuspenseWrapper>, roles: ['admin'] },

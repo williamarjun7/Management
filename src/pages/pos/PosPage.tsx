@@ -255,7 +255,7 @@ export default function PosPage() {
   }
 
   return (
-    <div className="flex flex-col h-dvh border-t-4 border-t-emerald-500">
+    <div className="flex flex-col h-screen h-dvh border-t-4 border-t-emerald-500">
       {/* Mobile top bar */}
       <div className="flex items-center gap-2 px-4 h-12 border-b border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-600 to-emerald-500 shrink-0 lg:hidden">
         <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1 text-sm font-medium text-emerald-50 hover:text-white">
@@ -351,7 +351,7 @@ export default function PosPage() {
                 placeholder="Customer"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="bg-transparent outline-none w-24 text-sm"
+                className="bg-transparent outline-none w-full min-w-0 text-sm"
               />
             </div>
             <span className="text-xs text-muted-foreground whitespace-nowrap">{availableItems.length} items</span>
@@ -420,7 +420,7 @@ export default function PosPage() {
 
       {/* Desktop cart sidebar (lg+) — collapsible */}
       {cartPanelOpen ? (
-      <aside className="hidden lg:flex w-96 bg-card border-l border-emerald-200 dark:border-emerald-800/50 flex-col shrink-0">
+      <aside className="hidden lg:flex w-full max-w-sm xl:w-96 bg-card border-l border-emerald-200 dark:border-emerald-800/50 flex-col shrink-0">
         <div className="p-5 border-b border-emerald-100 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50/50 to-transparent dark:from-emerald-950/10">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -502,7 +502,7 @@ export default function PosPage() {
                       placeholder="Notes"
                       value={line.notes}
                       onChange={(e) => updateNotes(line.menu_item_id, e.target.value)}
-                      className="ml-auto min-h-[44px] w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
+                      className="ml-auto min-h-[44px] w-full max-w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -652,13 +652,13 @@ export default function PosPage() {
                           placeholder="Notes"
                           value={line.notes}
                           onChange={(e) => updateNotes(line.menu_item_id, e.target.value)}
-                          className="ml-auto min-h-[44px] w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
-                        />
-                      </div>
+                        className="ml-auto min-h-[44px] w-full max-w-20 rounded-md border border-border bg-transparent px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring"
+                      />
                     </div>
                   </div>
-                ))
-              )}
+                </div>
+              ))
+            )}
             </div>
             <div className="p-4 bg-card border-t border-border shrink-0">
               <div className="flex items-center justify-between">

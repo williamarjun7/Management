@@ -554,3 +554,183 @@ export interface PurchaseOrderItem {
   created_at: string;
   products?: Product;
 }
+
+// ─── Staff Management ───
+
+export type StaffStatus = 'active' | 'inactive' | 'suspended' | 'locked' | 'archived';
+export type VerificationStatus = 'pending' | 'verified' | 'rejected' | 'suspended';
+export type StaffDepartment = 'management' | 'kitchen' | 'service' | 'inventory' | 'accounts' | 'reception' | 'maintenance' | 'other';
+export type GrantType = 'grant' | 'deny';
+
+export interface StaffProfile {
+  id: string;
+  auth_user_id: string | null;
+  full_name: string;
+  username: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  employee_id: string;
+  department: StaffDepartment;
+  position: string | null;
+  branch: string;
+  join_date: string | null;
+  employment_status: string | null;
+  avatar_url: string | null;
+  role_id: string | null;
+  role_name?: string | null;
+  role_slug?: string | null;
+  status: StaffStatus;
+  verification_status: VerificationStatus;
+  verified_by: string | null;
+  verified_at: string | null;
+  verification_notes: string | null;
+  last_login: string | null;
+  last_logout: string | null;
+  failed_login_attempts: number;
+  locked_until: string | null;
+  password_changed_at: string | null;
+  require_password_change: boolean;
+  is_active: boolean;
+  deleted_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffRole {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_system: boolean;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Permission {
+  id: string;
+  code: string;
+  name: string;
+  module: string;
+  description: string | null;
+  is_system: boolean;
+  created_at: string;
+}
+
+export interface RolePermission {
+  id: string;
+  role_id: string;
+  permission_id: string;
+  created_at: string;
+}
+
+export interface StaffPermission {
+  id: string;
+  staff_id: string;
+  permission_id: string;
+  grant_type: GrantType;
+  granted_by: string | null;
+  created_at: string;
+  code?: string;
+  name?: string;
+  module?: string;
+}
+
+export interface StaffSession {
+  id: string;
+  staff_id: string;
+  auth_session_id: string | null;
+  device: string | null;
+  browser: string | null;
+  operating_system: string | null;
+  ip_address: string | null;
+  login_time: string;
+  last_activity: string;
+  logout_time: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface StaffActivityLog {
+  id: string;
+  staff_id: string;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  ip_address: string | null;
+  device_info: string | null;
+  created_at: string;
+}
+
+export interface StaffSecurityLog {
+  id: string;
+  staff_id: string | null;
+  event_type: string;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  ip_address: string | null;
+  device_info: string | null;
+  created_at: string;
+}
+
+export interface StaffNote {
+  id: string;
+  staff_id: string;
+  note: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface StaffInvitation {
+  id: string;
+  email: string;
+  token: string;
+  role_id: string | null;
+  invited_by: string | null;
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+}
+
+export interface StaffDirectoryResponse {
+  total: number;
+  data: StaffProfile[];
+}
+
+export interface StaffDetailResponse {
+  profile: StaffProfile;
+  role: StaffRole | null;
+  active_sessions: StaffSession[];
+  recent_activity: StaffActivityLog[];
+  recent_security: StaffSecurityLog[];
+  permission_overrides: StaffPermission[];
+}
+
+export interface RoleWithPermissions {
+  role: StaffRole;
+  permissions: Permission[];
+}
+
+export interface CreateStaffInput {
+  full_name: string;
+  username: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  employee_id?: string;
+  department?: StaffDepartment;
+  position?: string;
+  branch?: string;
+  join_date?: string;
+  role_id?: string;
+  status?: StaffStatus;
+  verification_status?: VerificationStatus;
+  password?: string;
+  require_password_change?: boolean;
+}

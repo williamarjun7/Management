@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, Bed, UtensilsCrossed, ShoppingCart, ChefHat, ClipboardList, ChevronRight, Scan, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/core/utils';
 import { useAuth } from '../../lib/core/auth-context';
+import { useSettings } from '../../lib/core/settings-context';
 import logoSrc from '../../assets/logo.png';
 import { insforge } from '../../lib/core/insforge';
 import { showSuccess } from '../../components/ui/toast';
@@ -39,6 +40,7 @@ export default function StaffPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [cleanedRooms, setCleanedRooms] = useState(0);
   const [totalRooms, setTotalRooms] = useState(0);
@@ -101,8 +103,8 @@ export default function StaffPage() {
     <div className="min-h-screen bg-[#0F1115] text-on-surface font-body-md relative pb-32 border-t-4 border-t-purple-500">
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-[44px] bg-background/80 backdrop-blur-xl border-b border-outline-variant/10">
         <div className="flex items-center gap-3">
-          <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-5 w-5 rounded-full object-cover" />
-          <span className="text-sm font-black text-on-surface">Highlands Cafe & Motel Inn</span>
+          <img src={logoSrc} alt={settings.business_name} className="h-5 w-5 rounded-full object-cover" />
+          <span className="text-sm font-black text-on-surface">{settings.business_name}</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative">

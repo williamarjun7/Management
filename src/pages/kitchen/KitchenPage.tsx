@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { useKitchenOrders, useTransitionOrderStatus } from '../../lib/hooks';
 import { useAuth } from '../../lib/core/auth-context';
+import { useSettings } from '../../lib/core/settings-context';
 import { KitchenOrderCard } from '../../components/KitchenOrderCard';
 import { playKitchenAlert } from '../../lib/services/kitchen-sound';
 import { subscribeKitchenOrders } from '../../lib/services/realtime';
@@ -14,15 +15,17 @@ export default function KitchenPage() {
   const { data: orders, isLoading, error } = useKitchenOrders();
   const { mutate: transitionStatus, isPending: isUpdating } = useTransitionOrderStatus();
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [filter, setFilter] = useState<KdsFilter>('all');
   const [sortByTable, setSortByTable] = useState(false);
 
   useEffect(() => {
+    if (!settings.kitchen.sound_on_new_order) return;
     const unsub = subscribeKitchenOrders(() => {
       playKitchenAlert();
     });
     return unsub;
-  }, []);
+  }, [settings.kitchen.sound_on_new_order]);
 
   const idempotencyKeys = useRef<Map<string, string>>(new Map());
 
@@ -67,7 +70,7 @@ export default function KitchenPage() {
 
   const urgentOrders = (orders ?? []).filter((o: Order) => {
     const elapsed = Date.now() - new Date(o.created_at).getTime();
-    return elapsed > 15 * 60000;
+    return elapsed > settings.kitchen.default_prep_time_minutes * 60000;
   }).length;
 
   return (
@@ -85,7 +88,7 @@ export default function KitchenPage() {
         </span>
       </header>
 
-      <div className="flex items-center justify-between px-6 py-3 border-b bg-card shrink-0">
+      <div className="flex items-center justify-between gap-3 px-6 py-3 border-b bg-card shrink-0 flex-wrap">
         <div className="flex gap-2">
           {([{ key: 'all', label: 'All Orders', icon: List },
             { key: 'active', label: `Active (${activeOrders.length})`, icon: Clock },
@@ -139,7 +142,7 @@ export default function KitchenPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className={settings.kitchen.display_mode === 'list' ? 'space-y-3' : 'grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}>
             {displayedOrders.map((order: Order) => (
               <KitchenOrderCard
                 key={order.id}

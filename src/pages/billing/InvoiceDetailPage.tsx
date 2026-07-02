@@ -10,6 +10,7 @@ import { Badge } from "../../components/ui/badge";
 import { Separator } from "../../components/ui/separator";
 import { PaymentModal } from "./PaymentModal";
 import { PrintInvoice } from "./PrintInvoice";
+import { useSettings } from '../../lib/core/settings-context';
 import { formatCurrency } from "../../lib/core/format-currency";
 import type { InvoiceItem as InvoiceItemType, PaymentLog } from "../../types";
 
@@ -39,6 +40,7 @@ export default function InvoiceDetailPage() {
   const [showPrint, setShowPrint] = useState(false);
   const printWindowRef = useRef<Window | null>(null);
   const { data: orderData } = useOrderById(invoice?.order_id);
+  const { settings } = useSettings();
 
   if (isLoading) {
     return (
@@ -266,6 +268,7 @@ export default function InvoiceDetailPage() {
           printWindow={printWindowRef.current}
           tableNumber={orderData?.restaurant_tables?.table_number ? Number(orderData.restaurant_tables.table_number) : null}
           orderNumber={orderData?.order_number ?? null}
+          businessName={settings.business_name}
           onClose={() => { printWindowRef.current = null; setShowPrint(false); }}
         />
       )}

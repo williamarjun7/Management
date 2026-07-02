@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../lib/core/auth-context';
+import { useSettings } from '../../lib/core/settings-context';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
@@ -16,6 +17,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function AdminLoginPage() {
   const { signIn, sessionExpired } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,9 +52,9 @@ export default function AdminLoginPage() {
         <div className="absolute bottom-20 -right-20 w-80 h-80 bg-secondary/5 rounded-full blur-3xl" />
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-10 w-10 rounded-full object-cover" />
+            <img src={logoSrc} alt={settings.business_name} className="h-10 w-10 rounded-full object-cover shrink-0" />
             <div>
-              <p className="text-lg font-bold text-foreground">Highlands Cafe & Motel Inn</p>
+              <p className="text-lg font-bold text-foreground">{settings.business_name}</p>
               <p className="text-xs text-muted-foreground">Administration</p>
             </div>
           </div>
@@ -80,9 +82,9 @@ export default function AdminLoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-muted/30">
         <div className="w-full max-w-sm space-y-8">
           <div className="flex lg:hidden items-center gap-3 mb-8">
-            <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-9 w-9 rounded-full object-cover" />
+            <img src={logoSrc} alt={settings.business_name} className="h-9 w-9 rounded-full object-cover shrink-0" />
             <div>
-              <p className="text-base font-bold text-foreground">Highlands Cafe & Motel Inn</p>
+              <p className="text-base font-bold text-foreground">{settings.business_name}</p>
               <p className="text-[10px] text-muted-foreground">Administration</p>
             </div>
           </div>

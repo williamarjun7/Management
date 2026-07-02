@@ -160,7 +160,7 @@ export default function UserRoleManagement() {
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent outline-none w-48 text-sm"
+            className="bg-transparent outline-none w-full sm:w-48 text-sm"
             aria-label="Search users"
           />
         </div>

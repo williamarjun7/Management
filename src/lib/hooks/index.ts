@@ -9,3 +9,18 @@ export { useProducts, useProduct, useStockMovements, useCreateProduct, useUpdate
 export { useRevenueByPeriod, usePaymentMethodBreakdown, useAverageOrderValue, useQueueAnalytics, useRealtimeAnalytics, useSystemTelemetry, useStaffRoleDistribution, useActiveStaff, useStaffOrderCounts, useLowStockProducts, useStockMovementTrends, useRevenueForecast, useOccupancyForecast } from './analytics.hooks';
 export { useRoomMappings, useCreateRoomMapping, useDeleteRoomMapping, useSyncLogs, useSyncLog, useSyncQueue, useExternalBookings, useExternalBookingByPosId, usePushBookingToWebsite, usePushStatusUpdateToWebsite, useTriggerRetryQueue } from './booking-sync.hooks';
 export { useCustomers, useCustomer, useCustomerLedger, useSearchCustomers, useCreateCustomer, useCheckDuplicateCustomer, useRecordCustomerPayment, useCustomerCreditSummary, useUpdateCustomer, useSettleCreditPayment, useCreditCustomersList, useCustomerOutstandingInvoices } from './customers.hooks';
+export {
+  useStaffDirectory, useStaffDetail, useCreateStaff, useUpdateStaff,
+  useVerifyStaff, useUpdateStaffStatus, useDeleteStaff,
+  useRoles, useRoleWithPermissions, useCreateRole, useUpdateRole, useDeleteRole, useDuplicateRole,
+  useAssignStaffRole,
+  useAllPermissions, useToggleRolePermission,
+  useSetStaffPermissionOverride, useRemoveStaffPermissionOverride,
+  useStaffSessions, useTerminateSession, useTerminateAllSessions,
+  useStaffActivityLogs, useStaffSecurityLogs,
+  useBulkUpdateStatus, useBulkAssignRole,
+  useAdminGetUser, useAdminUpdateEmail, useAdminResetPassword,
+  useAdminSendVerification, useAdminUpdateMetadata, useAdminCheckAuth,
+  useAdminResyncStaff,
+} from './staff.hooks';
+export { useSystemSync } from './system-sync.hooks';

@@ -50,14 +50,14 @@ export function TableCard({ table, onViewOrders, onOpenPos, onReset, onBill }: T
       <div className="grid grid-cols-4 border-t border-border divide-x divide-border">
         <button
           onClick={() => onViewOrders(table.id)}
-          className="flex items-center justify-center gap-1 py-3 text-xs font-medium hover:bg-accent transition-colors"
+          className="flex items-center justify-center gap-1 py-3 min-h-[44px] text-xs font-medium hover:bg-accent transition-colors"
           title="View Orders"
         >
           <Eye className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => onOpenPos(table.id)}
-          className="flex items-center justify-center gap-1 py-3 text-xs font-medium hover:bg-accent transition-colors text-primary"
+          className="flex items-center justify-center gap-1 py-3 min-h-[44px] text-xs font-medium hover:bg-accent transition-colors text-primary"
           title="Open POS"
         >
           <ShoppingCart className="h-3.5 w-3.5" />
@@ -65,14 +65,14 @@ export function TableCard({ table, onViewOrders, onOpenPos, onReset, onBill }: T
         </button>
         <button
           onClick={() => onBill(table.id)}
-          className="flex items-center justify-center gap-1 py-3 text-xs font-medium hover:bg-accent transition-colors"
+          className="flex items-center justify-center gap-1 py-3 min-h-[44px] text-xs font-medium hover:bg-accent transition-colors"
           title="Billing"
         >
           <Receipt className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => onReset(table.id)}
-          className="flex items-center justify-center gap-1 py-3 text-xs font-medium hover:bg-accent transition-colors"
+          className="flex items-center justify-center gap-1 py-3 min-h-[44px] text-xs font-medium hover:bg-accent transition-colors"
           title="Reset"
         >
           <RotateCcw className="h-3.5 w-3.5" />

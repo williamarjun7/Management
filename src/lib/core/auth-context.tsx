@@ -9,7 +9,10 @@ import { connectAfterAuth } from '../services/realtime';
 import { createMutex } from '../services/sync';
 import type { AuthUser, UserProfile, AuthStatus } from '../../types';
 
-const SESSION_DURATION = 24 * 60 * 60 * 1000;
+let SESSION_DURATION = 24 * 60 * 60 * 1000;
+export function setSessionDuration(minutes: number) {
+  SESSION_DURATION = minutes * 60 * 1000;
+}
 const SESSION_START_KEY = 'highlands_session_start';
 const ADMIN_ROLES: string[] = ['admin', 'manager'];
 const REFRESH_ANOMALY_KEY = 'highlands_refresh_anomaly';

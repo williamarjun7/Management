@@ -10,6 +10,7 @@ interface PrintInvoiceProps {
   tableNumber?: number | null;
   orderNumber?: string | null;
   paperWidth?: string;
+  businessName?: string;
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -21,7 +22,7 @@ function fmt(n: number): string {
   return n.toFixed(2);
 }
 
-export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, orderNumber, paperWidth = "80mm" }: PrintInvoiceProps) {
+export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, orderNumber, paperWidth = "80mm", businessName = "Highlands Cafe & Motel Inn" }: PrintInvoiceProps) {
   useEffect(() => {
     const logoUrl = new URL(logoSrc, window.location.origin).href;
     const qrUrl = new URL(reviewQrSrc, window.location.origin).href;
@@ -125,7 +126,7 @@ export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, order
 <div class="receipt">
   <div class="c mb2">
     <img src="${logoUrl}" alt="" class="logo" />
-    <div class="b" style="font-size:12px">Highlands Cafe & Motel Inn</div>
+    <div class="b" style="font-size:12px">${businessName}</div>
     <div class="sm">Birendranagar-8, Khajura</div>
     <div class="sm">Surkhet, Nepal</div>
     <div class="sm">+977 9763215874</div>
@@ -169,7 +170,7 @@ export function PrintInvoice({ invoice, onClose, printWindow, tableNumber, order
 
   <hr />
 
-  <div class="c xs">Highlands Cafe & Motel Inn</div>
+  <div class="c xs">${businessName}</div>
 </div>
 </body>
 </html>`;

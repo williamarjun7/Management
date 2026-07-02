@@ -32,32 +32,32 @@ export function RoomCard({ room, bookings, onView, onCheckIn, onCheckOut, onCrea
       </div>
       <div className="flex border-t border-border divide-x divide-border">
         {room.status === 'available' && onCreateBooking && (
-          <button type="button" onClick={() => onCreateBooking(room)} className="flex-1 py-2 text-[11px] font-medium text-primary hover:bg-black/5 transition-colors">
+          <button type="button" onClick={() => onCreateBooking(room)} className="flex-1 min-h-[44px] py-2 text-[11px] font-medium text-primary hover:bg-black/5 transition-colors">
             <CalendarCheck className="h-3.5 w-3.5 mx-auto mb-0.5" /> Book
           </button>
         )}
         {room.status === 'occupied' && activeBooking && onCheckOut && (
-          <button type="button" onClick={() => onCheckOut(activeBooking)} className="flex-1 py-2 text-[11px] font-medium text-orange-600 hover:bg-black/5 transition-colors">
+          <button type="button" onClick={() => onCheckOut(activeBooking)} className="flex-1 min-h-[44px] py-2 text-[11px] font-medium text-orange-600 hover:bg-black/5 transition-colors">
             <LogOut className="h-3.5 w-3.5 mx-auto mb-0.5" /> Check Out
           </button>
         )}
         {(room.status === 'reserved' || room.status === 'booked') && activeBooking && onCheckIn && (
-          <button type="button" onClick={() => onCheckIn(activeBooking)} className="flex-1 py-2 text-[11px] font-medium text-primary hover:bg-black/5 transition-colors">
+          <button type="button" onClick={() => onCheckIn(activeBooking)} className="flex-1 min-h-[44px] py-2 text-[11px] font-medium text-primary hover:bg-black/5 transition-colors">
             <LogIn className="h-3.5 w-3.5 mx-auto mb-0.5" /> Check In
           </button>
         )}
         {room.status !== 'cleaning' && onMarkCleaning && (
-          <button type="button" onClick={() => onMarkCleaning(room)} className="flex-1 py-2 text-[11px] font-medium text-muted-foreground hover:bg-black/5 transition-colors" title="Mark Cleaning">
+          <button type="button" onClick={() => onMarkCleaning(room)} className="flex-1 min-h-[44px] py-2 text-[11px] font-medium text-muted-foreground hover:bg-black/5 transition-colors" title="Mark Cleaning">
             <Paintbrush className="h-3.5 w-3.5 mx-auto mb-0.5" /> Clean
           </button>
         )}
         {room.status !== 'maintenance' && onMarkMaintenance && (
-          <button type="button" onClick={() => onMarkMaintenance(room)} className="flex-1 py-2 text-[11px] font-medium text-muted-foreground hover:bg-black/5 transition-colors" title="Mark Maintenance">
+          <button type="button" onClick={() => onMarkMaintenance(room)} className="flex-1 min-h-[44px] py-2 text-[11px] font-medium text-muted-foreground hover:bg-black/5 transition-colors" title="Mark Maintenance">
             <Wrench className="h-3.5 w-3.5 mx-auto mb-0.5" /> Maint.
           </button>
         )}
         {onView && (
-          <button type="button" onClick={() => onView(room)} className="flex-1 py-2 text-[11px] font-medium text-muted-foreground hover:bg-black/5 transition-colors">
+          <button type="button" onClick={() => onView(room)} className="flex-1 min-h-[44px] py-2 text-[11px] font-medium text-muted-foreground hover:bg-black/5 transition-colors">
             View
           </button>
         )}

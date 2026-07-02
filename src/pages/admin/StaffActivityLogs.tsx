@@ -103,7 +103,7 @@ export default function StaffActivityLogs() {
               placeholder="Search logs..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPagination(); }}
-              className="bg-transparent outline-none w-40 text-sm"
+              className="bg-transparent outline-none w-full sm:w-40 text-sm"
               aria-label="Search logs"
             />
           </div>

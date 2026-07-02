@@ -3,6 +3,7 @@ import { X, QrCode, Banknote, CreditCard, Check, ArrowLeft, Loader2, AlertCircle
 import { Button } from "./ui/button";
 import { useProcessPayment, useProcessCashPayment } from "../lib/hooks";
 import { useAuth } from "../lib/core/auth-context";
+import { useSettings } from "../lib/core/settings-context";
 import { showSuccess, showError } from "./ui/toast";
 import { formatCurrency } from "../lib/core/format-currency";
 import { FonepayQRDialog } from "./FonepayQRDialog";
@@ -49,7 +50,12 @@ async function generateInvoiceNumber(): Promise<string> {
 
 export function PaymentCheckout({ order, customerName, onClose, onComplete }: PaymentCheckoutProps) {
   const { user } = useAuth();
-  const [tab, setTab] = useState<PaymentTab>("review");
+  const { settings } = useSettings();
+  const initialTab = settings.pos.default_payment_method === 'cash' ? 'cash' as const
+    : settings.pos.default_payment_method === 'fonepay' ? 'fonepay' as const
+    : settings.pos.default_payment_method === 'credit_account' ? 'credit' as const
+    : 'review' as const;
+  const [tab, setTab] = useState<PaymentTab>(initialTab);
   const processPayment = useProcessPayment();
   const processCashPayment = useProcessCashPayment();
   const [cashReceived, setCashReceived] = useState('');
@@ -88,6 +94,12 @@ export function PaymentCheckout({ order, customerName, onClose, onComplete }: Pa
     [subtotal, discountType, discountValue]
   );
   const grandTotal = subtotal - discountAmount;
+
+  useEffect(() => {
+    if (settings.pos.default_payment_method === 'cash' && tab === 'cash') {
+      setCashReceived(String(grandTotal));
+    }
+  }, [settings.pos.default_payment_method, tab, grandTotal]);
 
   const cashReceivedNum = Number(cashReceived) || 0;
   const change = calculateChange(cashReceivedNum, grandTotal);

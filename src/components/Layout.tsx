@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/core/auth-context';
+import { useSettings } from '../lib/core/settings-context';
 import { cn } from '../lib/core/utils';
 import type { Role } from '../types';
 import {
@@ -29,8 +30,9 @@ import {
   Users,
   CheckCircle2,
   AlertCircle,
-  Clock,
   CreditCard,
+  Loader2,
+  Database,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTheme } from '../lib/core/theme-context';
@@ -42,7 +44,11 @@ import { syncAllTables } from '../lib/services/table-occupancy';
 import logoSrc from '../assets/logo.png';
 import { QueueStatusBadge } from './QueueStatusBadge';
 import { toast } from './ui/toast';
-import { performFullSync, onSyncStateChange, type SyncStatus } from '../lib/services/sync-service';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { ConfirmDialog } from './ConfirmDialog';
+import { useSystemSync } from '../lib/hooks';
+import type { SystemSyncReport } from '../lib/services/system-sync.service';
+import { Button } from './ui/button';
 
 interface NavItem {
   label: string;
@@ -112,6 +118,7 @@ function isActiveRoute(pathname: string, href: string): boolean {
 export default function Layout() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { settings } = useSettings();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -140,32 +147,12 @@ export default function Layout() {
     (item) => item.href === location.pathname || location.pathname.startsWith(item.href + '/')
   ) && location.pathname !== '/';
 
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
-  const [syncTooltip, setSyncTooltip] = useState('Sync');
+  const [confirmSync, setConfirmSync] = useState(false);
+  const [syncReport, setSyncReport] = useState<SystemSyncReport | null>(null);
+  const systemSync = useSystemSync();
 
-  useEffect(() => {
-    return onSyncStateChange((state) => {
-      setSyncStatus(state.status);
-      if (state.status === 'success') {
-        setSyncTooltip(`Sync completed\nLast sync: ${state.lastSynced?.toLocaleTimeString() || ''}`);
-      } else if (state.status === 'error') {
-        setSyncTooltip(`Sync failed\n${state.error || 'Tap to retry'}`);
-      } else if (state.status === 'syncing') {
-        setSyncTooltip(state.progress || 'Syncing...');
-      }
-    });
-  }, []);
-
-  const handleSync = async () => {
-    if (syncStatus === 'syncing') return;
-    toast('Starting sync...', 'info');
-    const result = await performFullSync();
-    if (result.status === 'success') {
-      toast('Sync completed successfully', 'success');
-    } else if (result.status === 'error' && result.error) {
-      toast(`Sync failed: ${result.error}`, 'error');
-    }
-  };
+  const handleSyncClick = () => setConfirmSync(true);
+  const syncBusy = systemSync.isPending;
 
   const scrollPositions = useRef<Record<string, number>>({});
   const syncedRef = useRef(false);
@@ -218,8 +205,8 @@ export default function Layout() {
           {sidebarOpen || sidebarExpanded ? (
             <>
               <Link to="/dashboard" className="flex items-center gap-2 min-w-0" onClick={() => setSidebarOpen(false)}>
-                <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover shrink-0" />
-                <span className="font-bold text-base truncate">Highlands Cafe & Motel Inn</span>
+                <img src={logoSrc} alt={settings.business_name} className="h-6 w-6 rounded-full object-cover shrink-0" />
+                <span className="font-bold text-base truncate">{settings.business_name}</span>
               </Link>
               <button
                 className="lg:hidden p-3 rounded-md hover:bg-muted transition-colors"
@@ -231,7 +218,7 @@ export default function Layout() {
             </>
           ) : (
             <Link to="/dashboard" className="flex items-center justify-center w-full" onClick={() => setSidebarOpen(false)}>
-              <img src={logoSrc} alt="Highlands Cafe & Motel Inn" className="h-6 w-6 rounded-full object-cover shrink-0" />
+              <img src={logoSrc} alt={settings.business_name} className="h-6 w-6 rounded-full object-cover shrink-0" />
             </Link>
           )}
         </div>
@@ -300,25 +287,21 @@ export default function Layout() {
           <div className="flex-1" />
 
           <button
-            onClick={handleSync}
-            disabled={syncStatus === 'syncing'}
+            onClick={handleSyncClick}
+            disabled={syncBusy}
             className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90 relative group"
-            title={syncTooltip}
-            aria-label="Sync data"
+            title={syncBusy ? 'Synchronizing...' : 'Full system sync'}
+            aria-label="Full system sync"
           >
             <div className="relative">
-              {syncStatus === 'syncing' ? (
-                <Clock className="h-4 w-4 animate-spin" />
-              ) : syncStatus === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              ) : syncStatus === 'error' ? (
-                <AlertCircle className="h-4 w-4 text-destructive" />
+              {syncBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
             </div>
             <span className="sr-only">
-              {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'success' ? 'Synced' : syncStatus === 'error' ? 'Sync Failed' : 'Sync'}
+              {syncBusy ? 'Synchronizing...' : 'Sync'}
             </span>
           </button>
 
@@ -414,6 +397,176 @@ export default function Layout() {
           )}
         </button>
       </nav>
+
+      {/* Sync Confirmation */}
+      <ConfirmDialog
+        open={confirmSync}
+        onOpenChange={setConfirmSync}
+        title="Full System Sync?"
+        description="Reconcile tables, invoices, rooms, bookings, customer balances, stock levels, and inventory holds across the entire system."
+        consequence="Data inconsistencies across all modules will be detected and fixed automatically."
+        entity="entire system"
+        confirmLabel="Sync Now"
+        isPending={systemSync.isPending}
+        onConfirm={() => {
+          setConfirmSync(false);
+          systemSync.mutate({ performed_by: user?.id }, {
+            onSuccess: (data) => {
+              setSyncReport(data.report);
+              toast('System sync completed', 'success');
+            },
+            onError: (e) => toast(`Sync failed: ${(e as Error).message}`, 'error'),
+          });
+        }}
+      />
+
+      {/* Sync Progress Dialog */}
+      <Dialog open={systemSync.isPending && !syncReport}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              Full System Synchronization
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center space-y-3">
+            <div className="flex justify-center items-center gap-2 text-xs text-muted-foreground">
+              <Database className="h-4 w-4" />
+              <span>tables · invoices · rooms · bookings · customers · stock</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Reconciling table statuses, invoice states, room occupancy, checking out past-due bookings, verifying customer balances, rebuilding stock running balances, releasing expired holds…
+            </p>
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+              <div className="bg-primary h-full rounded-full animate-pulse" style={{ width: '50%' }} />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync Report Dialog */}
+      <Dialog open={!!syncReport} onOpenChange={(o) => { if (!o) setSyncReport(null); }}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              System Sync Complete
+            </DialogTitle>
+          </DialogHeader>
+          {syncReport && (
+            <div className="space-y-4">
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">Tables Fixed</p>
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{syncReport.summary.tables_fixed}</p>
+                </div>
+                <div className="bg-blue-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Invoices Fixed</p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{syncReport.summary.invoices_fixed}</p>
+                </div>
+                <div className="bg-violet-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-violet-600 dark:text-violet-400">Rooms Fixed</p>
+                  <p className="text-lg font-bold text-violet-600 dark:text-violet-400">{syncReport.summary.rooms_fixed}</p>
+                </div>
+                <div className="bg-amber-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-amber-600 dark:text-amber-400">Auto Checked Out</p>
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{syncReport.summary.auto_checked_out}</p>
+                </div>
+                <div className="bg-purple-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-purple-600 dark:text-purple-400">Balances Fixed</p>
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{syncReport.summary.balances_fixed}</p>
+                </div>
+                <div className="bg-cyan-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-cyan-600 dark:text-cyan-400">Stock Fixed</p>
+                  <p className="text-lg font-bold text-cyan-600 dark:text-cyan-400">{syncReport.summary.stock_fixed}</p>
+                </div>
+                <div className="bg-orange-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-orange-600 dark:text-orange-400">Low Stock Items</p>
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{syncReport.summary.low_stock_count}</p>
+                </div>
+                <div className="bg-rose-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xs text-rose-600 dark:text-rose-400">Holds Released</p>
+                  <p className="text-lg font-bold text-rose-600 dark:text-rose-400">{syncReport.summary.inventory_holds_released}</p>
+                </div>
+              </div>
+
+              {/* Orphaned warnings */}
+              {(syncReport.summary.orphaned_orders > 0 || syncReport.summary.orphaned_services > 0) && (
+                <div className="bg-red-500/5 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-medium text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> Orphaned References Detected
+                  </p>
+                  {syncReport.summary.orphaned_orders > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {syncReport.summary.orphaned_orders} order(s) reference deleted/inactive tables
+                    </p>
+                  )}
+                  {syncReport.summary.orphaned_services > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {syncReport.summary.orphaned_services} room service(s) reference deleted/inactive rooms
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Per-step details */}
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Steps Completed</p>
+                {syncReport.results.map((r) => (
+                  <div key={r.step} className="flex justify-between items-center bg-muted/30 rounded px-2 py-1">
+                    <div className="flex items-center gap-1.5">
+                      {r.status === 'ok' ? (
+                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3 text-destructive" />
+                      )}
+                      <span className="text-xs capitalize">{r.step.replace(/_/g, ' ')}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{(r.duration_ms / 1000).toFixed(1)}s</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Errors */}
+              {syncReport.errors.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-red-600 mb-1">Errors ({syncReport.errors.length}):</p>
+                  <ul className="text-xs space-y-1 max-h-24 overflow-y-auto">
+                    {syncReport.errors.map((e, i) => (
+                      <li key={i} className="text-red-500 bg-red-500/5 rounded px-2 py-1">{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Low stock detail */}
+              {(() => {
+                const stockStep = syncReport.results.find(r => r.step === 'stock_balance') as unknown as { low_stock_items?: Array<{ id: string; name: string; current_stock: number; reorder_level: number }> } | undefined;
+                const items = stockStep?.low_stock_items;
+                return items && items.length > 0 ? (
+                  <div>
+                    <p className="text-xs font-medium text-amber-600 mb-1">Low Stock Items:</p>
+                    <div className="text-xs space-y-1 max-h-20 overflow-y-auto">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex justify-between bg-amber-500/5 rounded px-2 py-1">
+                          <span>{item.name}</span>
+                          <span className="text-muted-foreground">{item.current_stock} / {item.reorder_level}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              <div className="text-right text-xs text-muted-foreground">Completed in {syncReport.duration}</div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setSyncReport(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomSheet
         open={moreSheetOpen}

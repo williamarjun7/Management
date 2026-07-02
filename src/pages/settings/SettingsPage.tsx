@@ -11,26 +11,16 @@ import {
   Save, Bell, Globe, Palette, Sun, Moon, Loader2,
   ShoppingCart, Receipt, Hotel, CookingPot, Lock, Users,
   Clock, Printer, Percent, DollarSign, KeyRound,
-  Smartphone, Download,
+  Smartphone, Download, ArrowRight,
 } from 'lucide-react';
-import { insforge } from '../../lib/core/insforge';
-import { useAuth } from '../../lib/core/auth-context';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../lib/core/theme-context';
+import { useSettings, ALL_ROLES, ALL_MODULES, DEFAULT_SETTINGS } from '../../lib/core/settings-context';
 import { getCurrentAppVersion } from '../../lib/services/app-update';
 import { useUpdate } from '../../lib/core/update-context';
 import ColorPicker from '../../components/ColorPicker';
 
-const ALL_ROLES = ['admin', 'manager', 'staff', 'kitchen', 'reception'] as const;
-
-const ALL_MODULES = [
-  'Dashboard', 'POS', 'Orders', 'Kitchen', 'Menu', 'Inventory',
-  'Billing', 'Motel', 'Reports', 'Analytics', 'Settings', 'Staff',
-] as const;
-
-type Role = typeof ALL_ROLES[number];
-type Module = typeof ALL_MODULES[number];
-
-const MODULE_ACCESS: Record<Role, Module[]> = {
+const MODULE_ACCESS: Record<string, string[]> = {
   admin: [...ALL_MODULES],
   manager: ALL_MODULES.filter((m) => !['Analytics', 'Settings', 'Staff'].includes(m)),
   staff: ALL_MODULES.filter((m) => ['Dashboard', 'POS', 'Orders', 'Menu', 'Inventory', 'Billing'].includes(m)),
@@ -38,52 +28,11 @@ const MODULE_ACCESS: Record<Role, Module[]> = {
   reception: ['Dashboard', 'Billing', 'Motel', 'Orders'],
 };
 
-const DEFAULT_SETTINGS = {
-  business_name: 'Highlands Cafe & Motel Inn',
-  currency: 'NPR',
-  notifications: {
-    new_orders: true,
-    kitchen_alerts: true,
-    payment_received: true,
-    low_stock_warnings: true,
-    checkin_reminders: true,
-  },
-  pos: {
-    default_payment_method: 'cash',
-    auto_print_receipt: true,
-    auto_print_kitchen: true,
-    printer_ip: '',
-    printer_port: 9100,
-  },
-  billing: {
-    invoice_prefix: 'INV-',
-    default_due_days: 7,
-    tax_rate: 13,
-    service_charge_percent: 10,
-  },
-  motel: {
-    check_in_time: '14:00',
-    check_out_time: '12:00',
-    default_nightly_rate: 0,
-    auto_clean_after_checkout: true,
-  },
-  kitchen: {
-    default_prep_time_minutes: 15,
-    display_mode: 'grid',
-    sound_on_new_order: true,
-  },
-  security: {
-    session_timeout_minutes: 480,
-    min_password_length: 8,
-    require_special_char: false,
-  },
-};
-
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const { theme, setTheme, resetTheme } = useTheme();
   const { updateInfo, updateAvailable } = useUpdate();
-  const [loading, setLoading] = useState(true);
+  const { settings, loading, saveSettings, refetch } = useSettings();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -107,65 +56,37 @@ export default function SettingsPage() {
     return perms;
   });
 
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    (async () => {
-      const keys = [
-        'business_name', 'currency', 'notifications', 'pos', 'billing',
-        'motel', 'kitchen', 'security', 'role_permissions',
-      ];
-      const { data, error } = await insforge.database
-        .from('system_settings')
-        .select('key, value')
-        .in('key', keys);
-      if (!error && data) {
-        for (const row of data as { key: string; value: Record<string, unknown> }[]) {
-          if (row.key === 'business_name' && typeof row.value?.business_name === 'string') setBusinessName(row.value.business_name);
-          if (row.key === 'currency' && typeof row.value?.currency === 'string') setCurrency(row.value.currency);
-          if (row.key === 'notifications' && row.value) setNotifications({ ...DEFAULT_SETTINGS.notifications, ...row.value });
-          if (row.key === 'pos' && row.value) setPos({ ...DEFAULT_SETTINGS.pos, ...row.value });
-          if (row.key === 'billing' && row.value) setBilling({ ...DEFAULT_SETTINGS.billing, ...row.value });
-          if (row.key === 'motel' && row.value) setMotel({ ...DEFAULT_SETTINGS.motel, ...row.value });
-          if (row.key === 'kitchen' && row.value) setKitchen({ ...DEFAULT_SETTINGS.kitchen, ...row.value });
-          if (row.key === 'security' && row.value) setSecurity({ ...DEFAULT_SETTINGS.security, ...row.value });
-          if (row.key === 'role_permissions' && row.value) {
-            setRolePerms((prev) => {
-              const merged = { ...prev };
-              for (const role of ALL_ROLES) {
-                const saved = row.value[role] as Record<string, boolean> | undefined;
-                if (saved) merged[role] = { ...merged[role], ...saved };
-              }
-              return merged;
-            });
-          }
-        }
-      }
-      setLoading(false);
-    })();
-  }, []);
+    if (!loading && !initialized) {
+      setBusinessName(settings.business_name);
+      setCurrency(settings.currency);
+      setNotifications(settings.notifications);
+      setPos(settings.pos);
+      setBilling(settings.billing);
+      setMotel(settings.motel);
+      setKitchen(settings.kitchen);
+      setSecurity(settings.security);
+      setRolePerms(settings.role_permissions);
+      setInitialized(true);
+    }
+  }, [loading, initialized, settings]);
 
   async function handleSave() {
     setSaving(true);
-    const userId = user?.id || null;
-    const upsert = async (key: string, value: Record<string, unknown>) => {
-      const { data: existing } = await insforge.database.from('system_settings').select('id').eq('key', key).limit(1);
-      const row = { key, value, updated_by: userId, updated_at: new Date().toISOString() };
-      if (existing && existing.length > 0) {
-        await insforge.database.from('system_settings').update(row).eq('key', key);
-      } else {
-        await insforge.database.from('system_settings').insert([row]);
-      }
-    };
-    await Promise.all([
-      upsert('business_name', { business_name: businessName }),
-      upsert('currency', { currency }),
-      upsert('notifications', notifications as unknown as Record<string, unknown>),
-      upsert('pos', pos as unknown as Record<string, unknown>),
-      upsert('billing', billing as unknown as Record<string, unknown>),
-      upsert('motel', motel as unknown as Record<string, unknown>),
-      upsert('kitchen', kitchen as unknown as Record<string, unknown>),
-      upsert('security', security as unknown as Record<string, unknown>),
-      upsert('role_permissions', rolePerms as unknown as Record<string, unknown>),
-    ]);
+    await saveSettings({
+      business_name: businessName,
+      currency,
+      notifications,
+      pos,
+      billing,
+      motel,
+      kitchen,
+      security,
+      role_permissions: rolePerms,
+    });
+    await refetch();
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -453,6 +374,20 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="staff" className="mt-4 space-y-4">
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <h3 className="text-sm font-semibold">Staff Management</h3>
+                  <p className="text-xs text-muted-foreground">Manage staff accounts, roles, permissions, and sessions</p>
+                </div>
+              </div>
+              <Button onClick={() => navigate('/settings/staff')} className="min-h-[44px]">
+                Open Staff Management <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
           <Card className="p-6 overflow-hidden">
             <div className="p-6 pb-0 flex items-center gap-3">
               <Users className="h-5 w-5 text-muted-foreground" />

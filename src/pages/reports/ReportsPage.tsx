@@ -99,7 +99,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card className="p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground uppercase">Total Revenue</span>
@@ -133,7 +133,7 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <Card className="p-5 border-amber-200 dark:border-amber-800">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground uppercase">Cash Revenue (Invoices)</span>
@@ -161,7 +161,7 @@ export default function ReportsPage() {
       </div>
 
       <Tabs defaultValue="orders">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 overflow-x-auto">
           <TabsList>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
@@ -170,7 +170,7 @@ export default function ReportsPage() {
         </div>
         <TabsContent value="orders" className="mt-4">
           <Card className="p-0">
-            <Table>
+            <div className="overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Order #</TableHead>
@@ -197,7 +197,7 @@ export default function ReportsPage() {
                   ))
                 )}
               </TableBody>
-            </Table>
+            </Table></div>
           </Card>
         </TabsContent>
         <TabsContent value="rooms" className="mt-4">
@@ -205,7 +205,7 @@ export default function ReportsPage() {
             {rooms?.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No room data</p>
             ) : (
-              <Table>
+              <div className="overflow-x-auto"><Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Room</TableHead>
@@ -224,7 +224,7 @@ export default function ReportsPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </Table></div>
             )}
           </Card>
         </TabsContent>
@@ -233,7 +233,7 @@ export default function ReportsPage() {
             {products?.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No products</p>
             ) : (
-              <Table>
+              <div className="overflow-x-auto"><Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
@@ -252,7 +252,7 @@ export default function ReportsPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </Table></div>
             )}
           </Card>
         </TabsContent>

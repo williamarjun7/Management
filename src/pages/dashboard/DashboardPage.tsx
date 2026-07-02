@@ -476,7 +476,7 @@ export default function DashboardPage() {
           {!pendingInvoices || pendingInvoices.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No pending payments</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Table</TableHead>
@@ -506,7 +506,7 @@ export default function DashboardPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </Table></div>
           )}
         </div>
 

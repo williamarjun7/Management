@@ -212,7 +212,7 @@ export default function QueueInspectorPage() {
                     {loading ? 'Loading...' : 'No queue items'}
                   </div>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full text-sm">
                     <thead className="sticky top-0 bg-muted/50">
                       <tr className="border-b">
                         {(['status', 'operation', 'createdAt', 'retryCount'] as SortField[]).map(field => (
@@ -272,7 +272,7 @@ export default function QueueInspectorPage() {
                         </>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             </CardContent>
